@@ -1,0 +1,45 @@
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge
+
+services:
+  auth:
+    build:
+      context: ./auth
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - 
+    depends_on:
+      - postgres
+    networks:
+      - app-network
+  
+  chat-server:
+    build:
+      context: ./chat-server
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      - 
+    depends_on:
+      - postgres
+      - auth
+    networks:
+      - app-network
+  
+  postgres:
+    image: postgres:17-alpine3.22
+    environment:
+      - "POSTGRES_DB=${PG_DATABASE_NAME}"
+      - "POSTGRES_USER=${PG_USER}"
+      - "POSTGRES_PASSWORD=${PG_PASSWORD}"
+    ports:
+      - "${PG_PORT}:5432"
+    volumes:
+      - postgres_volume:/var/lib/postgresql/data

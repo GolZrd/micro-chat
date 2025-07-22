@@ -1,0 +1,50 @@
+name: GO
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-auth:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.24
+          cache-dependency-path: go.sum
+      
+      - name: Build Auth Service
+        run: 
+          cd auth 
+          go build -o ./bin -v ./cmd
+
+      - name: Test Auth Service
+        run: 
+          cd auth
+          go test -v ./...
+  
+  test-chat-server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.24
+          cache-dependency-path: go.sum
+      
+      - name: Build Chat Server
+        run: 
+          cd chat-server 
+          go build -o ./bin -v ./cmd
+
+      - name: Test Chat Server
+        run: 
+          cd chat-server
+          go test -v ./...
