@@ -21,7 +21,7 @@ jobs:
       - name: Build Auth Service
         working-directory: ./auth
         run:
-          go build -o ./bin -v ./cmd
+          go build -o ./bin -v ./cmd/grpc_server
 
       - name: Test Auth Service
         working-directory: ./auth
@@ -42,7 +42,7 @@ jobs:
       - name: Build Chat Server
         working-directory: ./chat-server
         run:
-          go build -o ./bin -v ./cmd
+          go build -o ./bin -v ./cmd/grpc_server
 
       - name: Test Chat Server
         working-directory: ./chat-server

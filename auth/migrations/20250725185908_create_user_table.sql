@@ -12,4 +12,3 @@ CREATE TABLE users (
 
 -- +goose Down
 drop table users;
-

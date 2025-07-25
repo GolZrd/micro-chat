@@ -1,23 +1,14 @@
-include .env
-
-# Указываем PowerShell как shell
-SHELL := powershell.exe
-.SHELLFLAGS := -NoProfile -Command
-
-LOCAL_BIN:=$(CURDIR)\bin
-
-LOCAL_MIGRATION_DIR = $(MIGRATION_DIR)
-LOCAL_MIGRATION_DSN="host=localhost port=${PG_PORT} dbname=${PG_DATABASE_NAME} user=${PG_USER} password=${PG_PASSWORD} sslmode=disable"
-
+ROOT_DIR := ..
+include $(ROOT_DIR)/.env
 
 local-migration-status:
-	goose -dir $(LOCAL_MIGRATION_DIR) postgres ${LOCAL_MIGRATION_DSN} status -v
+	goose -dir ./migrations postgres ${PG_CHAT_DSN} status -v
 
 local-migration-up:
-	$(GOOSE) -dir $(LOCAL_MIGRATION_DIR) postgres ${LOCAL_MIGRATION_DSN} up -v
+	goose -dir ./migrations postgres ${PG_CHAT_DSN} up -v
 
 local-migration-down:
-	$(GOOSE) -dir $(LOCAL_MIGRATION_DIR) postgres ${LOCAL_MIGRATION_DSN} down -v
+	goose -dir ./migrations postgres ${PG_CHAT_DSN} down -v
 
 
 generate:
@@ -29,3 +20,5 @@ generate-chat-api:
 	--go_out=pkg/chat_v1 --go_opt=paths=source_relative \
 	--go-grpc_out=pkg/chat_v1 --go-grpc_opt=paths=source_relative \
 	api\chat_v1\chat.proto
+
+	

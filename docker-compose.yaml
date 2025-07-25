@@ -11,9 +11,13 @@ services:
       context: ./auth
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - "${GRPC_AUTH_PORT}:50051"
     environment:
-      - 
+      - DB_HOST=${PG_HOST}
+      - DB_PORT=${PG_PORT}
+      - DB_USER=${PG_USER}
+      - DB_PASSWORD=${PG_PASSWORD}
+      - DB_NAME=${DB_AUTH_NAME}
     depends_on:
       - postgres
     networks:
@@ -24,9 +28,13 @@ services:
       context: ./chat-server
       dockerfile: Dockerfile
     ports:
-      - "8081:8081"
+      - "${GRPC_CHAT_PORT}:50052"
     environment:
-      - 
+      - DB_HOST=${PG_HOST}
+      - DB_PORT=${PG_PORT}
+      - DB_USER=${PG_USER}
+      - DB_PASSWORD=${PG_PASSWORD}
+      - DB_NAME=${DB_CHAT_NAME}
     depends_on:
       - postgres
       - auth
