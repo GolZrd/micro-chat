@@ -19,13 +19,13 @@ jobs:
           cache-dependency-path: go.sum
       
       - name: Build Auth Service
-        run: 
-          cd auth 
+        working-directory: ./auth
+        run:
           go build -o ./bin -v ./cmd
 
       - name: Test Auth Service
-        run: 
-          cd auth
+        working-directory: ./auth
+        run:
           go test -v ./...
   
   test-chat-server:
@@ -40,11 +40,11 @@ jobs:
           cache-dependency-path: go.sum
       
       - name: Build Chat Server
-        run: 
-          cd chat-server 
+        working-directory: ./chat-server
+        run:
           go build -o ./bin -v ./cmd
 
       - name: Test Chat Server
+        working-directory: ./chat-server
         run: 
-          cd chat-server
           go test -v ./...

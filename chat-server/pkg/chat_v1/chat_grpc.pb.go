@@ -29,7 +29,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ChatClient interface {
-	Create(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*CreateResponse, error)
+	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error)
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	SendMessage(ctx context.Context, in *SendMessageRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
@@ -42,7 +42,7 @@ func NewChatClient(cc grpc.ClientConnInterface) ChatClient {
 	return &chatClient{cc}
 }
 
-func (c *chatClient) Create(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*CreateResponse, error) {
+func (c *chatClient) Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateResponse)
 	err := c.cc.Invoke(ctx, Chat_Create_FullMethodName, in, out, cOpts...)
@@ -76,7 +76,7 @@ func (c *chatClient) SendMessage(ctx context.Context, in *SendMessageRequest, op
 // All implementations must embed UnimplementedChatServer
 // for forward compatibility.
 type ChatServer interface {
-	Create(context.Context, *emptypb.Empty) (*CreateResponse, error)
+	Create(context.Context, *CreateRequest) (*CreateResponse, error)
 	Delete(context.Context, *DeleteRequest) (*emptypb.Empty, error)
 	SendMessage(context.Context, *SendMessageRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedChatServer()
@@ -89,7 +89,7 @@ type ChatServer interface {
 // pointer dereference when methods are called.
 type UnimplementedChatServer struct{}
 
-func (UnimplementedChatServer) Create(context.Context, *emptypb.Empty) (*CreateResponse, error) {
+func (UnimplementedChatServer) Create(context.Context, *CreateRequest) (*CreateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
 }
 func (UnimplementedChatServer) Delete(context.Context, *DeleteRequest) (*emptypb.Empty, error) {
@@ -120,7 +120,7 @@ func RegisterChatServer(s grpc.ServiceRegistrar, srv ChatServer) {
 }
 
 func _Chat_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
+	in := new(CreateRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -132,7 +132,7 @@ func _Chat_Create_Handler(srv interface{}, ctx context.Context, dec func(interfa
 		FullMethod: Chat_Create_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChatServer).Create(ctx, req.(*emptypb.Empty))
+		return srv.(ChatServer).Create(ctx, req.(*CreateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

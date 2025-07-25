@@ -9,10 +9,10 @@ import "google/protobuf/wrappers.proto";
 option go_package = "auth/pkg/auth_v1:auth_v1";
 
 service Auth {
-    rpc Create(CreateRequest) returns (CreateRespone);
-    rpc Get(GetRequest) returns (GetResponse);
-    rpc Update(UpdateRequest) returns (google.protobuf.Empty);
-    rpc Delete(DeleteRequest) returns (google.protobuf.Empty);
+    rpc Create(CreateRequest) returns (CreateRespone);         // Create - ручка создания нового пользователя в системе. 
+    rpc Get(GetRequest) returns (GetResponse);                 // Get - ручка получения информации о пользователе по его идентификатору. 
+    rpc Update(UpdateRequest) returns (google.protobuf.Empty); // Update - ручка обновления информации о пользователе по его идентификатору
+    rpc Delete(DeleteRequest) returns (google.protobuf.Empty); // Delete - удаление пользователя из системы по его идентификатору. 
 }
 
 enum Role {

@@ -9,15 +9,13 @@ import "google/protobuf/wrappers.proto";
 option go_package = "chat-server/pkg/chat_v1:chat_v1";
 
 service Chat {
-    rpc Create(google.protobuf.Empty) returns (CreateResponse);
-    rpc Delete(DeleteRequest) returns (google.protobuf.Empty);
-    rpc SendMessage(SendMessageRequest) returns (google.protobuf.Empty);
+    rpc Create(CreateRequest) returns (CreateResponse);            // Create - ручка создания нового чата. 
+    rpc Delete(DeleteRequest) returns (google.protobuf.Empty);             // Delete - удаление чата из системы по его идентификатору. 
+    rpc SendMessage(SendMessageRequest) returns (google.protobuf.Empty);   // SendMessage - ручка отправки сообщения на сервер. 
 }
 
-message Message {
-    string from = 1;
-    string text = 2;
-    google.protobuf.Timestamp created_at = 3;
+message CreateRequest {
+    repeated string usernames = 1;
 }
 
 message CreateResponse {
@@ -29,6 +27,7 @@ message DeleteRequest {
 }
 
 message SendMessageRequest {
-    string chat_id = 1;
-    Message message = 2;
+    string from = 1;
+    string text = 2;
+    google.protobuf.Timestamp created_at = 3;
 }
