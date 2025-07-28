@@ -37,7 +37,7 @@ func (s *server) Delete(ctx context.Context, req *desc.DeleteRequest) (*emptypb.
 
 // SendMessage - ручка отправки сообщения на сервер.
 func (s *server) SendMessage(ctx context.Context, req *desc.SendMessageRequest) (*emptypb.Empty, error) {
-	log.Printf("Send message %v from %v in %v", req.Text, req.From, req.CreatedAt)
+	log.Printf("Send message - %v , from - %v, to chat - %v in time: %v", req.Text, req.From, req.ChatId, req.CreatedAt)
 
 	return &emptypb.Empty{}, nil
 }

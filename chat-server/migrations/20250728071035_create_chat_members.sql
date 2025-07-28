@@ -1,0 +1,11 @@
+-- +goose Up
+CREATE TABLE chat_members (
+    chat_id BIGINT NOT NULL REFERENCES chats(ID) ON DELETE CASCADE,
+    username VARCHAR(255) NOT NULL,
+    joined_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (chat_id, username)
+);
+
+
+-- +goose Down
+drop table chat_members;

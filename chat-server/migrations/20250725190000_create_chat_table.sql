@@ -1,9 +1,9 @@
 -- +goose Up
--- +goose StatementBegin
-SELECT 'up SQL query';
--- +goose StatementEnd
+CREATE TABLE chats (
+    ID BIGSERIAL PRIMARY KEY,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+);
+
 
 -- +goose Down
--- +goose StatementBegin
-SELECT 'down SQL query';
--- +goose StatementEnd
+drop table chats;
