@@ -18,6 +18,7 @@ services:
       - DB_USER=${PG_USER}
       - DB_PASSWORD=${PG_PASSWORD}
       - DB_NAME=${DB_AUTH_NAME}
+      - GRPC_PORT=${GRPC_AUTH_PORT}
     depends_on:
       - postgres
     networks:
@@ -41,6 +42,34 @@ services:
     networks:
       - app-network
   
+  migrator-auth:
+    image: migrate/migrate:4  # Готовый образ
+    command:
+      - -source
+      - file:///migrations  # Путь внутри контейнера
+      - -database
+      - postgresql://${PG_USER}:${PG_PASSWORD}@${PG_HOST}:${PG_PORT}/${DB_AUTH_NAME}?sslmode=disable # Параметры подключения
+      - up 
+    volumes:
+      - ./auth/migrations:/migrations:ro 
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgres
+    networks:
+      - app-network
+
   postgres:
     image: postgres:17-alpine3.22
     environment:
@@ -51,3 +80,10 @@ services:
       - "${PG_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER} -d ${PG_NAME}"]
+      interval: 5s
+      retries: 5
+      timeout: 5s
