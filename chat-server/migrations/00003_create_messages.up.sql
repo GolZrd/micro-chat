@@ -1,12 +1,7 @@
--- +goose Up
 CREATE TABLE messages (
     ID BIGSERIAL PRIMARY KEY,
     chat_id BIGINT NOT NULL REFERENCES chats(ID) ON DELETE CASCADE,
     from_username VARCHAR(255) NOT NULL,
     text TEXT NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-
-
--- +goose Down
-drop table messages;

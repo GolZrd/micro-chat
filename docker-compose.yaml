@@ -36,6 +36,7 @@ services:
       - DB_USER=${PG_USER}
       - DB_PASSWORD=${PG_PASSWORD}
       - DB_NAME=${DB_CHAT_NAME}
+      - GRPC_PORT=${GRPC_CHAT_PORT}
     depends_on:
       - postgres
       - auth
@@ -52,6 +53,22 @@ services:
       - up 
     volumes:
       - ./auth/migrations:/migrations:ro 
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  migrator-chat:
+    image: migrate/migrate:4  # Готовый образ
+    command:
+      - -source
+      - file:///migrations  # Путь внутри контейнера
+      - -database
+      - postgresql://${PG_USER}:${PG_PASSWORD}@${PG_HOST}:${PG_PORT}/${DB_CHAT_NAME}?sslmode=disable # Параметры подключения
+      - up 
+    volumes:
+      - ./chat-server/migrations:/migrations:ro 
     depends_on:
       postgres:
         condition: service_healthy

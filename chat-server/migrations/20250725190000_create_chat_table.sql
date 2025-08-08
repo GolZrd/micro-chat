@@ -1,9 +1,0 @@
--- +goose Up
-CREATE TABLE chats (
-    ID BIGSERIAL PRIMARY KEY,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-);
-
-
--- +goose Down
-drop table chats;
