@@ -16,11 +16,6 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-type server struct {
-	desc.UnimplementedAuthServer
-	AuthRepository repository.AuthRepository
-}
-
 func main() {
 	ctx := context.Background()
 
