@@ -1,44 +1,28 @@
 package converter
 
 import (
-	"auth/internal/repository/model"
-	desc "auth/pkg/auth_v1"
-
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"auth/internal/model"
+	modelRepo "auth/internal/repository/model"
 )
 
-// Map для конвертации string -> Role enum
-var roleFromString = map[string]desc.Role{
-	"guest": desc.Role_guest, // 0
-	"user":  desc.Role_user,  // 1
-	"admin": desc.Role_admin, // 2
-}
+// Описываем конвертер, который будет мапить модель репозитория в общую доменную модель
+// modelRepo - модель внутри репо слоя, а model - модель внутри доменного слоя
+func ToUserFromRepo(user *modelRepo.User) *model.User {
 
-// Функция для преобразования модели User в proto.User
-func UserToProto(user *model.User) *desc.User {
-	var updated_at *timestamppb.Timestamp
-	if user.UpdatedAt.Valid {
-		updated_at = timestamppb.New(user.CreatedAt)
-	}
-
-	return &desc.User{
+	return &model.User{
 		Id:        user.Id,
-		Info:      UserInfoToProto(user.Info),
-		CreatedAt: timestamppb.New(user.CreatedAt),
-		UpdatedAt: updated_at,
+		Info:      *ToUserInfoFromRepo(user.Info),
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
 	}
 }
 
-func UserInfoToProto(info model.UserInfo) *desc.UserInfo {
-	role, ok := roleFromString[info.Role]
-	if !ok {
-		role = desc.Role_guest
-	}
+func ToUserInfoFromRepo(info modelRepo.UserInfo) *model.UserInfo {
 
-	return &desc.UserInfo{
+	return &model.UserInfo{
 		Name:     info.Name,
 		Email:    info.Email,
 		Password: info.Password,
-		Role:     role,
+		Role:     info.Role,
 	}
 }

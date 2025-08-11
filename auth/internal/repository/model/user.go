@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// User — основная модель (маппится на proto.User)
+// User — основная модель для репозитория
 type User struct {
 	Id        int64        `db:"id"`
 	Info      UserInfo     `db:""`
@@ -13,7 +13,7 @@ type User struct {
 	UpdatedAt sql.NullTime `db:"updated_at"`
 }
 
-// UserInfo — модель для info (маппится на proto.UserInfo, без password_confirm — оно для валидации)
+// UserInfo — модель для info
 type UserInfo struct {
 	Name     string `db:"name"`
 	Email    string `db:"email"`

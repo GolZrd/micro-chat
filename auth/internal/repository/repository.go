@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
+	"auth/internal/model"
 	"auth/internal/repository/converter"
-	"auth/internal/repository/model"
-	desc "auth/pkg/auth_v1"
+	modelRepo "auth/internal/repository/model"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -26,9 +26,9 @@ const (
 )
 
 type AuthRepository interface {
-	Create(ctx context.Context, info *desc.UserInfo) (int64, error)
-	Get(ctx context.Context, id int64) (*desc.User, error)
-	Update(ctx context.Context, id int64, info *desc.UpdateUserInfo) error
+	Create(ctx context.Context, info CreateUserDTO) (int64, error)
+	Get(ctx context.Context, id int64) (*model.User, error)
+	Update(ctx context.Context, id int64, info UpdateUserDTO) error
 	Delete(ctx context.Context, id int64) error
 }
 
@@ -43,12 +43,7 @@ func NewRepository(db *pgxpool.Pool) AuthRepository {
 }
 
 // Create - метод для создания нового пользователя в БД
-func (r *repo) Create(ctx context.Context, info *desc.UserInfo) (int64, error) {
-	// Пока валидация будет здесь
-	if info.Password != info.PasswordConfirm {
-		return 0, errors.New("passwords do not match")
-	}
-
+func (r *repo) Create(ctx context.Context, info CreateUserDTO) (int64, error) {
 	builder := squirrel.Insert(tableName).
 		PlaceholderFormat(squirrel.Dollar).
 		Columns(nameColumn, emailColumn, passwordColumn, roleColumn).
@@ -69,7 +64,7 @@ func (r *repo) Create(ctx context.Context, info *desc.UserInfo) (int64, error) {
 	return id, nil
 }
 
-func (r *repo) Get(ctx context.Context, id int64) (*desc.User, error) {
+func (r *repo) Get(ctx context.Context, id int64) (*model.User, error) {
 	builder := squirrel.Select(idColumn, nameColumn, passwordColumn, emailColumn, roleColumn, CreatedAtColumn, UpdatedAtColumn).
 		PlaceholderFormat(squirrel.Dollar).
 		From(tableName).
@@ -81,22 +76,22 @@ func (r *repo) Get(ctx context.Context, id int64) (*desc.User, error) {
 		return nil, err
 	}
 
-	var user model.User
+	var user modelRepo.User
 	err = r.db.QueryRow(ctx, query, args...).Scan(&user.Id, &user.Info.Name, &user.Info.Password, &user.Info.Email, &user.Info.Role, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
 
-	return converter.UserToProto(&user), nil
+	return converter.ToUserFromRepo(&user), nil
 }
 
-func (r *repo) Update(ctx context.Context, id int64, info *desc.UpdateUserInfo) error {
+func (r *repo) Update(ctx context.Context, id int64, info UpdateUserDTO) error {
 	builder := squirrel.Update(tableName).
 		PlaceholderFormat(squirrel.Dollar).
 		Where(squirrel.Eq{idColumn: id}).
 		SetMap(map[string]interface{}{
-			nameColumn:      info.Name.Value,
-			emailColumn:     info.Email.Value,
+			nameColumn:      info.Name,
+			emailColumn:     info.Email,
 			UpdatedAtColumn: time.Now(),
 		})
 
