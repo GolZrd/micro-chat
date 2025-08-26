@@ -1,4 +1,4 @@
-package repository
+package user
 
 import (
 	"context"
@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"auth/internal/model"
-	"auth/internal/repository/converter"
-	modelRepo "auth/internal/repository/model"
+	"auth/internal/repository/user/converter"
+	modelRepo "auth/internal/repository/user/model"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -86,6 +86,7 @@ func (r *repo) Get(ctx context.Context, id int64) (*model.User, error) {
 }
 
 func (r *repo) Update(ctx context.Context, id int64, info UpdateUserDTO) error {
+	//TODO: Добавить возможность обновить что то одно
 	builder := squirrel.Update(tableName).
 		PlaceholderFormat(squirrel.Dollar).
 		Where(squirrel.Eq{idColumn: id}).

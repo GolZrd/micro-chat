@@ -2,7 +2,7 @@ package converter
 
 import (
 	"auth/internal/model"
-	modelRepo "auth/internal/repository/model"
+	modelRepo "auth/internal/repository/user/model"
 )
 
 // Описываем конвертер, который будет мапить модель репозитория в общую доменную модель

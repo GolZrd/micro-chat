@@ -50,7 +50,7 @@ services:
       - file:///migrations  # Путь внутри контейнера
       - -database
       - postgresql://${PG_USER}:${PG_PASSWORD}@${PG_HOST}:${PG_PORT}/${DB_AUTH_NAME}?sslmode=disable # Параметры подключения
-      - up 
+      - up
     volumes:
       - ./auth/migrations:/migrations:ro 
     depends_on:

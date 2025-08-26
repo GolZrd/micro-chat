@@ -1,4 +1,4 @@
-package service
+package user
 
 import (
 	"auth/internal/model"

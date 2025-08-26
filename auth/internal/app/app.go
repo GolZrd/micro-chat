@@ -7,7 +7,7 @@ import (
 	"net"
 
 	"auth/internal/closer"
-	desc "auth/pkg/auth_v1"
+	descUser "auth/pkg/user_v1"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -66,7 +66,7 @@ func (a *App) InitGRPCServer(ctx context.Context) error {
 	reflection.Register(a.grpcServer)
 
 	// Здесь происходит иниициализация зависимостей
-	desc.RegisterAuthServer(a.grpcServer, a.serviceProvider.AuthImpl(ctx))
+	descUser.RegisterAuthServer(a.grpcServer, a.serviceProvider.AuthImpl(ctx))
 	return nil
 }
 

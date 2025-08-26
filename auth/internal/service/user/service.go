@@ -1,8 +1,8 @@
-package service
+package user
 
 import (
 	"auth/internal/model"
-	"auth/internal/repository"
+	userRepository "auth/internal/repository/user"
 	"context"
 )
 
@@ -14,9 +14,9 @@ type AuthService interface {
 }
 
 type service struct {
-	authRepository repository.AuthRepository
+	authRepository userRepository.AuthRepository
 }
 
-func NewService(authRepository repository.AuthRepository) AuthService {
+func NewService(authRepository userRepository.AuthRepository) AuthService {
 	return &service{authRepository: authRepository}
 }

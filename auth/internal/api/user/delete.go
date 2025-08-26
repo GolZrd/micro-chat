@@ -1,14 +1,14 @@
-package api
+package user
 
 import (
-	desc "auth/pkg/auth_v1"
+	descUser "auth/pkg/user_v1"
 	"context"
 	"log"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-func (s *Implementation) Delete(ctx context.Context, req *desc.DeleteRequest) (*emptypb.Empty, error) {
+func (s *Implementation) Delete(ctx context.Context, req *descUser.DeleteRequest) (*emptypb.Empty, error) {
 	err := s.authService.Delete(ctx, req.Id)
 	if err != nil {
 		return nil, err

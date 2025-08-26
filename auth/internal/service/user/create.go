@@ -1,7 +1,7 @@
-package service
+package user
 
 import (
-	"auth/internal/repository"
+	userRepository "auth/internal/repository/user"
 	"context"
 	"errors"
 )
@@ -12,7 +12,7 @@ func (s *service) Create(ctx context.Context, info CreateUserDTO) (int64, error)
 	}
 
 	// service DTO → repository DTO
-	params := repository.CreateUserDTO{
+	params := userRepository.CreateUserDTO{
 		Name:     info.Name,
 		Email:    info.Email,
 		Password: info.Password,

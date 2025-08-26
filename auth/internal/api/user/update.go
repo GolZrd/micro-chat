@@ -1,17 +1,17 @@
-package api
+package user
 
 import (
-	"auth/internal/service"
-	desc "auth/pkg/auth_v1"
+	userService "auth/internal/service/user"
+	descUser "auth/pkg/user_v1"
 	"context"
 	"log"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-func (s *Implementation) Update(ctx context.Context, req *desc.UpdateRequest) (*emptypb.Empty, error) {
+func (s *Implementation) Update(ctx context.Context, req *descUser.UpdateRequest) (*emptypb.Empty, error) {
 	// proto → service DTO
-	input := service.UpdateUserDTO{
+	input := userService.UpdateUserDTO{
 		Name:  &req.Info.Name.Value,
 		Email: &req.Info.Email.Value,
 	}
