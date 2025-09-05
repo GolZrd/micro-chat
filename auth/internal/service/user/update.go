@@ -12,7 +12,7 @@ func (s *service) Update(ctx context.Context, id int64, info UpdateUserDTO) erro
 		Email: info.Email,
 	}
 
-	err := s.authRepository.Update(ctx, id, params)
+	err := s.userRepository.Update(ctx, id, params)
 	if err != nil {
 		return err
 	}

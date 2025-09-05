@@ -25,18 +25,19 @@ const (
 	UpdatedAtColumn = "updated_at"
 )
 
-type AuthRepository interface {
+type UserRepository interface {
 	Create(ctx context.Context, info CreateUserDTO) (int64, error)
 	Get(ctx context.Context, id int64) (*model.User, error)
 	Update(ctx context.Context, id int64, info UpdateUserDTO) error
 	Delete(ctx context.Context, id int64) error
+	GetByEmail(ctx context.Context, email string) (*model.UserAuthData, error)
 }
 
 type repo struct {
 	db *pgxpool.Pool
 }
 
-func NewRepository(db *pgxpool.Pool) AuthRepository {
+func NewRepository(db *pgxpool.Pool) UserRepository {
 	return &repo{
 		db: db,
 	}
@@ -130,4 +131,25 @@ func (r *repo) Delete(ctx context.Context, id int64) error {
 	}
 
 	return nil
+}
+
+func (r *repo) GetByEmail(ctx context.Context, email string) (*model.UserAuthData, error) {
+	builder := squirrel.Select(idColumn, passwordColumn, emailColumn, roleColumn).
+		PlaceholderFormat(squirrel.Dollar).
+		From(tableName).
+		Where(squirrel.Eq{emailColumn: email}).
+		Limit(1)
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	var userData modelRepo.UserAuthData
+	err = r.db.QueryRow(ctx, query, args...).Scan(&userData.Id, &userData.Password, &userData.Email, &userData.Role)
+	if err != nil {
+		return nil, err
+	}
+
+	return converter.ToUserAuthDataFromRepo(&userData), nil
 }

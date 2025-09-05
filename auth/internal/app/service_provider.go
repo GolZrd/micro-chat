@@ -17,9 +17,9 @@ type serviceProvider struct {
 	cfg    *config.Config
 	pgPool *pgxpool.Pool
 
-	authRepository userRepository.AuthRepository
-	authService    userService.AuthService
-	authImpl       *userAPI.Implementation
+	userRepository userRepository.UserRepository
+	userService    userService.UserService
+	userImpl       *userAPI.Implementation
 }
 
 func newServiceProvider() *serviceProvider {
@@ -62,26 +62,26 @@ func (s *serviceProvider) PgPool(ctx context.Context) *pgxpool.Pool {
 	return s.pgPool
 }
 
-func (s *serviceProvider) AuthRepository(ctx context.Context) userRepository.AuthRepository {
-	if s.authRepository == nil {
-		s.authRepository = userRepository.NewRepository(s.PgPool(ctx))
+func (s *serviceProvider) UserRepository(ctx context.Context) userRepository.UserRepository {
+	if s.userRepository == nil {
+		s.userRepository = userRepository.NewRepository(s.PgPool(ctx))
 	}
 
-	return s.authRepository
+	return s.userRepository
 }
 
-func (s *serviceProvider) AuthService(ctx context.Context) userService.AuthService {
-	if s.authService == nil {
-		s.authService = userService.NewService(s.AuthRepository(ctx))
+func (s *serviceProvider) UserService(ctx context.Context) userService.UserService {
+	if s.userService == nil {
+		s.userService = userService.NewService(s.UserRepository(ctx))
 	}
 
-	return s.authService
+	return s.userService
 }
 
-func (s *serviceProvider) AuthImpl(ctx context.Context) *userAPI.Implementation {
-	if s.authImpl == nil {
-		s.authImpl = userAPI.NewImplementation(s.AuthService(ctx))
+func (s *serviceProvider) UserImpl(ctx context.Context) *userAPI.Implementation {
+	if s.userImpl == nil {
+		s.userImpl = userAPI.NewImplementation(s.UserService(ctx))
 	}
 
-	return s.authImpl
+	return s.userImpl
 }

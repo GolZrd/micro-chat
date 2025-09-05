@@ -16,7 +16,7 @@ func (s *Implementation) Update(ctx context.Context, req *descUser.UpdateRequest
 		Email: &req.Info.Email.Value,
 	}
 
-	err := s.authService.Update(ctx, req.Id, input)
+	err := s.userService.Update(ctx, req.Id, input)
 	if err != nil {
 		return nil, err
 	}

@@ -26,3 +26,12 @@ func ToUserInfoFromRepo(info modelRepo.UserInfo) *model.UserInfo {
 		Role:     info.Role,
 	}
 }
+
+func ToUserAuthDataFromRepo(user *modelRepo.UserAuthData) *model.UserAuthData {
+	return &model.UserAuthData{
+		Id:       user.Id,
+		Email:    user.Email,
+		Password: user.Password,
+		Role:     user.Role,
+	}
+}

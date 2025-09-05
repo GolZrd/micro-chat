@@ -7,9 +7,9 @@ import (
 
 type Implementation struct {
 	descUser.UnimplementedAuthServer
-	authService userService.AuthService
+	userService userService.UserService
 }
 
-func NewImplementation(authService userService.AuthService) *Implementation {
-	return &Implementation{authService: authService}
+func NewImplementation(userService userService.UserService) *Implementation {
+	return &Implementation{userService: userService}
 }

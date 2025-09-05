@@ -25,3 +25,11 @@ type UpdateUserInfo struct {
 	Name  *string `db:"name"`
 	Email *string `db:"email"`
 }
+
+// Модель для получения пользователя по email
+type UserAuthData struct {
+	Id       int64
+	Email    string
+	Password string
+	Role     string
+}

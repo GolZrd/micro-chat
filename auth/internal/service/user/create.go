@@ -19,7 +19,7 @@ func (s *service) Create(ctx context.Context, info CreateUserDTO) (int64, error)
 		Role:     info.Role,
 	}
 
-	id, err := s.authRepository.Create(ctx, params)
+	id, err := s.userRepository.Create(ctx, params)
 	if err != nil {
 		return 0, err
 	}

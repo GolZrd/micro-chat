@@ -19,6 +19,10 @@ services:
       - DB_PASSWORD=${PG_PASSWORD}
       - DB_NAME=${DB_AUTH_NAME}
       - GRPC_PORT=${GRPC_AUTH_PORT}
+      - REFRESH_TOKEN_SECRET_KEY=${REFRESH_TOKEN_SECRET_KEY}
+      - ACCESS_TOKEN_SECRET_KEY=${ACCESS_TOKEN_SECRET_KEY}
+      - REFRESH_TTL=${REFRESH_TTL}
+      - ACCESS_TTL=${ACCESS_TTL}
     depends_on:
       - postgres
     networks:

@@ -6,7 +6,7 @@ import (
 	"context"
 )
 
-type AuthService interface {
+type UserService interface {
 	Create(ctx context.Context, info CreateUserDTO) (int64, error)
 	Get(ctx context.Context, id int64) (*model.User, error)
 	Update(ctx context.Context, id int64, info UpdateUserDTO) error
@@ -14,9 +14,9 @@ type AuthService interface {
 }
 
 type service struct {
-	authRepository userRepository.AuthRepository
+	userRepository userRepository.UserRepository
 }
 
-func NewService(authRepository userRepository.AuthRepository) AuthService {
-	return &service{authRepository: authRepository}
+func NewService(userRepository userRepository.UserRepository) UserService {
+	return &service{userRepository: userRepository}
 }

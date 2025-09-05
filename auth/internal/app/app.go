@@ -66,7 +66,7 @@ func (a *App) InitGRPCServer(ctx context.Context) error {
 	reflection.Register(a.grpcServer)
 
 	// Здесь происходит иниициализация зависимостей
-	descUser.RegisterAuthServer(a.grpcServer, a.serviceProvider.AuthImpl(ctx))
+	descUser.RegisterAuthServer(a.grpcServer, a.serviceProvider.UserImpl(ctx))
 	return nil
 }
 
