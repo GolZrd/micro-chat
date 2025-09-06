@@ -1,10 +1,13 @@
 package app
 
 import (
+	authAPI "auth/internal/api/auth"
 	userAPI "auth/internal/api/user"
 	"auth/internal/closer"
 	"auth/internal/config"
+	authRepository "auth/internal/repository/auth"
 	userRepository "auth/internal/repository/user"
+	authService "auth/internal/service/auth"
 	userService "auth/internal/service/user"
 	"context"
 	"log"
@@ -18,8 +21,11 @@ type serviceProvider struct {
 	pgPool *pgxpool.Pool
 
 	userRepository userRepository.UserRepository
+	authRepository authRepository.AuthRepository
 	userService    userService.UserService
+	authService    authService.AuthService
 	userImpl       *userAPI.Implementation
+	authImpl       *authAPI.Implementation
 }
 
 func newServiceProvider() *serviceProvider {
@@ -84,4 +90,28 @@ func (s *serviceProvider) UserImpl(ctx context.Context) *userAPI.Implementation 
 	}
 
 	return s.userImpl
+}
+
+func (s *serviceProvider) AuthRepository(ctx context.Context) authRepository.AuthRepository {
+	if s.authRepository == nil {
+		s.authRepository = authRepository.NewRepository(s.PgPool(ctx))
+	}
+
+	return s.authRepository
+}
+
+func (s *serviceProvider) AuthService(ctx context.Context) authService.AuthService {
+	if s.authService == nil {
+		s.authService = authService.NewService(s.AuthRepository(ctx), s.UserRepository(ctx), s.Config())
+	}
+
+	return s.authService
+}
+
+func (s *serviceProvider) AuthImpl(ctx context.Context) *authAPI.Implementation {
+	if s.authImpl == nil {
+		s.authImpl = authAPI.NewImplementation(s.AuthService(ctx))
+	}
+
+	return s.authImpl
 }

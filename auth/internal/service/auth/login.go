@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"auth/internal/model"
 	authRepo "auth/internal/repository/auth"
 	"auth/internal/utils/jwt"
 	"context"
@@ -43,7 +44,7 @@ func (s *service) Login(ctx context.Context, email string, password string) (ref
 	}
 
 	// Генерируем новый токен
-	token, err := jwt.GenerateToken(userData, s.RefreshSecretKey, s.refreshTTL)
+	token, err := jwt.GenerateToken(model.UserAuthData{Id: userData.Id, Role: userData.Role}, s.RefreshSecretKey, s.refreshTTL)
 	if err != nil {
 		log.Println("failed to generate token:", err)
 		return "", err

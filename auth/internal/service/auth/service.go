@@ -17,7 +17,7 @@ type AuthService interface {
 // Нам нужно получить информацию о пользователе по email, для этого нужно обратиться к репозиторию user
 // Чтобы не тянуть весь userRepository.Repository мы объявим узкий интерфейс с методом GetByEmail
 type UsersReader interface {
-	GetByEmail(ctx context.Context, email string) (model.UserAuthData, error)
+	GetByEmail(ctx context.Context, email string) (*model.UserAuthData, error)
 }
 
 type service struct {
