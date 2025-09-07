@@ -9,7 +9,6 @@ import (
 )
 
 func (s *Implementation) GetRefreshToken(ctx context.Context, req *descAuth.GetRefreshTokenRequest) (*descAuth.GetRefreshTokenResponse, error) {
-
 	refreshToken, err := s.authService.RefreshToken(ctx, req.GetOldRefreshToken())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())

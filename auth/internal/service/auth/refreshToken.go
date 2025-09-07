@@ -13,7 +13,7 @@ import (
 // Исходим из того, что на стороне клиента следят за сроком действия токена, поэтому токен всегда валиден
 func (s *service) RefreshToken(ctx context.Context, oldRefreshToken string) (refreshToken string, err error) {
 	//Проверяем что токен валиден
-	userData, err := jwt.VerifyToken(refreshToken, []byte(s.RefreshSecretKey))
+	userData, err := jwt.VerifyToken(oldRefreshToken, []byte(s.RefreshSecretKey))
 	if err != nil {
 		return "", status.Errorf(codes.Aborted, "invalid refresh token")
 	}
