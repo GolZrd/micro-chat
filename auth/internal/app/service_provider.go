@@ -1,12 +1,15 @@
 package app
 
 import (
+	accessAPI "auth/internal/api/access"
 	authAPI "auth/internal/api/auth"
 	userAPI "auth/internal/api/user"
 	"auth/internal/closer"
 	"auth/internal/config"
+	accessRepository "auth/internal/repository/access"
 	authRepository "auth/internal/repository/auth"
 	userRepository "auth/internal/repository/user"
+	accessService "auth/internal/service/access"
 	authService "auth/internal/service/auth"
 	userService "auth/internal/service/user"
 	"context"
@@ -20,12 +23,15 @@ type serviceProvider struct {
 	cfg    *config.Config
 	pgPool *pgxpool.Pool
 
-	userRepository userRepository.UserRepository
-	authRepository authRepository.AuthRepository
-	userService    userService.UserService
-	authService    authService.AuthService
-	userImpl       *userAPI.Implementation
-	authImpl       *authAPI.Implementation
+	userRepository   userRepository.UserRepository
+	authRepository   authRepository.AuthRepository
+	accessRepository accessRepository.AccessRepository
+	userService      userService.UserService
+	authService      authService.AuthService
+	accessService    accessService.AccessService
+	userImpl         *userAPI.Implementation
+	authImpl         *authAPI.Implementation
+	accessImpl       *accessAPI.Implementation
 }
 
 func newServiceProvider() *serviceProvider {
@@ -114,4 +120,28 @@ func (s *serviceProvider) AuthImpl(ctx context.Context) *authAPI.Implementation 
 	}
 
 	return s.authImpl
+}
+
+func (s *serviceProvider) AccessRepository(ctx context.Context) accessRepository.AccessRepository {
+	if s.accessRepository == nil {
+		s.accessRepository = accessRepository.NewRepository(s.PgPool(ctx))
+	}
+
+	return s.accessRepository
+}
+
+func (s *serviceProvider) AccessService(ctx context.Context) accessService.AccessService {
+	if s.accessService == nil {
+		s.accessService = accessService.NewService(s.AccessRepository(ctx), s.Config())
+	}
+
+	return s.accessService
+}
+
+func (s *serviceProvider) AccessImpl(ctx context.Context) *accessAPI.Implementation {
+	if s.accessImpl == nil {
+		s.accessImpl = accessAPI.NewImplementation(s.AccessService(ctx))
+	}
+
+	return s.accessImpl
 }

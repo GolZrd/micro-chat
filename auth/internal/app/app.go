@@ -7,6 +7,7 @@ import (
 	"net"
 
 	"auth/internal/closer"
+	descAccess "auth/pkg/access_v1"
 	descAuth "auth/pkg/auth_v1"
 	descUser "auth/pkg/user_v1"
 
@@ -69,6 +70,7 @@ func (a *App) InitGRPCServer(ctx context.Context) error {
 	// Здесь происходит иниициализация зависимостей
 	descUser.RegisterAuthServer(a.grpcServer, a.serviceProvider.UserImpl(ctx))
 	descAuth.RegisterAuthAPIServer(a.grpcServer, a.serviceProvider.AuthImpl(ctx))
+	descAccess.RegisterAccessAPIServer(a.grpcServer, a.serviceProvider.AccessImpl(ctx))
 	return nil
 }
 
