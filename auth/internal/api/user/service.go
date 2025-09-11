@@ -1,12 +1,12 @@
 package user
 
 import (
-	userService "auth/internal/service/user"
-	descUser "auth/pkg/user_v1"
+	userService "github.com/GolZrd/micro-chat/auth/internal/service/user"
+	descUser "github.com/GolZrd/micro-chat/auth/pkg/user_v1"
 )
 
 type Implementation struct {
-	descUser.UnimplementedAuthServer
+	descUser.UnimplementedUserAPIServer
 	userService userService.UserService
 }
 

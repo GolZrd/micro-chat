@@ -1,9 +1,10 @@
 package auth
 
 import (
-	descAuth "auth/pkg/auth_v1"
 	"context"
 	"log"
+
+	descAuth "github.com/GolZrd/micro-chat/auth/pkg/auth_v1"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

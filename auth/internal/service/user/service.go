@@ -1,9 +1,10 @@
 package user
 
 import (
-	"auth/internal/model"
-	userRepository "auth/internal/repository/user"
 	"context"
+
+	"github.com/GolZrd/micro-chat/auth/internal/model"
+	userRepository "github.com/GolZrd/micro-chat/auth/internal/repository/user"
 )
 
 type UserService interface {

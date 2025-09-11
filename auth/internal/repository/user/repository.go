@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
-	"auth/internal/model"
-	"auth/internal/repository/user/converter"
-	modelRepo "auth/internal/repository/user/model"
+	"github.com/GolZrd/micro-chat/auth/internal/model"
+	"github.com/GolZrd/micro-chat/auth/internal/repository/user/converter"
+	modelRepo "github.com/GolZrd/micro-chat/auth/internal/repository/user/model"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5/pgxpool"

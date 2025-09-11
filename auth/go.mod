@@ -1,4 +1,4 @@
-module auth
+module github.com/GolZrd/micro-chat/auth
 
 go 1.24.0
 

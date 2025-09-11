@@ -1,8 +1,8 @@
 package converter
 
 import (
-	"auth/internal/model"
-	descUser "auth/pkg/user_v1"
+	"github.com/GolZrd/micro-chat/auth/internal/model"
+	descUser "github.com/GolZrd/micro-chat/auth/pkg/user_v1"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 )

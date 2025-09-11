@@ -1,8 +1,8 @@
 package converter
 
 import (
-	"auth/internal/model"
-	modelRepo "auth/internal/repository/user/model"
+	"github.com/GolZrd/micro-chat/auth/internal/model"
+	modelRepo "github.com/GolZrd/micro-chat/auth/internal/repository/user/model"
 )
 
 // Описываем конвертер, который будет мапить модель репозитория в общую доменную модель

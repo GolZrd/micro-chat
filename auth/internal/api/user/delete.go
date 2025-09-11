@@ -1,9 +1,10 @@
 package user
 
 import (
-	descUser "auth/pkg/user_v1"
 	"context"
 	"log"
+
+	descUser "github.com/GolZrd/micro-chat/auth/pkg/user_v1"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 )

@@ -1,9 +1,10 @@
 package user
 
 import (
-	userRepository "auth/internal/repository/user"
 	"context"
 	"errors"
+
+	userRepository "github.com/GolZrd/micro-chat/auth/internal/repository/user"
 )
 
 func (s *service) Create(ctx context.Context, info CreateUserDTO) (int64, error) {

@@ -1,13 +1,14 @@
 package app
 
 import (
-	"chat-server/internal/closer"
 	"context"
 	"fmt"
 	"log"
 	"net"
 
-	desc "chat-server/pkg/chat_v1"
+	"github.com/GolZrd/micro-chat/chat-server/internal/closer"
+
+	desc "github.com/GolZrd/micro-chat/chat-server/pkg/chat_v1"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"

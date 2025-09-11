@@ -1,9 +1,10 @@
 package api
 
 import (
-	desc "chat-server/pkg/chat_v1"
 	"context"
 	"log"
+
+	desc "github.com/GolZrd/micro-chat/chat-server/pkg/chat_v1"
 )
 
 func (s *Implementation) Create(ctx context.Context, req *desc.CreateRequest) (*desc.CreateResponse, error) {

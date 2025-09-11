@@ -1,8 +1,9 @@
 package service
 
 import (
-	"chat-server/internal/repository"
 	"context"
+
+	"github.com/GolZrd/micro-chat/chat-server/internal/repository"
 )
 
 type ChatService interface {

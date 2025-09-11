@@ -1,9 +1,10 @@
 package access
 
 import (
-	descAccess "auth/pkg/access_v1"
 	"context"
 	"strings"
+
+	descAccess "github.com/GolZrd/micro-chat/auth/pkg/access_v1"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"

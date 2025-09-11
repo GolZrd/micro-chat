@@ -1,9 +1,10 @@
 package service
 
 import (
-	"chat-server/internal/repository"
 	"context"
 	"errors"
+
+	"github.com/GolZrd/micro-chat/chat-server/internal/repository"
 )
 
 func (s *service) SendMessage(ctx context.Context, msg SendMessageDTO) error {

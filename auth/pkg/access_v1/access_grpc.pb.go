@@ -4,7 +4,7 @@
 // - protoc             v5.27.0
 // source: access.proto
 
-package access_v1_access_v1
+package access_v1
 
 import (
 	context "context"

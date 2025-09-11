@@ -1,4 +1,4 @@
-module chat-server
+module github.com/GolZrd/micro-chat/chat-server
 
 go 1.24.0
 

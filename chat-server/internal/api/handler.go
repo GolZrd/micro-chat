@@ -1,8 +1,9 @@
 package api
 
 import (
-	"chat-server/internal/service"
-	desc "chat-server/pkg/chat_v1"
+	desc "github.com/GolZrd/micro-chat/chat-server/pkg/chat_v1"
+
+	"github.com/GolZrd/micro-chat/chat-server/internal/service"
 )
 
 type Implementation struct {

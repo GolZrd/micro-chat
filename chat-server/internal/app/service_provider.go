@@ -1,13 +1,14 @@
 package app
 
 import (
-	"chat-server/internal/api"
-	"chat-server/internal/closer"
-	"chat-server/internal/config"
-	"chat-server/internal/repository"
-	"chat-server/internal/service"
 	"context"
 	"log"
+
+	"github.com/GolZrd/micro-chat/chat-server/internal/api"
+	"github.com/GolZrd/micro-chat/chat-server/internal/closer"
+	"github.com/GolZrd/micro-chat/chat-server/internal/config"
+	"github.com/GolZrd/micro-chat/chat-server/internal/repository"
+	"github.com/GolZrd/micro-chat/chat-server/internal/service"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )

@@ -1,10 +1,11 @@
 package user
 
 import (
-	"auth/internal/converter"
-	descUser "auth/pkg/user_v1"
 	"context"
 	"log"
+
+	"github.com/GolZrd/micro-chat/auth/internal/converter"
+	descUser "github.com/GolZrd/micro-chat/auth/pkg/user_v1"
 )
 
 func (s *Implementation) Get(ctx context.Context, req *descUser.GetRequest) (*descUser.GetResponse, error) {

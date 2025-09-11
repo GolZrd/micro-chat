@@ -1,10 +1,11 @@
 package auth
 
 import (
-	"auth/internal/model"
-	"auth/internal/utils/jwt"
 	"context"
 	"time"
+
+	"github.com/GolZrd/micro-chat/auth/internal/model"
+	"github.com/GolZrd/micro-chat/auth/internal/utils/jwt"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

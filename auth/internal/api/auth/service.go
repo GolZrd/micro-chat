@@ -1,8 +1,8 @@
 package auth
 
 import (
-	AuthService "auth/internal/service/auth"
-	descAuth "auth/pkg/auth_v1"
+	AuthService "github.com/GolZrd/micro-chat/auth/internal/service/auth"
+	descAuth "github.com/GolZrd/micro-chat/auth/pkg/auth_v1"
 )
 
 type Implementation struct {

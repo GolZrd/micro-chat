@@ -1,8 +1,9 @@
 package user
 
 import (
-	"auth/internal/model"
 	"context"
+
+	"github.com/GolZrd/micro-chat/auth/internal/model"
 )
 
 func (s *service) Get(ctx context.Context, id int64) (*model.User, error) {

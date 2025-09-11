@@ -6,10 +6,10 @@ import (
 	"log"
 	"net"
 
-	"auth/internal/closer"
-	descAccess "auth/pkg/access_v1"
-	descAuth "auth/pkg/auth_v1"
-	descUser "auth/pkg/user_v1"
+	"github.com/GolZrd/micro-chat/auth/internal/closer"
+	descAccess "github.com/GolZrd/micro-chat/auth/pkg/access_v1"
+	descAuth "github.com/GolZrd/micro-chat/auth/pkg/auth_v1"
+	descUser "github.com/GolZrd/micro-chat/auth/pkg/user_v1"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -68,7 +68,7 @@ func (a *App) InitGRPCServer(ctx context.Context) error {
 	reflection.Register(a.grpcServer)
 
 	// Здесь происходит иниициализация зависимостей
-	descUser.RegisterAuthServer(a.grpcServer, a.serviceProvider.UserImpl(ctx))
+	descUser.RegisterUserAPIServer(a.grpcServer, a.serviceProvider.UserImpl(ctx))
 	descAuth.RegisterAuthAPIServer(a.grpcServer, a.serviceProvider.AuthImpl(ctx))
 	descAccess.RegisterAccessAPIServer(a.grpcServer, a.serviceProvider.AccessImpl(ctx))
 	return nil

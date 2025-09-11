@@ -1,9 +1,10 @@
 package main
 
 import (
-	"chat-server/internal/app"
 	"context"
 	"log"
+
+	"github.com/GolZrd/micro-chat/chat-server/internal/app"
 )
 
 func main() {

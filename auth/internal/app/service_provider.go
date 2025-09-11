@@ -1,19 +1,20 @@
 package app
 
 import (
-	accessAPI "auth/internal/api/access"
-	authAPI "auth/internal/api/auth"
-	userAPI "auth/internal/api/user"
-	"auth/internal/closer"
-	"auth/internal/config"
-	accessRepository "auth/internal/repository/access"
-	authRepository "auth/internal/repository/auth"
-	userRepository "auth/internal/repository/user"
-	accessService "auth/internal/service/access"
-	authService "auth/internal/service/auth"
-	userService "auth/internal/service/user"
 	"context"
 	"log"
+
+	accessAPI "github.com/GolZrd/micro-chat/auth/internal/api/access"
+	authAPI "github.com/GolZrd/micro-chat/auth/internal/api/auth"
+	userAPI "github.com/GolZrd/micro-chat/auth/internal/api/user"
+	"github.com/GolZrd/micro-chat/auth/internal/closer"
+	"github.com/GolZrd/micro-chat/auth/internal/config"
+	accessRepository "github.com/GolZrd/micro-chat/auth/internal/repository/access"
+	authRepository "github.com/GolZrd/micro-chat/auth/internal/repository/auth"
+	userRepository "github.com/GolZrd/micro-chat/auth/internal/repository/user"
+	accessService "github.com/GolZrd/micro-chat/auth/internal/service/access"
+	authService "github.com/GolZrd/micro-chat/auth/internal/service/auth"
+	userService "github.com/GolZrd/micro-chat/auth/internal/service/user"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )

@@ -1,10 +1,11 @@
 package user
 
 import (
-	userService "auth/internal/service/user"
-	descUser "auth/pkg/user_v1"
 	"context"
 	"log"
+
+	userService "github.com/GolZrd/micro-chat/auth/internal/service/user"
+	descUser "github.com/GolZrd/micro-chat/auth/pkg/user_v1"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 )

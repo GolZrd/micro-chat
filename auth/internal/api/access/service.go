@@ -1,8 +1,8 @@
 package access
 
 import (
-	accessService "auth/internal/service/access"
-	descAccess "auth/pkg/access_v1"
+	accessService "github.com/GolZrd/micro-chat/auth/internal/service/access"
+	descAccess "github.com/GolZrd/micro-chat/auth/pkg/access_v1"
 )
 
 type Implementation struct {

@@ -1,11 +1,12 @@
 package auth
 
 import (
-	"auth/internal/config"
-	"auth/internal/model"
-	authRepository "auth/internal/repository/auth"
 	"context"
 	"time"
+
+	"github.com/GolZrd/micro-chat/auth/internal/config"
+	"github.com/GolZrd/micro-chat/auth/internal/model"
+	authRepository "github.com/GolZrd/micro-chat/auth/internal/repository/auth"
 )
 
 type AuthService interface {

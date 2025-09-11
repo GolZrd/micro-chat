@@ -6,9 +6,9 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/wrappers.proto";
 
-option go_package = "auth/pkg/user_v1:user_v1";
+option go_package = "github.com/GolZrd/micro-chat/auth/pkg/user_v1;user_v1";
 
-service User {
+service UserAPI {
     rpc Create(CreateRequest) returns (CreateRespone);         // Create - ручка создания нового пользователя в системе. 
     rpc Get(GetRequest) returns (GetResponse);                 // Get - ручка получения информации о пользователе по его идентификатору. 
     rpc Update(UpdateRequest) returns (google.protobuf.Empty); // Update - ручка обновления информации о пользователе по его идентификатору

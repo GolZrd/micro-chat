@@ -1,9 +1,10 @@
 package access
 
 import (
-	"auth/internal/config"
-	accessRepository "auth/internal/repository/access"
 	"context"
+
+	"github.com/GolZrd/micro-chat/auth/internal/config"
+	accessRepository "github.com/GolZrd/micro-chat/auth/internal/repository/access"
 )
 
 type AccessService interface {

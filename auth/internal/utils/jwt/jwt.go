@@ -1,8 +1,9 @@
 package jwt
 
 import (
-	"auth/internal/model"
 	"time"
+
+	"github.com/GolZrd/micro-chat/auth/internal/model"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/pkg/errors"

@@ -1,8 +1,9 @@
 package user
 
 import (
-	userRepository "auth/internal/repository/user"
 	"context"
+
+	userRepository "github.com/GolZrd/micro-chat/auth/internal/repository/user"
 )
 
 func (s *service) Update(ctx context.Context, id int64, info UpdateUserDTO) error {

@@ -1,8 +1,9 @@
 package access
 
 import (
-	"auth/internal/utils/jwt"
 	"context"
+
+	"github.com/GolZrd/micro-chat/auth/internal/utils/jwt"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

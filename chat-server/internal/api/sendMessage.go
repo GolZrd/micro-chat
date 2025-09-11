@@ -1,10 +1,12 @@
 package api
 
 import (
-	"chat-server/internal/service"
-	desc "chat-server/pkg/chat_v1"
 	"context"
 	"log"
+
+	desc "github.com/GolZrd/micro-chat/chat-server/pkg/chat_v1"
+
+	"github.com/GolZrd/micro-chat/chat-server/internal/service"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 )

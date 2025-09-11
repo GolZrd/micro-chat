@@ -1,13 +1,14 @@
 package auth
 
 import (
-	"auth/internal/model"
-	authRepo "auth/internal/repository/auth"
-	"auth/internal/utils/jwt"
 	"context"
 	"errors"
 	"log"
 	"time"
+
+	"github.com/GolZrd/micro-chat/auth/internal/model"
+	authRepo "github.com/GolZrd/micro-chat/auth/internal/repository/auth"
+	"github.com/GolZrd/micro-chat/auth/internal/utils/jwt"
 )
 
 func (s *service) Login(ctx context.Context, email string, password string) (refreshToken string, err error) {
