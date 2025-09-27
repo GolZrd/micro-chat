@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"sort"
 	"time"
 
 	"github.com/Masterminds/squirrel"
@@ -13,6 +14,9 @@ type ChatRepository interface {
 	Create(ctx context.Context, usernames []string) (int64, error)
 	Delete(ctx context.Context, id int64) error
 	SendMessage(ctx context.Context, msg MessageCreateDTO) error
+	ChatExists(ctx context.Context, id int64) (bool, error)
+	RecentMessages(ctx context.Context, chatID int64, limit int) ([]MessageDTO, error)
+	UserChats(ctx context.Context, username string) ([]ChatInfoDTO, error)
 }
 
 type repo struct {
@@ -121,4 +125,119 @@ func (r *repo) SendMessage(ctx context.Context, msg MessageCreateDTO) error {
 	}
 
 	return nil
+}
+
+func (r *repo) RecentMessages(ctx context.Context, chatID int64, limit int) ([]MessageDTO, error) {
+	builder := squirrel.Select("id", "chat_id", "from_username", "text", "created_at").
+		PlaceholderFormat(squirrel.Dollar).
+		From("messages").
+		Where(squirrel.Eq{"chat_id": chatID}).
+		Limit(uint64(limit))
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	var messages []MessageDTO
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		var message MessageDTO
+		err := rows.Scan(&message.Id, &message.ChatId, &message.From, &message.Text, &message.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		messages = append(messages, message)
+	}
+
+	// Теперь нужно сделать, чтобы сообщения были в порядке убывания, по времени, то есть новые сначала и старые в конце
+	sort.Slice(messages, func(i, j int) bool {
+		return messages[i].CreatedAt.After(messages[j].CreatedAt)
+	})
+
+	return messages, nil
+}
+
+func (r *repo) ChatExists(ctx context.Context, id int64) (bool, error) {
+	var exists bool
+	// Здесь используем простой запрос
+	query := "SELECT EXISTS (SELECT 1 FROM chats WHERE id = $1)"
+	err := r.db.QueryRow(ctx, query, id).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
+}
+
+func (r *repo) UserChats(ctx context.Context, username string) ([]ChatInfoDTO, error) {
+	builder := squirrel.Select("id", "created_at").
+		PlaceholderFormat(squirrel.Dollar).
+		From("chats").
+		Join("chat_members ON chats.ID = chat_members.chat_id ").
+		Where(squirrel.Eq{"username": username}).
+		OrderBy("created_at DESC")
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	var chats []ChatInfoDTO
+	for rows.Next() {
+		var chat ChatInfoDTO
+		err := rows.Scan(&chat.ID, &chat.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		// Получаем участников чата
+		members, err := r.chatMembers(ctx, chat.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		chat.Usernames = members
+		chats = append(chats, chat)
+	}
+
+	return chats, nil
+}
+
+func (r *repo) chatMembers(ctx context.Context, chatID int64) ([]string, error) {
+	builder := squirrel.Select("username").
+		PlaceholderFormat(squirrel.Dollar).
+		From("chat_members").
+		Where(squirrel.Eq{"chat_id": chatID})
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	var usernames []string
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		var username string
+		err := rows.Scan(&username)
+		if err != nil {
+			return nil, err
+		}
+		usernames = append(usernames, username)
+	}
+
+	return usernames, nil
 }

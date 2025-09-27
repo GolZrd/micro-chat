@@ -8,3 +8,15 @@ type SendMessageDTO struct {
 	Text          string
 	Created_at    time.Time
 }
+
+type MessageDTO struct {
+	From      string
+	Text      string
+	CreatedAt time.Time
+}
+
+type ChatInfoDTO struct {
+	ID        int64
+	Usernames []string
+	CreatedAt time.Time
+}

@@ -2,6 +2,7 @@ package access
 
 import (
 	"context"
+	"log"
 	"strings"
 
 	descAccess "github.com/GolZrd/micro-chat/auth/pkg/access_v1"
@@ -47,6 +48,8 @@ func (s *Implementation) Check(ctx context.Context, req *descAccess.CheckRequest
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+
+	log.Println("access granted for endpoint: ", endPoint)
 
 	return &emptypb.Empty{}, nil
 }

@@ -13,6 +13,7 @@ service Chat {
     rpc Delete(DeleteRequest) returns (google.protobuf.Empty);             // Delete - удаление чата из системы по его идентификатору. 
     rpc SendMessage(SendMessageRequest) returns (google.protobuf.Empty);   // SendMessage - ручка отправки сообщения на сервер. 
     rpc ConnectChat(ConnectChatRequest) returns (stream Message);          // ConnectChat - стриминговая ручка подключения к чату.
+    rpc MyChats(MyChatsRequest) returns (MyChatsResponse);         // MyChats - ручка получения списка чатов пользователя.
 }
 
 message CreateRequest {
@@ -42,4 +43,19 @@ message Message {
     string from = 1;
     string text = 2;
     google.protobuf.Timestamp created_at = 3;
+}
+
+message MyChatsRequest {
+    string username = 1;
+}
+
+message ChatInfo {
+    int64 id = 1;
+    repeated string usernames = 2;
+    google.protobuf.Timestamp created_at = 3;
+    string created_by = 4;
+}
+
+message MyChatsResponse {
+    repeated ChatInfo chats = 1;
 }

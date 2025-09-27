@@ -5,8 +5,10 @@ import (
 	"log"
 
 	"github.com/GolZrd/micro-chat/chat-server/internal/api"
+	"github.com/GolZrd/micro-chat/chat-server/internal/client/grpc/access"
 	"github.com/GolZrd/micro-chat/chat-server/internal/closer"
 	"github.com/GolZrd/micro-chat/chat-server/internal/config"
+	"github.com/GolZrd/micro-chat/chat-server/internal/interceptor"
 	"github.com/GolZrd/micro-chat/chat-server/internal/repository"
 	"github.com/GolZrd/micro-chat/chat-server/internal/service"
 
@@ -17,6 +19,9 @@ import (
 type serviceProvider struct {
 	cfg    *config.Config
 	pgPool *pgxpool.Pool
+
+	accessClient    *access.Client
+	authInterceptor *interceptor.AuthInterceptor
 
 	chatRepository repository.ChatRepository
 	chatService    service.ChatService
@@ -61,6 +66,26 @@ func (s *serviceProvider) PgPool(ctx context.Context) *pgxpool.Pool {
 	}
 
 	return s.pgPool
+}
+
+func (s *serviceProvider) AccessClient() *access.Client {
+	if s.accessClient == nil {
+		client, err := access.NewClient("localhost:" + s.cfg.GRPCAuthPort)
+		if err != nil {
+			log.Fatalf("failed to create access client: %v", err)
+		}
+		s.accessClient = client
+	}
+
+	return s.accessClient
+}
+
+func (s *serviceProvider) AuthInterceptor() *interceptor.AuthInterceptor {
+	if s.authInterceptor == nil {
+		s.authInterceptor = interceptor.NewAuthInterceptor(s.AccessClient())
+	}
+
+	return s.authInterceptor
 }
 
 func (s *serviceProvider) ChatRepository(ctx context.Context) repository.ChatRepository {

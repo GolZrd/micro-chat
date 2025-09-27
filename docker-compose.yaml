@@ -41,6 +41,7 @@ services:
       - DB_PASSWORD=${PG_PASSWORD}
       - DB_NAME=${DB_CHAT_NAME}
       - GRPC_PORT=${GRPC_CHAT_PORT}
+      - GRPC_AUTH_PORT=${GRPC_AUTH_PORT}
     depends_on:
       - postgres
       - auth

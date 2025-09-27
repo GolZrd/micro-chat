@@ -63,7 +63,8 @@ func (a *App) InitServiceProvider(_ context.Context) error {
 }
 
 func (a *App) InitGRPCServer(ctx context.Context) error {
-	a.grpcServer = grpc.NewServer()
+	// создаем gRPC-сервер c интерцептором
+	a.grpcServer = grpc.NewServer(grpc.UnaryInterceptor(a.serviceProvider.AuthInterceptor().Unary()))
 	reflection.Register(a.grpcServer)
 
 	// Здесь происходит иниициализация зависимостей

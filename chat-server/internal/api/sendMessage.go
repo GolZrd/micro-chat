@@ -8,6 +8,8 @@ import (
 
 	"github.com/GolZrd/micro-chat/chat-server/internal/service"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -22,7 +24,7 @@ func (s *Implementation) SendMessage(ctx context.Context, req *desc.SendMessageR
 
 	err := s.chatService.SendMessage(ctx, msg)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to send message: %v", err)
 	}
 
 	log.Printf("Send message - %v , from - %v, to chat - %v in time: %v", req.Text, req.From, req.ChatId, req.CreatedAt)
