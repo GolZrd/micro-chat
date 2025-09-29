@@ -53,7 +53,6 @@ message ChatInfo {
     int64 id = 1;
     repeated string usernames = 2;
     google.protobuf.Timestamp created_at = 3;
-    string created_by = 4;
 }
 
 message MyChatsResponse {

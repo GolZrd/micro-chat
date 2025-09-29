@@ -76,4 +76,6 @@ func (c *ChatClient) ConnectToChat(ctx context.Context, chatID int64) (chat_v1.C
 	return stream, nil
 }
 
-func (c *ChatClient) MyChats(ctx context.Context, username string)
+func (c *ChatClient) MyChats(ctx context.Context, username string) {
+	panic("implement me")
+}
