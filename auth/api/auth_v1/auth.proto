@@ -21,6 +21,7 @@ message LoginRequest {
 
 message LoginResponse {
     string refresh_token = 1;
+    int64 userId = 2;
 }
 
 message GetRefreshTokenRequest {

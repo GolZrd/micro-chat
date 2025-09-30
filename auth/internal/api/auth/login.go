@@ -19,11 +19,11 @@ func (s *Implementation) Login(ctx context.Context, req *descAuth.LoginRequest) 
 		return nil, status.Error(codes.InvalidArgument, "password is required")
 	}
 
-	refreshToken, err := s.authService.Login(ctx, req.GetEmail(), req.GetPassword())
+	refreshToken, userId, err := s.authService.Login(ctx, req.GetEmail(), req.GetPassword())
 	if err != nil {
 		//TODO: обработка в зависимости от ошибки
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return &descAuth.LoginResponse{RefreshToken: refreshToken}, nil
+	return &descAuth.LoginResponse{RefreshToken: refreshToken, UserId: userId}, nil
 }

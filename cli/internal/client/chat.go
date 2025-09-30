@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	chat_v1 "github.com/GolZrd/micro-chat/chat-server/pkg/chat_v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	chat_v1 "github.com/GolZrd/micro-chat/chat-server/pkg/chat_v1"
 )
 
 type ChatClient struct {
@@ -36,6 +37,7 @@ func (c *ChatClient) Close() error {
 
 // Добавляем токен в контекст для каждого запроса
 func (c *ChatClient) withAuth(ctx context.Context) context.Context {
+	fmt.Println("Добавляем токен в контекст", c.token)
 	return metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+c.token)
 }
 
@@ -76,6 +78,12 @@ func (c *ChatClient) ConnectToChat(ctx context.Context, chatID int64) (chat_v1.C
 	return stream, nil
 }
 
-func (c *ChatClient) MyChats(ctx context.Context, username string) {
-	panic("implement me")
+func (c *ChatClient) MyChats(ctx context.Context, username string) ([]*chat_v1.ChatInfo, error) {
+	resp, err := c.client.MyChats(c.withAuth(ctx), &chat_v1.MyChatsRequest{
+		Username: username,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return resp.Chats, nil
 }

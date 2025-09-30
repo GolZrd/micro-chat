@@ -57,7 +57,7 @@ var loginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "Вход в систему",
 	Run: func(cmd *cobra.Command, args []string) {
-		username, _ := cmd.Flags().GetString("username")
+		email, _ := cmd.Flags().GetString("email")
 
 		fmt.Print("Введите пароль: ")
 		password, err := term.ReadPassword(int(syscall.Stdin))
@@ -73,7 +73,7 @@ var loginCmd = &cobra.Command{
 		defer authClient.Close()
 
 		ctx := context.Background()
-		userInfo, err := authClient.Login(ctx, username, string(password))
+		userInfo, err := authClient.Login(ctx, email, string(password))
 		if err != nil {
 			log.Fatalf("Ошибка входа: %v", err)
 		}
@@ -116,7 +116,8 @@ var refreshCmd = &cobra.Command{
 			log.Fatalf("Ошибка сохранения токена: %v", err)
 		}
 
-		fmt.Println("Access token успешно обновлен!")
+		fmt.Println("Access token успешно обновлен!", newAccessToken)
+
 	},
 }
 

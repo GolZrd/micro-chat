@@ -4,8 +4,7 @@ go 1.24.0
 
 require (
 	github.com/GolZrd/micro-chat/auth v0.0.0-20250911111643-b94d191ddc7d
-	github.com/GolZrd/micro-chat/chat-server v0.0.0-20250911111643-b94d191ddc7d
-	github.com/golang-jwt/jwt/v5 v5.3.0
+	github.com/GolZrd/micro-chat/chat-server v0.0.0-20250929070832-1b513feffdbd
 	github.com/spf13/cobra v1.10.1
 	golang.org/x/term v0.35.0
 	google.golang.org/grpc v1.75.1

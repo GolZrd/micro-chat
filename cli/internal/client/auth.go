@@ -57,9 +57,9 @@ func (c *AuthClient) Register(ctx context.Context, username, email, password, pa
 	return resp.Id, nil
 }
 
-func (c *AuthClient) Login(ctx context.Context, username, password string) (*LoginResponse, error) {
+func (c *AuthClient) Login(ctx context.Context, email, password string) (*LoginResponse, error) {
 	resp, err := c.authClient.Login(ctx, &auth_v1.LoginRequest{
-		Email:    username,
+		Email:    email,
 		Password: password,
 	})
 	if err != nil {
@@ -74,12 +74,19 @@ func (c *AuthClient) Login(ctx context.Context, username, password string) (*Log
 		return nil, err
 	}
 
+	// Получаем информацию по пользователю по его Id
+	userInfo, err := c.userClient.Get(ctx, &user_v1.GetRequest{
+		//Id: resp.userId,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	return &LoginResponse{
 		AccessToken:  accessToken.AccessToken,
 		RefreshToken: resp.RefreshToken,
-		Username:     username,
+		Username:     userInfo.User.Info.Name,
 	}, nil
-
 }
 
 // Метод для обновления access token

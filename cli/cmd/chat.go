@@ -40,6 +40,8 @@ var createChatCmd = &cobra.Command{
 			log.Fatalf("Ошибка получения токена: %v", err)
 		}
 
+		log.Println("Токен успешно получен:", accessToken)
+
 		chatClient, err := client.NewChatClient(chatServerAddr, accessToken)
 		if err != nil {
 			log.Fatal(err)
@@ -199,11 +201,12 @@ var listChatsCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 		defer chatClient.Close()
-
+		// Получаем имя текущего пользователя
 		username, err := storage.GetUsername()
 		if err != nil {
 			log.Fatalf("Ошибка получения имени пользователя: %v", err)
 		}
+		log.Println("my username:", username)
 
 		ctx := context.Background()
 		chats, err := chatClient.MyChats(ctx, username)
@@ -220,12 +223,15 @@ var listChatsCmd = &cobra.Command{
 		fmt.Println("ID\tУчастники\t\t\tСоздан")
 		fmt.Println(strings.Repeat("-", 60))
 
+		for _, chat := range chats {
+			fmt.Printf("%d\t%s\t%s\n", chat.Id, strings.Join(chat.Usernames, ", "), chat.CreatedAt.AsTime().Format("2006-01-02 15:04:05"))
+		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(chatCmd)
-	chatCmd.AddCommand(createChatCmd, connectChatCmd, deleteChatCmd)
+	chatCmd.AddCommand(createChatCmd, connectChatCmd, deleteChatCmd, listChatsCmd)
 
 	// Флаги для create команды - поддерживаем оба варианта
 	createChatCmd.Flags().StringP("users", "u", "", "Список пользователей через запятую (например: user1,user2,user3)")

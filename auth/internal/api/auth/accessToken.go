@@ -13,7 +13,7 @@ import (
 func (s *Implementation) GetAccessToken(ctx context.Context, req *descAuth.GetAccessTokenRequest) (*descAuth.GetAccessTokenResponse, error) {
 	accessToken, err := s.authService.AccessToken(ctx, req.GetRefreshToken())
 	//Логи добавить
-	log.Println("Get access token with refresh token: ", req.GetRefreshToken())
+	log.Println("Get access token for refresh token: ", req.GetRefreshToken())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

@@ -10,7 +10,7 @@ import (
 )
 
 type AuthService interface {
-	Login(ctx context.Context, email string, password string) (refreshToken string, err error)
+	Login(ctx context.Context, email string, password string) (refreshToken string, userId int64, err error)
 	RefreshToken(ctx context.Context, oldRefreshToken string) (refreshToken string, err error)
 	AccessToken(ctx context.Context, refreshToken string) (accessToken string, err error)
 }

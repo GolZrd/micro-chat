@@ -11,25 +11,25 @@ import (
 	"github.com/GolZrd/micro-chat/auth/internal/utils/jwt"
 )
 
-func (s *service) Login(ctx context.Context, email string, password string) (refreshToken string, err error) {
+func (s *service) Login(ctx context.Context, email string, password string) (refreshToken string, userId int64, err error) {
 	// Вызываем метод user репозитория для получения данных о пользователе по email
 	userData, err := s.userRepository.GetByEmail(ctx, email)
 	if err != nil {
 		// Ошибка на уровне репозитория
 		if errors.Is(err, authRepo.ErrUserNotFound) {
 			log.Println("User not found")
-			return "", errors.New("invalid credentials")
+			return "", 0, errors.New("invalid credentials")
 		}
 
 		log.Println("failed to get user by email:", err)
 
-		return "", err
+		return "", 0, err
 	}
 
 	// Проверяем пароль в упрощенном варианте
 	// TODO: Добавить хеширование
 	if userData.Password != password {
-		return "", errors.New("invalid credentials")
+		return "", 0, errors.New("invalid credentials")
 	}
 
 	log.Printf("Login user with id: %d, email: %s, role: %s", userData.Id, userData.Email, userData.Role)
@@ -41,23 +41,23 @@ func (s *service) Login(ctx context.Context, email string, password string) (ref
 	err = s.authRepository.RevokeAllByUserId(ctx, userData.Id)
 	// TODO: обработать ошибку
 	if err != nil {
-		return "", err
+		return "", 0, err
 	}
 
 	// Генерируем новый токен
 	token, err := jwt.GenerateToken(model.UserAuthData{Id: userData.Id, Role: userData.Role}, s.RefreshSecretKey, s.refreshTTL)
 	if err != nil {
 		log.Println("failed to generate token:", err)
-		return "", err
+		return "", 0, err
 	}
 
 	// Сохраняем токен в БД
 	err = s.authRepository.CreateRefreshToken(ctx, userData.Id, token, time.Now().Add(s.refreshTTL))
 	if err != nil {
 		log.Println("failed to create refresh token:", err)
-		return "", err
+		return "", 0, err
 	}
 
-	// Возвращаем токен
-	return token, nil
+	// Возвращаем токен и id пользователя
+	return token, userData.Id, nil
 }

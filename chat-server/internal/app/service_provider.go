@@ -70,7 +70,10 @@ func (s *serviceProvider) PgPool(ctx context.Context) *pgxpool.Pool {
 
 func (s *serviceProvider) AccessClient() *access.Client {
 	if s.accessClient == nil {
-		client, err := access.NewClient("localhost:" + s.cfg.GRPCAuthPort)
+		cfg := s.Config()
+
+		address := "auth:" + cfg.GRPCAuthPort
+		client, err := access.NewClient(address)
 		if err != nil {
 			log.Fatalf("failed to create access client: %v", err)
 		}

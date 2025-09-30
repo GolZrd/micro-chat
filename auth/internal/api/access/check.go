@@ -18,6 +18,9 @@ const (
 )
 
 func (s *Implementation) Check(ctx context.Context, req *descAccess.CheckRequest) (*emptypb.Empty, error) {
+	// для отладки
+	log.Println("Начинаем проверку доступа")
+
 	// Достаем acessToken из контекста
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {

@@ -21,6 +21,7 @@ enum Role {
     admin = 2;
 }
 
+// Лучше разделять по методам, например, для создания пользователя передается пароль, но для других методов этот message UserInfo не нужен 
 message UserInfo {
     string name = 1;
     string email = 2;
@@ -47,7 +48,8 @@ message CreateRespone {
 message GetRequest {
     int64 id = 1;
 }
-
+// Такое возвращать небезопасно, только в учебных целях 
+// Возвращать пароль нельзя
 message GetResponse {
     User user = 1;
 }

@@ -1,14 +1,12 @@
 github.com/GolZrd/micro-chat/auth v0.0.0-20250911111643-b94d191ddc7d h1:nfADShm61ICtZLnsNnVibmE1iJWaZzL6fHiBV5mmfrc=
 github.com/GolZrd/micro-chat/auth v0.0.0-20250911111643-b94d191ddc7d/go.mod h1:f4+UYdzbHzqmlrfpJokzuVle66UCVZ9JN6AYbEpSSWw=
-github.com/GolZrd/micro-chat/chat-server v0.0.0-20250911111643-b94d191ddc7d h1:vwvrMLn8XojLPGqJk3uo858NwL8uTfWWpN0bxSlWL7s=
-github.com/GolZrd/micro-chat/chat-server v0.0.0-20250911111643-b94d191ddc7d/go.mod h1:U0ueatb/B19i0ebxjbgBXsOAx+xJAAccpyEnBhZpFZU=
+github.com/GolZrd/micro-chat/chat-server v0.0.0-20250929070832-1b513feffdbd h1:dNPWB3P4XKzr3JYmyQI4T5alASVYNWTVUDG0oa1nZmE=
+github.com/GolZrd/micro-chat/chat-server v0.0.0-20250929070832-1b513feffdbd/go.mod h1:kn/77aJg/FTP5mw/ix0UfDe95Xnmc9GLqUbA/aNiVp8=
 github.com/cpuguy83/go-md2man/v2 v2.0.6/go.mod h1:oOW0eioCTA6cOiMLiUPZOpcVxMig6NIQQ7OS05n1F4g=
 github.com/go-logr/logr v1.4.3 h1:CjnDlHq8ikf6E492q6eKboGOC0T8CDaOvkHCIg8idEI=
 github.com/go-logr/logr v1.4.3/go.mod h1:9T104GzyrTigFIr8wt5mBrctHMim0Nb2HLGrmQ40KvY=
 github.com/go-logr/stdr v1.2.2 h1:hSWxHoqTgW2S2qGc0LTAI563KZ5YKYRhT3MFKZMbjag=
 github.com/go-logr/stdr v1.2.2/go.mod h1:mMo/vtBO5dYbehREoey6XUKy/eSumjCCveDpRre4VKE=
-github.com/golang-jwt/jwt/v5 v5.3.0 h1:pv4AsKCKKZuqlgs5sUmn4x8UlGa0kEVt/puTpKx9vvo=
-github.com/golang-jwt/jwt/v5 v5.3.0/go.mod h1:fxCRLWMO43lRc8nhHWY6LGqRcf+1gQWArsqaEUEa5bE=
 github.com/golang/protobuf v1.5.4 h1:i7eJL8qZTpSEXOPTxNKhASYpMn+8e5Q6AdndVa1dWek=
 github.com/golang/protobuf v1.5.4/go.mod h1:lnTiLA8Wa4RWRcIUkrtSVa5nRhsEGBg48fD6rSs7xps=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
