@@ -24,7 +24,14 @@ var createChatCmd = &cobra.Command{
 	Short: "Создать новый чат",
 	Long:  "Создать новый чат с указанными пользователями. Примеры: chat-cli chat create -u user1,user2,user3 или chat-cli chat create --users user1 --users user2 --users user3",
 	Run: func(cmd *cobra.Command, args []string) {
-		// Получаем список пользователей
+		// Первым делом, так как создаем чат, то добавляем себя в него
+		storage := token.NewFileStorage()
+		myUsername, err := storage.GetUsername()
+		if err != nil {
+			log.Fatalf("Ошибка получения имени пользователя: %v", err)
+		}
+
+		//Теперь получаем список пользователей и объединяем их
 		usernames, err := getUsernames(cmd)
 		if err != nil {
 			log.Fatalf("Ошибка получения списка пользователей: %v", err)
@@ -34,13 +41,17 @@ var createChatCmd = &cobra.Command{
 			log.Fatal("Необходимо указать хотя бы одного пользователя")
 		}
 
-		storage := token.NewFileStorage()
+		usernames = append(usernames, myUsername)
+
+		// Для отладки
+		fmt.Printf("Список пользователей: %v\n", usernames)
+
 		accessToken, err := storage.GetAccessToken()
 		if err != nil {
 			log.Fatalf("Ошибка получения токена: %v", err)
 		}
 
-		log.Println("Токен успешно получен:", accessToken)
+		//log.Println("Токен успешно получен:", accessToken)
 
 		chatClient, err := client.NewChatClient(chatServerAddr, accessToken)
 		if err != nil {
@@ -206,7 +217,7 @@ var listChatsCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("Ошибка получения имени пользователя: %v", err)
 		}
-		log.Println("my username:", username)
+		//log.Println("my username:", username)
 
 		ctx := context.Background()
 		chats, err := chatClient.MyChats(ctx, username)

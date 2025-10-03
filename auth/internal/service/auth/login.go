@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/GolZrd/micro-chat/auth/internal/model"
@@ -12,8 +13,10 @@ import (
 )
 
 func (s *service) Login(ctx context.Context, email string, password string) (refreshToken string, userId int64, err error) {
+	// Приводим email к нижнему регистру
+	lowerEmail := strings.ToLower(email)
 	// Вызываем метод user репозитория для получения данных о пользователе по email
-	userData, err := s.userRepository.GetByEmail(ctx, email)
+	userData, err := s.userRepository.GetByEmail(ctx, lowerEmail)
 	if err != nil {
 		// Ошибка на уровне репозитория
 		if errors.Is(err, authRepo.ErrUserNotFound) {

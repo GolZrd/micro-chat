@@ -37,7 +37,7 @@ func (c *ChatClient) Close() error {
 
 // Добавляем токен в контекст для каждого запроса
 func (c *ChatClient) withAuth(ctx context.Context) context.Context {
-	fmt.Println("Добавляем токен в контекст", c.token)
+	//fmt.Println("Добавляем токен в контекст", c.token)
 	return metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+c.token)
 }
 

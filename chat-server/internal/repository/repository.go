@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"errors"
-	"sort"
 	"time"
 
 	"github.com/Masterminds/squirrel"
@@ -156,9 +155,9 @@ func (r *repo) RecentMessages(ctx context.Context, chatID int64, limit int) ([]M
 	}
 
 	// Теперь нужно сделать, чтобы сообщения были в порядке убывания, по времени, то есть новые сначала и старые в конце
-	sort.Slice(messages, func(i, j int) bool {
-		return messages[i].CreatedAt.After(messages[j].CreatedAt)
-	})
+	// sort.Slice(messages, func(i, j int) bool {
+	// 	return messages[i].CreatedAt.After(messages[j].CreatedAt)
+	// })
 
 	return messages, nil
 }

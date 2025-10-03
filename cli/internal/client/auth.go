@@ -76,7 +76,7 @@ func (c *AuthClient) Login(ctx context.Context, email, password string) (*LoginR
 
 	// Получаем информацию по пользователю по его Id
 	userInfo, err := c.userClient.Get(ctx, &user_v1.GetRequest{
-		//Id: resp.userId,
+		Id: resp.UserId,
 	})
 	if err != nil {
 		return nil, err
