@@ -28,7 +28,7 @@ func (s *service) RefreshToken(ctx context.Context, oldRefreshToken string) (ref
 	}
 
 	// Создаем новый токен
-	refreshToken, err = jwt.GenerateToken(model.UserAuthData{Id: userData.UID, Role: userData.Role}, s.RefreshSecretKey, s.refreshTTL)
+	refreshToken, err = jwt.GenerateToken(model.UserAuthData{Id: userData.UID, Name: userData.Name, Role: userData.Role}, s.RefreshSecretKey, s.refreshTTL)
 	if err != nil {
 		return "", status.Errorf(codes.Internal, "failed to generate refresh token")
 	}

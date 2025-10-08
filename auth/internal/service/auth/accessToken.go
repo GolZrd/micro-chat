@@ -22,7 +22,7 @@ func (s *service) AccessToken(ctx context.Context, refreshToken string) (accessT
 	}
 	log.Println("Verify refresh token with user id: ", userData.UID)
 	// Если токен валиден, генерируем новый access токен
-	accessToken, err = jwt.GenerateToken(model.UserAuthData{Id: userData.UID, Role: userData.Role}, s.AccessSecretKey, s.accessTTL)
+	accessToken, err = jwt.GenerateToken(model.UserAuthData{Id: userData.UID, Name: userData.Name, Role: userData.Role}, s.AccessSecretKey, s.accessTTL)
 	if err != nil {
 		log.Println("failed to generate access token:", err)
 		return "", status.Errorf(codes.Internal, "failed to generate access token")

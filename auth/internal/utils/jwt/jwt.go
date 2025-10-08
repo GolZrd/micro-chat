@@ -11,12 +11,13 @@ import (
 
 // Функция для генерации токена. Передаем информацию о пользователе, секретный ключ и время жизни
 func GenerateToken(user model.UserAuthData, secretKey string, ttl time.Duration) (string, error) {
-	// TODO: использовать userClaims
+	// Добавляем в токен информацию о пользователе
 	claims := model.UserClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(ttl)),
 		},
 		UID:  user.Id,
+		Name: user.Name,
 		Role: user.Role,
 	}
 

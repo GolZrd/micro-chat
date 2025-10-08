@@ -29,6 +29,7 @@ type UpdateUserInfo struct {
 // Модель для получения пользователя по email
 type UserAuthData struct {
 	Id       int64
+	Name     string
 	Email    string
 	Password string
 	Role     string

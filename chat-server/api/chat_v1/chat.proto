@@ -13,7 +13,7 @@ service Chat {
     rpc Delete(DeleteRequest) returns (google.protobuf.Empty);             // Delete - удаление чата из системы по его идентификатору. 
     rpc SendMessage(SendMessageRequest) returns (google.protobuf.Empty);   // SendMessage - ручка отправки сообщения на сервер. 
     rpc ConnectChat(ConnectChatRequest) returns (stream Message);          // ConnectChat - стриминговая ручка подключения к чату.
-    rpc MyChats(MyChatsRequest) returns (MyChatsResponse);         // MyChats - ручка получения списка чатов пользователя.
+    rpc MyChats(MyChatsRequest) returns (MyChatsResponse);         // MyChats - ручка получения списка чатов пользователя. Не будем передавать имя пользователя. А будем его брать из токена
 }
 
 message CreateRequest {
@@ -45,8 +45,8 @@ message Message {
     google.protobuf.Timestamp created_at = 3;
 }
 
+// Так как нам не нужно передавать имя, то сообщение можно оставить пустым, и если вдруг, в будущем потребуется дополнить сообщение, то это будет сделать проще
 message MyChatsRequest {
-    string username = 1;
 }
 
 message ChatInfo {

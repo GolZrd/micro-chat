@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 
+	"github.com/GolZrd/micro-chat/chat-server/internal/utils"
 	desc "github.com/GolZrd/micro-chat/chat-server/pkg/chat_v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -10,7 +11,11 @@ import (
 )
 
 func (s *Implementation) MyChats(ctx context.Context, req *desc.MyChatsRequest) (*desc.MyChatsResponse, error) {
-	username := req.Username
+	// Извлекаем username из токена
+	username, err := utils.GetUsernameFromContext(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Unauthenticated, "failed to get username from token: %v", err)
+	}
 
 	if username == "" {
 		return nil, status.Error(codes.InvalidArgument, "username is required")
