@@ -134,7 +134,7 @@ func (r *repo) Delete(ctx context.Context, id int64) error {
 }
 
 func (r *repo) GetByEmail(ctx context.Context, email string) (*model.UserAuthData, error) {
-	builder := squirrel.Select(idColumn, passwordColumn, emailColumn, roleColumn).
+	builder := squirrel.Select(idColumn, nameColumn, passwordColumn, emailColumn, roleColumn).
 		PlaceholderFormat(squirrel.Dollar).
 		From(tableName).
 		Where(squirrel.Eq{emailColumn: email}).
@@ -146,7 +146,7 @@ func (r *repo) GetByEmail(ctx context.Context, email string) (*model.UserAuthDat
 	}
 
 	var userData modelRepo.UserAuthData
-	err = r.db.QueryRow(ctx, query, args...).Scan(&userData.Id, &userData.Password, &userData.Email, &userData.Role)
+	err = r.db.QueryRow(ctx, query, args...).Scan(&userData.Id, &userData.Name, &userData.Password, &userData.Email, &userData.Role)
 	if err != nil {
 		return nil, err
 	}

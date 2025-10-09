@@ -35,7 +35,7 @@ func (s *service) Login(ctx context.Context, email string, password string) (ref
 		return "", 0, errors.New("invalid credentials")
 	}
 
-	log.Printf("Login user with id: %d, email: %s, role: %s", userData.Id, userData.Email, userData.Role)
+	log.Printf("Login user with id: %d, name: %s, email: %s, role: %s", userData.Id, userData.Name, userData.Email, userData.Role)
 
 	// Вызываем репозиторий чтобы сохранить токен в БД, после этого просто возвращаем его пользователю и он у себя подсохраняет
 	// У нас будет только 1 устройство, поэтому старые refresh мы будем помечать как revoked
