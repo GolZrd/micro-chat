@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"log"
 
 	"github.com/GolZrd/micro-chat/chat-server/internal/utils"
 	desc "github.com/GolZrd/micro-chat/chat-server/pkg/chat_v1"
@@ -10,12 +11,16 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+// MyChats возвращает список чатов пользователя
 func (s *Implementation) MyChats(ctx context.Context, req *desc.MyChatsRequest) (*desc.MyChatsResponse, error) {
 	// Извлекаем username из токена
 	username, err := utils.GetUsernameFromContext(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "failed to get username from token: %v", err)
 	}
+
+	// Проверка
+	log.Printf("Loading chats for user: %s", username)
 
 	if username == "" {
 		return nil, status.Error(codes.InvalidArgument, "username is required")

@@ -11,7 +11,7 @@ option go_package = "github.com/GolZrd/micro-chat/chat-server/pkg/chat_v1:chat_v
 service Chat {
     rpc Create(CreateRequest) returns (CreateResponse);            // Create - ручка создания нового чата. 
     rpc Delete(DeleteRequest) returns (google.protobuf.Empty);             // Delete - удаление чата из системы по его идентификатору. 
-    rpc SendMessage(SendMessageRequest) returns (google.protobuf.Empty);   // SendMessage - ручка отправки сообщения на сервер. 
+    rpc SendMessage(SendMessageRequest) returns (google.protobuf.Empty);   // SendMessage - ручка отправки сообщения на сервер. Обновление: так как у нас есть токен, то нам не нужно передавать имя пользователя, мы будем брать его из токена.
     rpc ConnectChat(ConnectChatRequest) returns (stream Message);          // ConnectChat - стриминговая ручка подключения к чату.
     rpc MyChats(MyChatsRequest) returns (MyChatsResponse);         // MyChats - ручка получения списка чатов пользователя. Не будем передавать имя пользователя. А будем его брать из токена
 }
@@ -27,10 +27,9 @@ message CreateResponse {
 message DeleteRequest {
     int64 id = 1;
 }
-
+// Убрал поле From, так как мы с каждым запросом передаем токен, из которого будет извлекаться username
 message SendMessageRequest {
     int64 chat_id = 1;
-    string from = 2;
     string text = 3;
     google.protobuf.Timestamp created_at = 4;
 }
