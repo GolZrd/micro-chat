@@ -3,3 +3,6 @@ CREATE TABLE role_permissions (
     endpoint VARCHAR(255) NOT NULL,
     PRIMARY KEY (role, endpoint)
 );
+
+-- Применим индексы
+CREATE INDEX role_permissions_endpoint_idx ON role_permissions (endpoint);

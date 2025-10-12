@@ -1,5 +1,5 @@
-github.com/GolZrd/micro-chat/auth v0.0.0-20250911111643-b94d191ddc7d h1:nfADShm61ICtZLnsNnVibmE1iJWaZzL6fHiBV5mmfrc=
-github.com/GolZrd/micro-chat/auth v0.0.0-20250911111643-b94d191ddc7d/go.mod h1:f4+UYdzbHzqmlrfpJokzuVle66UCVZ9JN6AYbEpSSWw=
+github.com/GolZrd/micro-chat/auth v0.0.0-20251009070815-27316154d650 h1:GzQlowVOWIYHGfLREDnKVUpgPrY95pyjOMDTUAFuBs8=
+github.com/GolZrd/micro-chat/auth v0.0.0-20251009070815-27316154d650/go.mod h1:f4+UYdzbHzqmlrfpJokzuVle66UCVZ9JN6AYbEpSSWw=
 github.com/Masterminds/squirrel v1.5.4 h1:uUcX/aBc8O7Fg9kaISIUsHXdKuqehiXAMQTYX8afzqM=
 github.com/Masterminds/squirrel v1.5.4/go.mod h1:NNaOrjSoIDfDA40n7sr2tPNZRfjzjA400rg+riTZj10=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

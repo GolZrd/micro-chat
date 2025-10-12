@@ -3,7 +3,7 @@ module github.com/GolZrd/micro-chat/chat-server
 go 1.24.0
 
 require (
-	github.com/GolZrd/micro-chat/auth v0.0.0-20250911111643-b94d191ddc7d
+	github.com/GolZrd/micro-chat/auth v0.0.0-20251009070815-27316154d650
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/jackc/pgx/v5 v5.7.5
