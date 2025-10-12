@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Micro Chat</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Micro Chat</h1>
+        
+        <!-- Статус авторизации -->
+        <div class="card" id="authStatus">
+            <p>Статус: <span id="status">Не авторизован</span></p>
+            <button onclick="logout()" id="logoutBtn" style="display:none; margin-top: 10px;">🚪 Выйти</button>
+        </div>
+
+        <!-- ✅ ДОБАВИЛИ КЛАСС: guest-only - показывается только для НЕ авторизованных -->
+        <!-- Регистрация -->
+        <div class="card guest-only">
+            <h2>📝 Регистрация</h2>
+            <form id="registerForm">
+                <input type="text" id="reg_name" placeholder="Имя" required>
+                <input type="email" id="reg_email" placeholder="Email" required>
+                <input type="password" id="reg_password" placeholder="Пароль" required>
+                <input type="password" id="reg_password_confirm" placeholder="Подтвердите пароль" required>
+                <button type="submit">Зарегистрироваться</button>
+            </form>
+            <div id="registerResult"></div>
+        </div>
+
+        <!-- Вход -->
+        <div class="card guest-only">
+            <h2>🔐 Вход</h2>
+            <form id="loginForm">
+                <input type="email" id="login_email" placeholder="Email" required>
+                <input type="password" id="login_password" placeholder="Пароль" required>
+                <button type="submit">Войти</button>
+            </form>
+            <div id="loginResult"></div>
+        </div>
+
+        <!-- Создание чата (требует авторизации) -->
+        <div class="card protected-content" style="display:none;">
+            <h2>➕ Создать чат</h2>
+            <form id="createChatForm">
+                <input type="text" id="chat_usernames" placeholder="Имена пользователей через запятую" required>
+                <button type="submit">Создать</button>
+            </form>
+            <div id="chatResult"></div>
+        </div>
+
+        <!-- Мои чаты (требует авторизации) -->
+        <div class="card protected-content" style="display:none;">
+            <h2>📬 Мои чаты</h2>
+            <button onclick="loadMyChats()">🔄 Загрузить чаты</button>
+            <div id="myChats"></div>
+        </div>
+
+        <!-- Информация о пользователе -->
+        <div class="card protected-content" style="display:none;">
+            <h2>👤 Мой профиль</h2>
+            <button onclick="loadUserInfo()">Загрузить информацию</button>
+            <div id="userInfo"></div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

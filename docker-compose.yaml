@@ -86,7 +86,7 @@ services:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
-      - "8080:80"
+      - "5050:80"
     depends_on:
       - postgres
     networks:
@@ -109,3 +109,18 @@ services:
       interval: 5s
       retries: 5
       timeout: 5s
+  web-gateway:
+    build:
+      context: ./web-gateway
+      dockerfile: Dockerfile
+    ports: 
+      - "${HTTP_PORT}:8080"
+    environment:
+      - HTTP_PORT=8080
+      - AUTH_GRPC_ADDR=${AUTH_GRPC_ADDR}
+      - CHAT_GRPC_ADDR=${CHAT_GRPC_ADDR}
+    depends_on:
+      - auth
+      - chat-server
+    networks:
+      - app-network

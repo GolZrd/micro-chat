@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Заголовок чата -->
+        <div class="chat-header">
+            <div>
+                <h1>💬 Чат #<span id="chatIdDisplay">...</span></h1>
+            </div>
+            <div class="user-badge">
+                Вы: <strong id="currentUsername">загрузка...</strong>
+            </div>
+        </div>
+
+        <!-- Статус подключения -->
+        <div id="connectionStatus" class="status-badge status-disconnected">
+            🔴 Подключение...
+        </div>
+        
+        <div class="chat-container">
+            <!-- Список сообщений -->
+            <div id="messages" class="messages"></div>
+            
+            <!-- Форма отправки (БЕЗ поля username!) -->
+            <form id="messageForm" class="message-form">
+                <input 
+                    type="text" 
+                    id="messageInput" 
+                    placeholder="Введите сообщение..." 
+                    required 
+                    autocomplete="off"
+                >
+                <button type="submit" id="sendBtn" disabled>Отправить</button>
+            </form>
+        </div>
+        
+        <a href="/" class="back-link">← Вернуться на главную</a>
+    </div>
+
+    <!-- Подключаем app.js -->
+    <script src="/static/app.js"></script>
+    <script>
+        // ==================== Инициализация ====================
+        
+        // Проверка авторизации
+        if (!TokenManager.isAuthenticated()) {
+            alert('❌ Необходима авторизация для доступа к чату!');
+            window.location.href = '/';
+        }
+
+        // Получаем chat ID из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const chatId = urlParams.get('id');
+        
+        if (!chatId) {
+            alert('❌ Chat ID не указан!');
+            window.location.href = '/';
+        }
+
+        document.getElementById('chatIdDisplay').textContent = chatId;
+
+        // Получаем токен и username
+        const token = TokenManager.getAccessToken();
+        const currentUsername = TokenManager.getUsername() || 'Пользователь';
+        document.getElementById('currentUsername').textContent = currentUsername;
+
+        console.log('👤 Current user:', currentUsername);
+
+        // ==================== WebSocket ====================
+        
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const cleanToken = token.replace('Bearer ', '').trim();
+        const wsUrl = `${wsProtocol}//${window.location.host}/ws/chat/${chatId}?token=${encodeURIComponent(cleanToken)}`;
+        
+        console.log('🔌 Connecting to WebSocket...');
+        
+        let ws = new WebSocket(wsUrl);
+        const statusEl = document.getElementById('connectionStatus');
+        const sendBtn = document.getElementById('sendBtn');
+
+        ws.onopen = () => {
+            console.log('✅ WebSocket connected');
+            statusEl.textContent = '🟢 Подключено';
+            statusEl.className = 'status-badge status-connected';
+            sendBtn.disabled = false;
+        };
+
+        ws.onmessage = (event) => {
+            console.log('📨 Received:', event.data);
+            
+            try {
+                const msg = JSON.parse(event.data);
+                
+                if (msg.error) {
+                    console.error('❌ Server error:', msg.error);
+                    statusEl.textContent = '❌ Ошибка: ' + msg.error;
+                    statusEl.className = 'status-badge status-disconnected';
+                    return;
+                }
+                
+                displayMessage(msg);
+            } catch (error) {
+                console.error('❌ Parse error:', error);
+            }
+        };
+
+        ws.onerror = (error) => {
+            console.error('❌ WebSocket error:', error);
+            statusEl.textContent = '🔴 Ошибка подключения';
+            statusEl.className = 'status-badge status-disconnected';
+            sendBtn.disabled = true;
+        };
+
+        ws.onclose = (event) => {
+            console.log('🔌 WebSocket closed');
+            statusEl.textContent = '🔴 Отключено. Переподключение...';
+            statusEl.className = 'status-badge status-disconnected';
+            sendBtn.disabled = true;
+            
+            setTimeout(() => location.reload(), 3000);
+        };
+
+        // ==================== Функции ====================
+
+        function displayMessage(msg) {
+            const messagesDiv = document.getElementById('messages');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message';
+            
+            const isOwn = msg.from === currentUsername;
+            if (isOwn) msgDiv.classList.add('own');
+            
+            let timeStr = 'сейчас';
+            if (msg.createdAt) {
+                try {
+                    const date = new Date(msg.createdAt);
+                    if (!isNaN(date.getTime())) {
+                        timeStr = date.toLocaleTimeString('ru-RU', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                    }
+                } catch (e) {}
+            }
+            
+            msgDiv.innerHTML = `
+                <div class="message-header">
+                    <strong>${escapeHtml(msg.from || 'Аноним')}</strong>
+                    <span class="time">${timeStr}</span>
+                </div>
+                <div class="message-text">${escapeHtml(msg.text || '')}</div>
+            `;
+            
+            messagesDiv.appendChild(msgDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ==================== Отправка ====================
+
+        document.getElementById('messageForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const messageInput = document.getElementById('messageInput');
+            const text = messageInput.value.trim();
+            
+            if (!text) return;
+            
+            sendBtn.disabled = true;
+            sendBtn.textContent = '⏳';
+            
+            try {
+                const response = await apiRequest('/api/chat/send', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        chat_id: parseInt(chatId),
+                        text: text
+                    })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to send');
+                }
+                
+                messageInput.value = '';
+                
+            } catch (error) {
+                console.error('❌ Send error:', error);
+                alert('Ошибка отправки: ' + error.message);
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Отправить';
+            }
+        });
+
+        // Enter для отправки
+        document.getElementById('messageInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.getElementById('messageForm').dispatchEvent(new Event('submit'));
+            }
+        });
+
+        window.addEventListener('load', () => {
+            document.getElementById('messageInput').focus();
+        });
+    </script>
+</body>
+</html>
