@@ -1,5 +1,6 @@
 volumes:
   postgres_data:
+  redis_data:
 
 networks:
   app-network:
@@ -23,8 +24,15 @@ services:
       - ACCESS_TOKEN_SECRET_KEY=${ACCESS_TOKEN_SECRET_KEY}
       - REFRESH_TTL=${REFRESH_TTL}
       - ACCESS_TTL=${ACCESS_TTL}
+      - REDIS_ADDR=${REDIS_ADDR}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_DB=${REDIS_DB}
+      - REDIS_TTL=${REDIS_TTL}
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - app-network
   
@@ -109,6 +117,20 @@ services:
       interval: 5s
       retries: 5
       timeout: 5s
+  redis:
+    image: redis:latest
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+  
   web-gateway:
     build:
       context: ./web-gateway

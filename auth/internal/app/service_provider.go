@@ -7,6 +7,7 @@ import (
 	accessAPI "github.com/GolZrd/micro-chat/auth/internal/api/access"
 	authAPI "github.com/GolZrd/micro-chat/auth/internal/api/auth"
 	userAPI "github.com/GolZrd/micro-chat/auth/internal/api/user"
+	"github.com/GolZrd/micro-chat/auth/internal/cache"
 	"github.com/GolZrd/micro-chat/auth/internal/closer"
 	"github.com/GolZrd/micro-chat/auth/internal/config"
 	accessRepository "github.com/GolZrd/micro-chat/auth/internal/repository/access"
@@ -21,8 +22,9 @@ import (
 
 // Описываем структуру для хранения зависимостей
 type serviceProvider struct {
-	cfg    *config.Config
-	pgPool *pgxpool.Pool
+	cfg        *config.Config
+	pgPool     *pgxpool.Pool
+	redisCache *cache.RedisCache
 
 	userRepository   userRepository.UserRepository
 	authRepository   authRepository.AuthRepository
@@ -73,6 +75,25 @@ func (s *serviceProvider) PgPool(ctx context.Context) *pgxpool.Pool {
 	}
 
 	return s.pgPool
+}
+
+func (s *serviceProvider) RedisCache(ctx context.Context) *cache.RedisCache {
+	if s.redisCache == nil {
+
+		redisCache, err := cache.NewRedisCache(s.Config().RedisAddr, s.Config().RedisPassword, s.Config().RedisDB, s.Config().RedisTTL)
+		if err != nil {
+			log.Fatalf("failed to connect to redis: %v", err)
+		}
+
+		closer.Add(func() error {
+			redisCache.Close()
+			return nil
+		})
+
+		s.redisCache = redisCache
+	}
+
+	return s.redisCache
 }
 
 func (s *serviceProvider) UserRepository(ctx context.Context) userRepository.UserRepository {
@@ -133,7 +154,7 @@ func (s *serviceProvider) AccessRepository(ctx context.Context) accessRepository
 
 func (s *serviceProvider) AccessService(ctx context.Context) accessService.AccessService {
 	if s.accessService == nil {
-		s.accessService = accessService.NewService(s.AccessRepository(ctx), s.Config())
+		s.accessService = accessService.NewService(s.AccessRepository(ctx), s.RedisCache(ctx), s.Config())
 	}
 
 	return s.accessService

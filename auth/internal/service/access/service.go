@@ -3,6 +3,7 @@ package access
 import (
 	"context"
 
+	"github.com/GolZrd/micro-chat/auth/internal/cache"
 	"github.com/GolZrd/micro-chat/auth/internal/config"
 	accessRepository "github.com/GolZrd/micro-chat/auth/internal/repository/access"
 )
@@ -13,9 +14,10 @@ type AccessService interface {
 
 type service struct {
 	accessRepository accessRepository.AccessRepository
+	redisCache       *cache.RedisCache
 	AccessSecretKey  string
 }
 
-func NewService(accessRepository accessRepository.AccessRepository, cfg *config.Config) AccessService {
-	return &service{accessRepository: accessRepository, AccessSecretKey: cfg.AccessSecretKey}
+func NewService(accessRepository accessRepository.AccessRepository, redisCache *cache.RedisCache, cfg *config.Config) AccessService {
+	return &service{accessRepository: accessRepository, redisCache: redisCache, AccessSecretKey: cfg.AccessSecretKey}
 }
