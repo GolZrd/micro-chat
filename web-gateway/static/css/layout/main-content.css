@@ -1,0 +1,64 @@
+/* ==================== MAIN CONTENT AREA ==================== */
+
+.main-content {
+    flex: 1;
+    overflow-y: auto;
+    background: transparent; /* ИЗМЕНЕНО: был var(--bg-primary) */
+    position: relative;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    animation: fadeIn 0.6s ease;
+}
+
+.content-section {
+    display: none;
+    padding: 2rem;
+    animation: fadeIn 0.3s ease;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.content-section.active {
+    display: block;
+}
+
+.section-header {
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.section-header h1 {
+    font-size: 2.5rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+/* Grid системы */
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}

@@ -1,0 +1,379 @@
+/* ==================== STARFALL THEME ==================== */
+/* Космический стиль с падающими звездами */
+
+:root {
+    /* Космическая палитра */
+    --space-dark: #0a0e27;
+    --space-blue: #1a1f4e;
+    --star-white: #ffffff;
+    --star-blue: #4dd0e1;
+    --star-purple: #ba68c8;
+    --star-yellow: #ffd54f;
+    --nebula-pink: #ec407a;
+    --nebula-purple: #7e57c2;
+}
+
+/* Космический фон */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(ellipse at top, 
+            rgba(26, 31, 78, 0.8) 0%, 
+            rgba(10, 14, 39, 1) 60%
+        ),
+        radial-gradient(ellipse at bottom, 
+            rgba(126, 87, 194, 0.15) 0%, 
+            transparent 50%
+        );
+    z-index: -4;
+}
+
+/* Туманность */
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(ellipse at 20% 30%, rgba(126, 87, 194, 0.2) 0%, transparent 40%),
+        radial-gradient(ellipse at 80% 70%, rgba(236, 64, 122, 0.15) 0%, transparent 40%),
+        radial-gradient(ellipse at 50% 50%, rgba(77, 208, 225, 0.1) 0%, transparent 50%);
+    z-index: -3;
+    animation: nebulaPulse 20s ease-in-out infinite;
+}
+
+@keyframes nebulaPulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1) rotate(5deg);
+    }
+}
+
+/* Звездное поле */
+.starfield {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+    pointer-events: none;
+}
+
+.star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    animation: starTwinkle 3s ease-in-out infinite;
+}
+
+.star.small {
+    width: 1px;
+    height: 1px;
+    box-shadow: 0 0 2px rgba(255, 255, 255, 0.8);
+}
+
+.star.medium {
+    width: 2px;
+    height: 2px;
+    box-shadow: 0 0 4px rgba(255, 255, 255, 0.9);
+}
+
+.star.large {
+    width: 3px;
+    height: 3px;
+    box-shadow: 0 0 6px rgba(255, 255, 255, 1);
+}
+
+@keyframes starTwinkle {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.3;
+        transform: scale(0.8);
+    }
+}
+
+/* Падающие звезды (метеоры) */
+.shooting-stars {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.shooting-star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 
+        0 0 4px 2px rgba(255, 255, 255, 0.8),
+        0 0 8px 4px rgba(77, 208, 225, 0.6);
+    animation: shootingStar 3s linear infinite;
+}
+
+.shooting-star::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100px;
+    height: 2px;
+    background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.8) 50%,
+        rgba(77, 208, 225, 0.6) 100%
+    );
+    transform: translateX(100%);
+    border-radius: 50%;
+}
+
+.shooting-star.purple::before {
+    background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.8) 50%,
+        rgba(186, 104, 200, 0.6) 100%
+    );
+    box-shadow: 0 0 8px 4px rgba(186, 104, 200, 0.6);
+}
+
+.shooting-star.yellow::before {
+    background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.8) 50%,
+        rgba(255, 213, 79, 0.6) 100%
+    );
+    box-shadow: 0 0 8px 4px rgba(255, 213, 79, 0.6);
+}
+
+@keyframes shootingStar {
+    0% {
+        transform: translate(0, 0) rotate(-45deg);
+        opacity: 1;
+    }
+    70% {
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-500px, 500px) rotate(-45deg);
+        opacity: 0;
+    }
+}
+
+/* Большие падающие звезды (кометы) */
+.comet {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 
+        0 0 8px 4px rgba(255, 255, 255, 1),
+        0 0 16px 8px rgba(77, 208, 225, 0.8);
+    animation: cometFall 5s linear infinite;
+}
+
+.comet::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 200px;
+    height: 3px;
+    background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 1) 20%,
+        rgba(77, 208, 225, 0.8) 60%,
+        rgba(77, 208, 225, 0) 100%
+    );
+    transform: translateX(100%);
+    border-radius: 50%;
+    box-shadow: 0 0 20px rgba(77, 208, 225, 0.8);
+}
+
+@keyframes cometFall {
+    0% {
+        transform: translate(0, 0) rotate(-30deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    80% {
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-800px, 800px) rotate(-30deg);
+        opacity: 0;
+    }
+}
+
+/* Мерцающие созвездия */
+.constellation {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+    pointer-events: none;
+}
+
+.constellation-line {
+    position: absolute;
+    height: 1px;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(77, 208, 225, 0.3), 
+        transparent
+    );
+    transform-origin: left center;
+    animation: constellationGlow 4s ease-in-out infinite;
+}
+
+@keyframes constellationGlow {
+    0%, 100% {
+        opacity: 0.3;
+    }
+    50% {
+        opacity: 0.8;
+    }
+}
+
+/* Космическая пыль */
+.space-dust {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+}
+
+.dust-particle {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.4);
+    animation: dustFloat 20s linear infinite;
+}
+
+@keyframes dustFloat {
+    0% {
+        transform: translateY(100vh) translateX(0);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100px) translateX(100px);
+        opacity: 0;
+    }
+}
+
+/* Обновленные стили элементов */
+.card:hover,
+.action-card:hover,
+.chat-card:hover {
+    box-shadow: 
+        0 10px 40px rgba(77, 208, 225, 0.3),
+        0 0 30px rgba(126, 87, 194, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.btn-primary,
+.send-btn.active {
+    background: linear-gradient(135deg, 
+        rgba(77, 208, 225, 0.9), 
+        rgba(126, 87, 194, 0.9)
+    );
+    box-shadow: 
+        0 8px 20px rgba(77, 208, 225, 0.4),
+        0 0 40px rgba(77, 208, 225, 0.2);
+}
+
+.btn-primary:hover,
+.send-btn.active:hover {
+    box-shadow: 
+        0 10px 30px rgba(77, 208, 225, 0.5),
+        0 0 50px rgba(77, 208, 225, 0.3);
+}
+
+.message.own .message-text {
+    background: linear-gradient(135deg, 
+        rgba(77, 208, 225, 0.95), 
+        rgba(126, 87, 194, 0.95)
+    );
+    box-shadow: 
+        0 4px 16px rgba(77, 208, 225, 0.5),
+        0 0 20px rgba(77, 208, 225, 0.3);
+}
+
+h1 {
+    background: linear-gradient(135deg, 
+        var(--star-blue), 
+        var(--star-purple), 
+        var(--star-yellow)
+    );
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 30px rgba(77, 208, 225, 0.5));
+    animation: titleGlow 3s ease-in-out infinite;
+}
+
+@keyframes titleGlow {
+    0%, 100% {
+        filter: drop-shadow(0 0 20px rgba(77, 208, 225, 0.5));
+    }
+    50% {
+        filter: drop-shadow(0 0 40px rgba(126, 87, 194, 0.8));
+    }
+}
+
+.nav-item.active::before {
+    box-shadow: 
+        0 0 15px rgba(77, 208, 225, 0.8),
+        0 0 30px rgba(77, 208, 225, 0.4);
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .shooting-star::before,
+    .comet::before {
+        width: 60px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .shooting-star,
+    .comet,
+    .star,
+    .dust-particle {
+        animation: none;
+    }
+}

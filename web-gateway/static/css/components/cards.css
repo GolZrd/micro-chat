@@ -1,0 +1,181 @@
+/* ==================== CARDS ==================== */
+
+.card {
+    background: rgba(26, 26, 36, 0.9); /* ИЗМЕНЕНО: добавлена прозрачность */
+    backdrop-filter: blur(15px); /* ДОБАВЛЕНО */
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: slideUp 0.5s ease backwards;
+}
+
+.card:nth-child(1) { animation-delay: 0.1s; }
+.card:nth-child(2) { animation-delay: 0.2s; }
+.card:nth-child(3) { animation-delay: 0.3s; }
+.card:nth-child(4) { animation-delay: 0.4s; }
+.card:nth-child(5) { animation-delay: 0.5s; }
+
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 2px;
+    background: var(--accent-gradient);
+    transition: left 0.5s ease;
+    box-shadow: 0 0 10px rgba(88, 101, 242, 0.5); /* ДОБАВЛЕНО */
+}
+
+.card:hover::before {
+    left: 0;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(88, 101, 242, 0.5); /* УСИЛЕНО */
+    background: rgba(26, 26, 36, 0.95); /* ДОБАВЛЕНО */
+    box-shadow: 
+        0 10px 40px rgba(88, 101, 242, 0.3),
+        0 0 20px rgba(88, 101, 242, 0.2), /* ДОБАВЛЕНО: внешнее свечение */
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Action cards */
+.action-card {
+    background: rgba(26, 26, 36, 0.9); /* ИЗМЕНЕНО */
+    backdrop-filter: blur(15px); /* ДОБАВЛЕНО */
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    text-align: center;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.action-card::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: radial-gradient(circle, rgba(88, 101, 242, 0.2), transparent);
+    transform: translate(-50%, -50%);
+    transition: width 0.5s, height 0.5s;
+    pointer-events: none;
+}
+
+.action-card:hover::after {
+    width: 300%;
+    height: 300%;
+}
+
+.action-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(88, 101, 242, 0.5);
+    background: rgba(26, 26, 36, 0.95); /* ДОБАВЛЕНО */
+    box-shadow: 
+        0 10px 30px rgba(88, 101, 242, 0.3),
+        0 0 20px rgba(88, 101, 242, 0.2); /* ДОБАВЛЕНО: свечение */
+}
+
+.action-card i {
+    font-size: 3rem;
+    background: var(--accent-gradient);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1rem;
+    filter: drop-shadow(0 4px 8px rgba(88, 101, 242, 0.3)); /* ДОБАВЛЕНО */
+}
+
+.action-card h3 {
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.action-card p {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+/* Chat cards */
+.chat-card {
+    background: rgba(37, 37, 51, 0.9); /* ИЗМЕНЕНО */
+    backdrop-filter: blur(15px); /* ДОБАВЛЕНО */
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 1.5rem;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.chat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+        rgba(88, 101, 242, 0.05) 0%, 
+        rgba(88, 101, 242, 0.1) 50%,
+        rgba(88, 101, 242, 0.05) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.chat-card:hover::before {
+    opacity: 1;
+}
+
+.chat-card:hover {
+    background: rgba(42, 42, 58, 0.95); /* ИЗМЕНЕНО */
+    transform: translateY(-4px);
+    border-color: rgba(88, 101, 242, 0.5);
+    box-shadow: 
+        0 8px 24px rgba(88, 101, 242, 0.3),
+        0 0 15px rgba(88, 101, 242, 0.2); /* ДОБАВЛЕНО */
+}
+
+.chat-card > * {
+    position: relative;
+    z-index: 1;
+}
+
+.chat-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.chat-card h3 {
+    color: var(--text-primary);
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.chat-card h3::before {
+    display: none;
+}
+
+.chat-card p {
+    color: var(--text-secondary);
+    margin: 0.5rem 0;
+    font-size: 0.95rem;
+}
+
+.chat-card p strong {
+    color: var(--text-primary);
+    font-weight: 500;
+}

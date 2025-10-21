@@ -1,0 +1,41 @@
+/* ==================== MAIN ENTRY POINT ==================== */
+/* Порядок импорта важен! */
+
+/* 1. Базовые стили */
+@import url('./base/variables.css');
+@import url('./base/reset.css');
+@import url('./base/typography.css');
+@import url('./base/animations.css');
+
+/* 2. Layouts */
+@import url('./layout/sidebar.css');
+@import url('./layout/main-content.css');
+@import url('./layout/chat-layout.css');
+
+/* 3. Компоненты */
+@import url('./components/buttons.css');
+@import url('./components/cards.css');
+@import url('./components/forms.css');
+@import url('./components/modals.css');
+@import url('./components/messages.css');
+@import url('./components/navigation.css');
+@import url('./components/emoji-picker.css'); /* ДОБАВЛЕНО */
+
+/* 4. Страницы */
+@import url('./pages/auth.css');
+@import url('./pages/chat.css');
+@import url('./pages/profile.css');
+
+/* 5. Утилиты и адаптивность (должны быть последними) */
+@import url('./utils/responsive.css');
+
+/* ==================== ВЫБЕРИТЕ ТЕМУ ==================== */
+
+/* Вариант 1: Оригинальная (ваши цвета с частицами) */
+/* @import url('./themes/animated-background.css'); */
+
+/* Вариант 2: Liquid Gradient (плавные морфирующие блобы) */
+@import url('./themes/liquid-gradient.css');
+
+/* Вариант 3: Starfall (космос с падающими звездами) */
+/* @import url('./themes/starfall.css'); */

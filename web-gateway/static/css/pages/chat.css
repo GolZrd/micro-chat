@@ -1,0 +1,250 @@
+/* ==================== CHAT PAGE SPECIFIC ==================== */
+
+.chat-container {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    animation: fadeIn 0.6s ease;
+}
+
+/* Статус подключения */
+.current-chat-info {
+    padding: 1rem;
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border);
+}
+
+.chat-status {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--danger);
+    transition: var(--transition);
+}
+
+.status-dot.active {
+    background: var(--success);
+    box-shadow: 0 0 0 3px rgba(59, 165, 92, 0.2);
+}
+
+.status-badge {
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    animation: fadeIn 0.5s ease;
+}
+
+.status-connected {
+    background: rgba(59, 165, 92, 0.1);
+    color: var(--success);
+    border: 1px solid rgba(59, 165, 92, 0.2);
+}
+
+.status-disconnected {
+    background: rgba(237, 66, 69, 0.1);
+    color: var(--danger);
+    border: 1px solid rgba(237, 66, 69, 0.2);
+}
+
+/* ==================== УЛУЧШЕННЫЙ СПИСОК ЧАТОВ ==================== */
+
+.chats-list {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+/* ИСПРАВЛЕНО: Плавная анимация hover */
+.chat-card {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 1.5rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Улучшенный эффект подсветки */
+.chat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+        rgba(88, 101, 242, 0.05) 0%, 
+        rgba(88, 101, 242, 0.1) 50%,
+        rgba(88, 101, 242, 0.05) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.chat-card:hover::before {
+    opacity: 1;
+}
+
+.chat-card:hover {
+    background: var(--bg-hover);
+    transform: translateY(-4px);
+    border-color: rgba(88, 101, 242, 0.4);
+    box-shadow: 
+        0 8px 20px rgba(88, 101, 242, 0.15),
+        0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Все элементы внутри карточки выше overlay */
+.chat-card > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* Заголовок карточки */
+.chat-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.chat-card h3 {
+    color: var(--text-primary);
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.chat-card h3::before {
+    display: none;
+}
+
+.chat-card p {
+    color: var(--text-secondary);
+    margin: 0.5rem 0;
+    font-size: 0.95rem;
+}
+
+.chat-card p strong {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.chat-card p::before {
+    display: none;
+}
+
+/* Обертка для кликабельности */
+.chat-card-clickable {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+/* Анимация появления карточек */
+.chat-card {
+    animation: slideUpChat 0.4s ease backwards;
+}
+
+.chat-card:nth-child(1) { animation-delay: 0.05s; }
+.chat-card:nth-child(2) { animation-delay: 0.1s; }
+.chat-card:nth-child(3) { animation-delay: 0.15s; }
+.chat-card:nth-child(4) { animation-delay: 0.2s; }
+.chat-card:nth-child(5) { animation-delay: 0.25s; }
+
+@keyframes slideUpChat {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Состояние загрузки */
+.no-chats,
+.loading-chats {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 3rem 2rem;
+    background: var(--bg-tertiary);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    animation: fadeIn 0.5s ease;
+}
+
+.no-chats::before {
+    content: '📭';
+    display: block;
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.loading-chats::after {
+    content: '';
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    margin-left: 1rem;
+    border: 2px solid var(--accent);
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 1s linear infinite;
+    vertical-align: middle;
+}
+
+/* Header чата */
+.chat-header {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    animation: slideDown 0.5s ease;
+}
+
+.chat-header h1 {
+    font-size: 1.75rem;
+    margin: 0;
+    animation: none;
+}
+
+.chat-header h1::after {
+    display: none;
+}
+
+.user-badge {
+    padding: 0.625rem 1.25rem;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+}
+
+.user-badge strong {
+    color: var(--accent);
+    font-weight: 600;
+}

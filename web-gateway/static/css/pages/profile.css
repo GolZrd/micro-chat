@@ -1,0 +1,57 @@
+/* ==================== PROFILE PAGE ==================== */
+
+.user-info-card {
+    background: rgba(37, 37, 51, 0.9); /* ИЗМЕНЕНО */
+    backdrop-filter: blur(15px); /* ДОБАВЛЕНО */
+    border-radius: var(--radius-sm);
+    padding: 1.5rem;
+    margin-top: 1rem;
+    border: 1px solid var(--border); /* ДОБАВЛЕНО */
+}
+
+.user-info-card p {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    margin: 0.75rem 0;
+    background: rgba(15, 15, 21, 0.6); /* ИЗМЕНЕНО */
+    backdrop-filter: blur(10px); /* ДОБАВЛЕНО */
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    border-left: 3px solid var(--accent);
+    transition: all 0.2s ease;
+}
+
+.user-info-card p:hover {
+    background: rgba(26, 26, 36, 0.8); /* ИЗМЕНЕНО */
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(88, 101, 242, 0.2); /* ДОБАВЛЕНО */
+}
+
+.user-info-card p strong {
+    color: var(--accent);
+    font-weight: 600;
+    min-width: 100px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.user-info-card p span {
+    color: var(--text-primary);
+    font-weight: 400;
+}
+
+/* Иконки для профиля */
+.user-info-card p strong::before {
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    opacity: 0.7;
+}
+
+.user-info-card p:nth-child(1) strong::before { content: '\f2bd'; }
+.user-info-card p:nth-child(2) strong::before { content: '\f007'; }
+.user-info-card p:nth-child(3) strong::before { content: '\f0e0'; }
+.user-info-card p:nth-child(4) strong::before { content: '\f0c0'; }
+.user-info-card p:nth-child(5) strong::before { content: '\f073'; }

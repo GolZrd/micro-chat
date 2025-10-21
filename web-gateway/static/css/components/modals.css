@@ -1,0 +1,83 @@
+/* ==================== MODALS ==================== */
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85); /* УСИЛЕНО */
+    backdrop-filter: blur(10px); /* УВЕЛИЧЕНО */
+    z-index: var(--z-modal);
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: rgba(26, 26, 36, 0.98); /* ИЗМЕНЕНО */
+    backdrop-filter: blur(20px); /* ДОБАВЛЕНО */
+    border: 1px solid rgba(88, 101, 242, 0.3); /* ИЗМЕНЕНО */
+    border-radius: var(--radius);
+    width: 90%;
+    max-width: 500px;
+    animation: slideUp 0.3s ease;
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.5),
+        0 0 30px rgba(88, 101, 242, 0.2); /* ДОБАВЛЕНО: свечение */
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(37, 37, 51, 0.5); /* ДОБАВЛЕНО */
+    backdrop-filter: blur(10px); /* ДОБАВЛЕНО */
+}
+
+.modal-header h2 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.modal-header h2::before {
+    display: none;
+}
+
+.close-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: transparent;
+    color: var(--text-secondary);
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: var(--transition);
+    border-radius: 50%;
+}
+
+.close-btn:hover {
+    color: var(--danger);
+    background: rgba(237, 66, 69, 0.1); /* ДОБАВЛЕНО */
+    transform: rotate(90deg);
+}
+
+.modal-content form {
+    padding: 1.5rem;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}

@@ -1,0 +1,447 @@
+/* ==================== BUTTONS ==================== */
+
+/* Базовый класс кнопки */
+button,
+.btn {
+    position: relative;
+    padding: 0.875rem 2rem;
+    background: var(--accent-gradient);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    overflow: hidden;
+    text-transform: none;
+    letter-spacing: 0.3px;
+    font-family: inherit;
+}
+
+/* Ripple эффект для всех кнопок */
+button::before,
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+    z-index: 0;
+}
+
+button:hover::before,
+.btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+/* Текст кнопки должен быть выше ripple */
+button > *,
+.btn > * {
+    position: relative;
+    z-index: 1;
+}
+
+button:hover,
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(88, 101, 242, 0.4);
+}
+
+button:active,
+.btn:active {
+    transform: translateY(0);
+}
+
+button:disabled,
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+button:disabled:hover,
+.btn:disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* Primary кнопка */
+.btn-primary,
+button[type="submit"] {
+    background: var(--accent-gradient);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-primary:hover,
+button[type="submit"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(88, 101, 242, 0.3);
+}
+
+/* Secondary кнопка */
+.btn-secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    padding: 0.75rem 1.5rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-secondary::before {
+    background: rgba(88, 101, 242, 0.1);
+}
+
+.btn-secondary:hover {
+    background: var(--bg-hover);
+    transform: translateY(-2px);
+}
+
+/* Icon кнопка */
+.btn-icon {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-icon:hover {
+    background: var(--accent);
+    color: white;
+    transform: rotate(180deg);
+}
+
+/* Delete кнопка */
+.btn-delete {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    background: rgba(237, 66, 69, 0.1);
+    color: var(--danger);
+    border: 1px solid rgba(237, 66, 69, 0.2);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-fast);
+}
+
+.btn-delete::before {
+    display: none;
+}
+
+.btn-delete:hover {
+    background: var(--danger);
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(237, 66, 69, 0.3);
+}
+
+/* ИСПРАВЛЕНО: Logout кнопка с плавной анимацией */
+.logout-btn,
+#logoutBtn {
+    background: rgba(237, 66, 69, 0.1);
+    color: var(--danger);
+    border: 1px solid rgba(237, 66, 69, 0.2);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); /* Плавная transition */
+}
+
+/* Градиентная заливка при наведении */
+.logout-btn::after,
+#logoutBtn::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, var(--danger), #c42e31);
+    opacity: 0;
+    transition: opacity 0.4s ease; /* Плавное появление */
+    z-index: 0;
+}
+
+.logout-btn:hover::after,
+#logoutBtn:hover::after {
+    opacity: 1;
+}
+
+/* Убедимся что текст и иконка видны */
+.logout-btn i,
+.logout-btn span,
+#logoutBtn i,
+#logoutBtn span {
+    position: relative;
+    z-index: 2;
+    transition: color 0.4s ease;
+}
+
+.logout-btn:hover,
+#logoutBtn:hover {
+    color: white;
+    border-color: var(--danger);
+    box-shadow: 0 4px 12px rgba(237, 66, 69, 0.4);
+}
+
+.logout-btn:hover i,
+.logout-btn:hover span,
+#logoutBtn:hover i,
+#logoutBtn:hover span {
+    color: white;
+}
+
+#logoutBtn {
+    width: auto;
+}
+
+/* Кнопка отправки сообщения */
+.send-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: none;
+    color: white;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.send-btn::before {
+    display: none;
+}
+
+.send-btn:hover:not(:disabled) {
+    background: var(--accent-hover);
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(88, 101, 242, 0.4);
+}
+
+.send-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Кнопка эмодзи */
+.emoji-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.emoji-btn::before {
+    display: none;
+}
+
+.emoji-btn:hover {
+    background: var(--bg-hover);
+    color: var(--accent);
+    transform: scale(1.1);
+}
+
+.emoji-btn.active {
+    background: var(--bg-hover);
+    color: var(--accent);
+}
+
+/* Кнопки внутри инпута */
+.input-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.input-btn::before {
+    display: none;
+}
+
+.input-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    transform: scale(1.05);
+}
+
+/* Кнопка открытия чата */
+.btn-open-chat {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    background: var(--accent);
+    color: white;
+    text-decoration: none;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    transition: var(--transition-fast);
+    margin-top: 1rem;
+    position: relative;
+    z-index: 10;
+}
+
+.btn-open-chat::before {
+    display: none;
+}
+
+.btn-open-chat:hover {
+    background: var(--accent-hover);
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(88, 101, 242, 0.3);
+}
+
+/* Кнопки табов */
+.tab-btn {
+    flex: 1;
+    padding: 0.75rem;
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.tab-btn::before {
+    display: none !important;
+}
+
+.tab-btn:hover {
+    background: var(--bg-hover);
+    border-color: rgba(88, 101, 242, 0.3);
+    color: var(--text-primary);
+}
+
+.tab-btn.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+/* Кнопки навигации - ОБНОВЛЕНО */
+.home-btn,
+.refresh-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm); /* ИЗМЕНЕНО: было 50% (круглая) */
+    background: var(--bg-tertiary);  /* ДОБАВЛЕНО: фон */
+    border: 1px solid var(--border); /* ДОБАВЛЕНО: обводка */
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.home-btn::before,
+.refresh-btn::before {
+    display: none;
+}
+
+.home-btn:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    transform: translateY(-2px); /* ИЗМЕНЕНО: было translateX(-2px) */
+    box-shadow: 0 4px 12px rgba(88, 101, 242, 0.3);
+}
+
+.refresh-btn:hover {
+    background: var(--bg-hover);
+    color: var(--accent);
+    border-color: rgba(88, 101, 242, 0.3);
+    transform: rotate(180deg);
+}
+
+/* Мобильные кнопки меню */
+.mobile-menu-btn,
+.mobile-members-btn {
+    display: none;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 50%;
+    transition: var(--transition);
+}
+
+.mobile-menu-btn::before,
+.mobile-members-btn::before {
+    display: none;
+}
+
+.mobile-menu-btn:hover,
+.mobile-members-btn:hover {
+    background: var(--bg-hover);
+    color: var(--accent);
+}
+
+/* Close кнопка */
+.close-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: transparent;
+    color: var(--text-secondary);
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.close-btn::before {
+    display: none;
+}
+
+.close-btn:hover {
+    color: var(--danger);
+    transform: rotate(90deg);
+}

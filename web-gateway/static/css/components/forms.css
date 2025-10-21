@@ -1,0 +1,441 @@
+/* ==================== FORMS - ОБЩИЕ СТИЛИ ==================== */
+
+/* Стандартные формы (регистрация, вход, создание чата) */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+input:not(.emoji-search),
+textarea:not(#messageInput),
+select {
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.875rem 1.25rem;
+    font-size: 1rem;
+    color: var(--text-primary);
+    transition: var(--transition-fast);
+    font-family: inherit;
+    width: 100%;
+}
+
+input:not(.emoji-search):hover,
+textarea:not(#messageInput):hover,
+select:hover {
+    border-color: rgba(88, 101, 242, 0.3);
+    background: rgba(37, 37, 51, 0.8);
+}
+
+input:not(.emoji-search):focus,
+textarea:not(#messageInput):focus,
+select:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: var(--bg-tertiary);
+    box-shadow: 
+        0 0 0 3px rgba(88, 101, 242, 0.1),
+        inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--text-muted);
+}
+
+textarea:not(#messageInput) {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* Стили для small под полями */
+form small {
+    display: block;
+    margin-top: 0.5rem;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+/* ==================== DISCORD-STYLE MESSAGE INPUT ==================== */
+
+/* Контейнер сообщений */
+.messages-wrapper {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: transparent; /* ИЗМЕНЕНО: был var(--bg-primary) */
+    overflow: hidden;
+}
+
+.messages {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    background: transparent; /* ДОБАВЛЕНО */
+}
+
+/* Welcome message */
+.welcome-message {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-muted);
+    background: rgba(26, 26, 36, 0.6); /* ДОБАВЛЕНО */
+    backdrop-filter: blur(10px); /* ДОБАВЛЕНО */
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+}
+
+.welcome-message i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+    background: var(--accent-gradient);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.welcome-message h3 {
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.welcome-message p {
+    margin: 0;
+}
+
+/* Индикатор печати */
+.typing-indicator {
+    padding: 0.5rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+}
+
+.typing-dots {
+    display: flex;
+    gap: 3px;
+}
+
+.typing-dots span {
+    width: 4px;
+    height: 4px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    animation: typing 1.4s infinite;
+}
+
+.typing-dots span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-dots span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+/* DISCORD-STYLE: Область ввода */
+.message-input-area {
+    padding: 0 1rem 1.5rem 1rem;
+    background: rgba(26, 26, 36, 0.95); /* ИЗМЕНЕНО: добавлена прозрачность */
+    backdrop-filter: blur(10px); /* ДОБАВЛЕНО */
+    border-top: 1px solid var(--border);
+    width: 100%;
+    position: relative;
+}
+
+/* СПЕЦИФИЧНЫЕ СТИЛИ ДЛЯ ФОРМЫ СООБЩЕНИЙ */
+.message-form {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center;
+    gap: 0 !important;
+    background: rgba(15, 15, 21, 0.8); /* ИЗМЕНЕНО: добавлена прозрачность */
+    backdrop-filter: blur(5px); /* ДОБАВЛЕНО */
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 0 !important;
+    width: 100%;
+    min-height: 44px;
+    transition: all 0.15s ease;
+    position: relative;
+}
+
+.message-form:hover {
+    border-color: rgba(255, 255, 255, 0.16);
+    background: rgba(15, 15, 21, 0.9); /* ДОБАВЛЕНО */
+}
+
+.message-form:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent), 0 0 20px rgba(88, 101, 242, 0.2); /* ДОБАВЛЕНО: свечение */
+}
+
+/* Левая часть - кнопка эмодзи */
+.input-left-actions {
+    display: flex;
+    align-items: center;
+    padding: 0 0.5rem 0 1rem;
+    align-self: flex-end;
+    padding-bottom: 10px;
+}
+
+.emoji-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.1s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1.25rem;
+    padding: 0;
+}
+
+.emoji-btn::before {
+    display: none;
+}
+
+.emoji-btn:hover {
+    color: var(--text-primary);
+}
+
+.emoji-btn.active {
+    color: var(--accent);
+}
+
+/* Центральная часть - ГЛАВНОЕ ПОЛЕ ВВОДА */
+.input-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    padding: 11px 0;
+    max-height: 200px;
+    overflow: hidden;
+}
+
+#messageInput {
+    flex: 1;
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    resize: none;
+    outline: none;
+    font-family: inherit;
+    font-size: 1rem;
+    line-height: 1.375;
+    padding: 0;
+    margin: 0;
+    height: 22px;
+    max-height: 178px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+#messageInput::placeholder {
+    color: var(--text-muted);
+    opacity: 1;
+}
+
+#messageInput::-webkit-scrollbar {
+    width: 8px;
+}
+
+#messageInput::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#messageInput::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+#messageInput::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Правая часть - кнопки действий */
+.input-right-actions {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 0 1rem 0 0.5rem;
+    align-self: flex-end;
+    padding-bottom: 10px;
+}
+
+/* Кнопки действий */
+.input-action-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.1s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1.125rem;
+    padding: 0;
+    margin-left: 8px;
+}
+
+.input-action-btn::before {
+    display: none;
+}
+
+.input-action-btn:hover {
+    color: var(--text-primary);
+}
+
+/* Кнопка отправки */
+.send-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-left: 8px;
+    font-size: 1.125rem;
+    padding: 0;
+}
+
+.send-btn::before {
+    display: none;
+}
+
+.send-btn.active {
+    background: var(--accent);
+    color: white;
+}
+
+.send-btn.active:hover {
+    background: var(--accent-hover);
+    transform: scale(1.05);
+}
+
+.send-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* Информация под полем */
+.input-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    padding: 0 0.5rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    min-height: 20px;
+}
+
+.input-hints {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.input-hint {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.input-hint kbd {
+    background: rgba(255, 255, 255, 0.06);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.7rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.char-counter {
+    font-variant-numeric: tabular-nums;
+    transition: color 0.2s;
+}
+
+.char-counter.warning {
+    color: var(--warning);
+}
+
+.char-counter.danger {
+    color: var(--danger);
+    font-weight: 600;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .message-input-area {
+        padding: 0 0.75rem 1rem 0.75rem;
+    }
+    
+    .input-hints {
+        display: none;
+    }
+    
+    .message-form {
+        min-height: 40px;
+    }
+    
+    #messageInput {
+        font-size: 16px;
+    }
+    
+    .input-left-actions,
+    .input-right-actions {
+        padding-bottom: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .input-info {
+        font-size: 0.7rem;
+    }
+    
+    .char-counter {
+        font-size: 0.65rem;
+    }
+    
+    .input-action-btn {
+        width: 20px;
+        height: 20px;
+        font-size: 1rem;
+    }
+}

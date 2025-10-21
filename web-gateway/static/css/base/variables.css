@@ -1,0 +1,53 @@
+/* ==================== CSS VARIABLES ==================== */
+/* Все переменные проекта в одном месте */
+
+:root {
+    /* ===== Цвета фона ===== */
+    --bg-primary: #0f0f15;
+    --bg-secondary: #1a1a24;
+    --bg-tertiary: #252533;
+    --bg-hover: #2a2a3a;
+    
+    /* ===== Акцентные цвета ===== */
+    --accent: #5865f2;
+    --accent-hover: #4752c4;
+    --accent-gradient: linear-gradient(135deg, #5865f2, #8b5cf6);
+    --secondary: #8b5cf6;
+    --primary: #5865f2;
+    
+    /* ===== Статусы ===== */
+    --success: #3ba55c;
+    --danger: #ed4245;
+    --warning: #faa61a;
+    --info: #00b0f4;
+    
+    /* ===== Текст ===== */
+    --text-primary: #ffffff;
+    --text-secondary: #b9bbbe;
+    --text-muted: #72767d;
+    
+    /* ===== Элементы UI ===== */
+    --border: rgba(255, 255, 255, 0.06);
+    --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 16px 64px rgba(0, 0, 0, 0.6);
+    
+    /* ===== Размеры ===== */
+    --radius: 16px;
+    --radius-sm: 8px;
+    --radius-lg: 24px;
+    
+    /* ===== Переходы ===== */
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.15s ease;
+    
+    /* ===== Размеры компонентов ===== */
+    --sidebar-width: 280px;
+    --members-sidebar-width: 260px;
+    --header-height: 60px;
+    
+    /* ===== Z-index ===== */
+    --z-modal: 1000;
+    --z-sidebar: 100;
+    --z-dropdown: 500;
+    --z-toast: 2000;
+}

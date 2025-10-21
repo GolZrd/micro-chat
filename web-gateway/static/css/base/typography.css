@@ -1,0 +1,71 @@
+/* ==================== TYPOGRAPHY ==================== */
+/* Импорт шрифтов и типографика */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--text-primary);
+}
+
+h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 3rem;
+    background: var(--accent-gradient);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    position: relative;
+    animation: glow 2s ease-in-out infinite alternate;
+}
+
+h1::after {
+    content: '✨';
+    position: absolute;
+    top: -10px;
+    right: -30px;
+    font-size: 1.5rem;
+    animation: sparkle 2s ease infinite;
+}
+
+h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+h2::before {
+    content: '';
+    width: 4px;
+    height: 24px;
+    background: var(--accent-gradient);
+    border-radius: 2px;
+}
+
+p {
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    margin-top: 0.5rem;
+}
+
+strong {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+small {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}

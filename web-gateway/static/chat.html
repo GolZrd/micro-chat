@@ -3,162 +3,320 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat Room</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <title>Chat Room - Micro Chat</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <!-- Заголовок чата -->
-        <div class="chat-header">
-            <div>
-                <h1>💬 Чат #<span id="chatIdDisplay">...</span></h1>
+    <div class="chat-app-container">
+        <!-- Левая панель - Список чатов -->
+        <aside class="chat-list-sidebar">
+            <div class="sidebar-header">
+                <button onclick="window.location.href='/'" class="home-btn" title="На главную">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h3>Мои чаты</h3>
+                <button onclick="refreshChatList()" class="refresh-btn" title="Обновить">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
             </div>
-            <div class="user-badge">
-                Вы: <strong id="currentUsername">загрузка...</strong>
-            </div>
-        </div>
-
-        <!-- Статус подключения -->
-        <div id="connectionStatus" class="status-badge status-disconnected">
-            🔴 Подключение...
-        </div>
-        
-        <div class="chat-container">
-            <!-- Список сообщений -->
-            <div id="messages" class="messages"></div>
             
-            <!-- Форма отправки (БЕЗ поля username!) -->
-            <form id="messageForm" class="message-form">
-                <input 
-                    type="text" 
-                    id="messageInput" 
-                    placeholder="Введите сообщение..." 
-                    required 
-                    autocomplete="off"
-                >
-                <button type="submit" id="sendBtn" disabled>Отправить</button>
-            </form>
-        </div>
+            <div class="current-chat-info">
+                <div class="chat-status">
+                    <span class="status-dot active"></span>
+                    <div>
+                        <strong>Чат #<span id="currentChatId"></span></strong>
+                        <small id="connectionStatus">Подключено</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="other-chats">
+                <div class="section-title">Другие чаты</div>
+                <div id="chatsList" class="chats-list">
+                    <div class="loading-chats">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        Загрузка чатов...
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-footer">
+                <div class="user-info-mini">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="currentUser">Загрузка...</span>
+                </div>
+            </div>
+        </aside>
         
-        <a href="/" class="back-link">← Вернуться на главную</a>
+        <!-- Центральная часть - Чат -->
+        <main class="chat-main-area">
+            <div class="chat-header">
+                <button class="mobile-menu-btn" onclick="toggleLeftSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="chat-title">
+                    <h2>Чат #<span id="chatIdDisplay">...</span></h2>
+                    <div class="chat-meta">
+                        <span id="messageCount">0 сообщений</span>
+                        <span class="separator">•</span>
+                        <span id="onlineCount">0 онлайн</span>
+                    </div>
+                </div>
+                <button class="mobile-members-btn" onclick="toggleRightSidebar()">
+                    <i class="fas fa-users"></i>
+                </button>
+            </div>
+            
+            <div class="messages-wrapper">
+                <div id="messages" class="messages">
+                    <div class="welcome-message">
+                        <i class="fas fa-comments"></i>
+                        <h3>Добро пожаловать в чат!</h3>
+                        <p>Начните общение прямо сейчас</p>
+                    </div>
+                </div>
+                
+                <div class="typing-indicator" id="typingIndicator" style="display: none;">
+                    <div class="typing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <span class="typing-text">кто-то печатает...</span>
+                </div>
+            </div>
+            
+            <div class="message-input-area">
+                <form id="messageForm" class="message-form">
+                    <div class="input-left-actions">
+                        <button type="button" class="emoji-btn" title="Выбрать эмодзи">
+                            <i class="far fa-smile"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="input-wrapper">
+                        <textarea 
+                            id="messageInput" 
+                            name="message" 
+                            placeholder="Написать сообщение..."
+                            rows="1"
+                            maxlength="2000"
+                        ></textarea>
+                    </div>
+                    
+                    <div class="input-right-actions">
+                        <button type="button" class="input-action-btn" title="Прикрепить файл">
+                            <i class="fas fa-paperclip"></i>
+                        </button>
+                        <button type="button" class="input-action-btn" title="GIF">
+                            <i class="fas fa-gift"></i>
+                        </button>
+                        <button type="submit" class="send-btn" title="Отправить">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="input-info">
+                    <div class="input-hints">
+                        <span class="input-hint">
+                            <kbd>Enter</kbd> отправить
+                        </span>
+                        <span class="input-hint">
+                            <kbd>Shift</kbd>+<kbd>Enter</kbd> новая строка
+                        </span>
+                    </div>
+                    <span class="char-counter">
+                        <span id="charCount">0</span>/2000
+                    </span>
+                </div>
+                
+                <!-- Emoji Picker -->
+                <div class="emoji-picker">
+                    <div class="emoji-header">
+                        <input type="text" class="emoji-search" placeholder="Поиск эмодзи...">
+                    </div>
+                    <div class="emoji-categories">
+                        <button type="button" class="emoji-category active">😊</button>
+                        <button type="button" class="emoji-category">👋</button>
+                        <button type="button" class="emoji-category">🌸</button>
+                        <button type="button" class="emoji-category">🍕</button>
+                        <button type="button" class="emoji-category">⚽</button>
+                        <button type="button" class="emoji-category">✈️</button>
+                        <button type="button" class="emoji-category">💡</button>
+                        <button type="button" class="emoji-category">❤️</button>
+                    </div>
+                    <div class="emoji-grid">
+                        <span>😀</span><span>😃</span><span>😄</span><span>😁</span>
+                        <span>😅</span><span>😂</span><span>🤣</span><span>😊</span>
+                        <span>😇</span><span>🙂</span><span>🙃</span><span>😉</span>
+                        <span>😌</span><span>😍</span><span>🥰</span><span>😘</span>
+                        <span>😗</span><span>😙</span><span>😚</span><span>😋</span>
+                        <span>😛</span><span>😝</span><span>😜</span><span>🤪</span>
+                        <span>🤨</span><span>🧐</span><span>🤓</span><span>😎</span>
+                        <span>🤩</span><span>🥳</span><span>😏</span><span>😒</span>
+                        <span>😞</span><span>😔</span><span>😟</span><span>😕</span>
+                        <span>🙁</span><span>☹️</span><span>😣</span><span>😖</span>
+                        <span>😫</span><span>😩</span><span>🥺</span><span>😢</span>
+                        <span>😭</span><span>😤</span><span>😠</span><span>😡</span>
+                        <span>🤬</span><span>🤯</span><span>😳</span><span>🥵</span>
+                        <span>🥶</span><span>😱</span><span>😨</span><span>😰</span>
+                        <span>😥</span><span>😓</span><span>🤗</span><span>🤔</span>
+                        <span>🤭</span><span>🤫</span><span>🤥</span><span>😶</span>
+                        <span>😐</span><span>😑</span><span>😬</span><span>🙄</span>
+                        <span>😯</span><span>😦</span><span>😧</span><span>😮</span>
+                        <span>👍</span><span>👎</span><span>👌</span><span>✌️</span>
+                        <span>🤞</span><span>🤟</span><span>🤘</span><span>🤙</span>
+                        <span>👏</span><span>🙌</span><span>👐</span><span>🤲</span>
+                        <span>🤝</span><span>🙏</span><span>✍️</span><span>💪</span>
+                        <span>❤️</span><span>🧡</span><span>💛</span><span>💚</span>
+                        <span>💙</span><span>💜</span><span>🖤</span><span>🤍</span>
+                        <span>🔥</span><span>💯</span><span>✨</span><span>⭐</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Правая панель -->
+        <aside class="members-sidebar">
+            <div class="sidebar-header">
+                <h3>Участники</h3>
+                <span class="member-count" id="totalMembers">0</span>
+            </div>
+            
+            <div class="members-list" id="membersList">
+                <div class="member-item">
+                    <div class="member-avatar">
+                        <i class="fas fa-user-circle"></i>
+                        <span class="online-indicator"></span>
+                    </div>
+                    <div class="member-info">
+                        <strong>Загрузка...</strong>
+                        <small>Онлайн</small>
+                    </div>
+                </div>
+            </div>
+        </aside>
     </div>
 
-    <!-- Подключаем app.js -->
     <script src="/static/app.js"></script>
-    <script>
-        // ==================== Инициализация ====================
-        
-        // Проверка авторизации
-        if (!TokenManager.isAuthenticated()) {
-            alert('❌ Необходима авторизация для доступа к чату!');
-            window.location.href = '/';
-        }
+    <!-- Певая тема -->
+    <!-- <script src="/static/js/animated-background.js"></script> -->
+    <!-- Для Liquid Gradient -->
+    <script src="/static/js/liquid-gradient.js"></script>
 
-        // Получаем chat ID из URL
+    <!-- Для Starfall -->
+    <!-- <script src="/static/js/starfall.js"></script> -->
+
+    <script>
+        // ==================== CHAT PAGE LOGIC ====================
+        console.log('🎮 Chat page script loading...');
+        
         const urlParams = new URLSearchParams(window.location.search);
         const chatId = urlParams.get('id');
         
         if (!chatId) {
             alert('❌ Chat ID не указан!');
             window.location.href = '/';
+            throw new Error('No chat ID');
         }
 
-        document.getElementById('chatIdDisplay').textContent = chatId;
+        if (!TokenManager.isAuthenticated()) {
+            alert('❌ Необходима авторизация!');
+            window.location.href = '/';
+            throw new Error('Not authenticated');
+        }
 
-        // Получаем токен и username
+        console.log('✅ Chat ID:', chatId);
+        
         const token = TokenManager.getAccessToken();
         const currentUsername = TokenManager.getUsername() || 'Пользователь';
-        document.getElementById('currentUsername').textContent = currentUsername;
+        let messageCount = 0;
 
-        console.log('👤 Current user:', currentUsername);
+        // Устанавливаем ID сразу
+        document.getElementById('currentChatId').textContent = chatId;
+        document.getElementById('chatIdDisplay').textContent = chatId;
+        document.getElementById('currentUser').textContent = currentUsername;
 
-        // ==================== WebSocket ====================
-        
+        // ==================== WEBSOCKET ====================
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const cleanToken = token.replace('Bearer ', '').trim();
         const wsUrl = `${wsProtocol}//${window.location.host}/ws/chat/${chatId}?token=${encodeURIComponent(cleanToken)}`;
         
-        console.log('🔌 Connecting to WebSocket...');
+        console.log('🔌 Connecting to:', wsUrl.replace(cleanToken, 'TOKEN'));
         
-        let ws = new WebSocket(wsUrl);
-        const statusEl = document.getElementById('connectionStatus');
-        const sendBtn = document.getElementById('sendBtn');
-
-        ws.onopen = () => {
-            console.log('✅ WebSocket connected');
-            statusEl.textContent = '🟢 Подключено';
-            statusEl.className = 'status-badge status-connected';
-            sendBtn.disabled = false;
-        };
-
-        ws.onmessage = (event) => {
-            console.log('📨 Received:', event.data);
+        function connectWebSocket() {
+            window.socket = new WebSocket(wsUrl);
             
-            try {
-                const msg = JSON.parse(event.data);
-                
-                if (msg.error) {
-                    console.error('❌ Server error:', msg.error);
-                    statusEl.textContent = '❌ Ошибка: ' + msg.error;
-                    statusEl.className = 'status-badge status-disconnected';
-                    return;
+            window.socket.onopen = () => {
+                console.log('✅ WebSocket connected');
+                updateConnectionStatus(true);
+            };
+
+            window.socket.onmessage = (event) => {
+                try {
+                    const msg = JSON.parse(event.data);
+                    console.log('📨 Message:', msg);
+                    
+                    if (msg.error) {
+                        console.error('❌ Error:', msg.error);
+                        return;
+                    }
+                    
+                    displayMessage(msg);
+                } catch (error) {
+                    console.error('❌ Parse error:', error);
                 }
-                
-                displayMessage(msg);
-            } catch (error) {
-                console.error('❌ Parse error:', error);
-            }
-        };
+            };
 
-        ws.onerror = (error) => {
-            console.error('❌ WebSocket error:', error);
-            statusEl.textContent = '🔴 Ошибка подключения';
-            statusEl.className = 'status-badge status-disconnected';
-            sendBtn.disabled = true;
-        };
+            window.socket.onerror = (error) => {
+                console.error('❌ WebSocket error:', error);
+                updateConnectionStatus(false);
+            };
 
-        ws.onclose = (event) => {
-            console.log('🔌 WebSocket closed');
-            statusEl.textContent = '🔴 Отключено. Переподключение...';
-            statusEl.className = 'status-badge status-disconnected';
-            sendBtn.disabled = true;
-            
-            setTimeout(() => location.reload(), 3000);
-        };
-
-        // ==================== Функции ====================
+            window.socket.onclose = () => {
+                console.log('🔌 Closed, reconnecting...');
+                updateConnectionStatus(false);
+                setTimeout(connectWebSocket, 3000);
+            };
+        }
 
         function displayMessage(msg) {
             const messagesDiv = document.getElementById('messages');
+            const welcome = messagesDiv.querySelector('.welcome-message');
+            if (welcome) welcome.remove();
+            
             const msgDiv = document.createElement('div');
             msgDiv.className = 'message';
             
             const isOwn = msg.from === currentUsername;
             if (isOwn) msgDiv.classList.add('own');
             
-            let timeStr = 'сейчас';
-            if (msg.createdAt) {
-                try {
-                    const date = new Date(msg.createdAt);
-                    if (!isNaN(date.getTime())) {
-                        timeStr = date.toLocaleTimeString('ru-RU', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        });
-                    }
-                } catch (e) {}
-            }
+            const textLength = msg.text ? msg.text.length : 0;
+            let sizeClass = '';
+            if (textLength <= 3) sizeClass = 'tiny';
+            else if (textLength <= 20) sizeClass = 'short';
+            else if (textLength > 200) sizeClass = 'long';
+            
+            const timeStr = new Date().toLocaleTimeString('ru-RU', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
             
             msgDiv.innerHTML = `
                 <div class="message-header">
-                    <strong>${escapeHtml(msg.from || 'Аноним')}</strong>
+                    <strong>${escapeHtml(msg.from)}</strong>
                     <span class="time">${timeStr}</span>
                 </div>
-                <div class="message-text">${escapeHtml(msg.text || '')}</div>
+                <div class="message-text ${sizeClass}">${escapeHtml(msg.text || '')}</div>
             `;
             
             messagesDiv.appendChild(msgDiv);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            
+            messageCount++;
+            document.getElementById('messageCount').textContent = `${messageCount} сообщений`;
         }
 
         function escapeHtml(text) {
@@ -167,55 +325,142 @@
             return div.innerHTML;
         }
 
-        // ==================== Отправка ====================
+        function updateConnectionStatus(isConnected) {
+            const statusDot = document.querySelector('.status-dot');
+            const statusText = document.getElementById('connectionStatus');
+            const sendBtn = document.querySelector('.send-btn');
+            
+            if (isConnected) {
+                if (statusDot) statusDot.classList.add('active');
+                if (statusText) statusText.textContent = 'Подключено';
+                if (sendBtn) sendBtn.disabled = false;
+            } else {
+                if (statusDot) statusDot.classList.remove('active');
+                if (statusText) statusText.textContent = 'Отключено';
+                if (sendBtn) sendBtn.disabled = true;
+            }
+        }
 
-        document.getElementById('messageForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const messageInput = document.getElementById('messageInput');
-            const text = messageInput.value.trim();
-            
-            if (!text) return;
-            
-            sendBtn.disabled = true;
-            sendBtn.textContent = '⏳';
-            
+        async function loadChatsList() {
             try {
-                const response = await apiRequest('/api/chat/send', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        chat_id: parseInt(chatId),
-                        text: text
-                    })
-                });
+                const response = await apiRequest('/api/chat/my');
+                const data = await response.json();
                 
                 if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || 'Failed to send');
+                    console.error('Load chats failed:', data.error);
+                    return;
                 }
                 
-                messageInput.value = '';
+                let chats = data.chats || [];
+                chats = chats.filter(chat => chat && chat.id && chat.id != chatId);
                 
+                const chatsListEl = document.getElementById('chatsList');
+                
+                if (chats.length === 0) {
+                    chatsListEl.innerHTML = '<p class="no-chats">Нет других чатов</p>';
+                    return;
+                }
+                
+                let html = '';
+                chats.forEach(chat => {
+                    const users = chat.usernames || [];
+                    html += `
+                        <a href="/chat?id=${chat.id}" class="chat-item">
+                            <div class="chat-icon">
+                                <i class="fas fa-comments"></i>
+                            </div>
+                            <div class="chat-info">
+                                <strong>Чат #${chat.id}</strong>
+                                <small>${users.slice(0, 2).join(', ')}${users.length > 2 ? '...' : ''}</small>
+                            </div>
+                        </a>
+                    `;
+                });
+                
+                chatsListEl.innerHTML = html;
+                console.log('✅ Chats loaded');
             } catch (error) {
-                console.error('❌ Send error:', error);
-                alert('Ошибка отправки: ' + error.message);
-            } finally {
-                sendBtn.disabled = false;
-                sendBtn.textContent = 'Отправить';
+                console.error('❌ Load chats error:', error);
             }
+        }
+
+        function toggleLeftSidebar() {
+            document.querySelector('.chat-list-sidebar').classList.toggle('active');
+        }
+
+        function toggleRightSidebar() {
+            document.querySelector('.members-sidebar').classList.toggle('active');
+        }
+
+        function refreshChatList() {
+            loadChatsList();
+        }
+
+        window.toggleLeftSidebar = toggleLeftSidebar;
+        window.toggleRightSidebar = toggleRightSidebar;
+        window.refreshChatList = refreshChatList;
+
+        // ==================== FORM SUBMIT ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('📋 Chat page DOM ready');
+            
+            connectWebSocket();
+            loadChatsList();
+            
+            const messageForm = document.getElementById('messageForm');
+            const messageInput = document.getElementById('messageInput');
+            
+            if (messageForm && messageInput) {
+                messageForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    const text = messageInput.value.trim();
+                    if (!text) {
+                        console.log('⚠️ Empty message');
+                        return;
+                    }
+                    
+                    console.log('📤 Sending:', text);
+                    const sendBtn = document.querySelector('.send-btn');
+                    if (sendBtn) sendBtn.disabled = true;
+                    
+                    try {
+                        const response = await apiRequest('/api/chat/send', {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                chat_id: parseInt(chatId),
+                                text: text
+                            })
+                        });
+                        
+                        if (!response.ok) {
+                            const error = await response.json();
+                            throw new Error(error.error || 'Send failed');
+                        }
+                        
+                        messageInput.value = '';
+                        messageInput.style.height = '22px';
+                        
+                        const charCount = document.getElementById('charCount');
+                        if (charCount) charCount.textContent = '0';
+                        
+                        console.log('✅ Message sent');
+                    } catch (error) {
+                        console.error('❌ Send error:', error);
+                        alert('Ошибка: ' + error.message);
+                    } finally {
+                        if (sendBtn) sendBtn.disabled = false;
+                        messageInput.focus();
+                    }
+                });
+                
+                setTimeout(() => messageInput.focus(), 500);
+            }
+            
+            console.log('✅ Chat page ready');
         });
 
-        // Enter для отправки
-        document.getElementById('messageInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                document.getElementById('messageForm').dispatchEvent(new Event('submit'));
-            }
-        });
-
-        window.addEventListener('load', () => {
-            document.getElementById('messageInput').focus();
-        });
+        console.log('✅ Chat script loaded');
     </script>
 </body>
 </html>

@@ -1,0 +1,142 @@
+/* ==================== AUTH PAGE ==================== */
+
+.auth-container {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.auth-tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 0.75rem;
+    background: rgba(26, 26, 36, 0.6); /* ИЗМЕНЕНО */
+    backdrop-filter: blur(10px); /* ДОБАВЛЕНО */
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+}
+
+.tab-btn::before {
+    display: none !important;
+}
+
+.tab-btn:hover {
+    background: rgba(37, 37, 51, 0.8); /* ИЗМЕНЕНО */
+    border-color: rgba(88, 101, 242, 0.3);
+    color: var(--text-primary);
+}
+
+.tab-btn.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    box-shadow: 0 4px 12px rgba(88, 101, 242, 0.4); /* ДОБАВЛЕНО */
+}
+
+.auth-tab {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.auth-tab.active {
+    display: block;
+}
+
+/* Результаты форм */
+#registerResult,
+#loginResult,
+#chatResult {
+    display: none;
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    animation: slideIn 0.3s ease;
+    border-left: 3px solid;
+    backdrop-filter: blur(10px); /* ДОБАВЛЕНО */
+}
+
+#registerResult:not(:empty),
+#loginResult:not(:empty),
+#chatResult:not(:empty) {
+    display: block;
+}
+
+/* Успех */
+#registerResult.success,
+#loginResult.success,
+#chatResult.success {
+    background: rgba(59, 165, 92, 0.15); /* ИЗМЕНЕНО */
+    color: var(--success);
+    border-color: var(--success);
+}
+
+/* Ошибка */
+#registerResult.error,
+#loginResult.error,
+#chatResult.error {
+    background: rgba(237, 66, 69, 0.15); /* ИЗМЕНЕНО */
+    color: var(--danger);
+    border-color: var(--danger);
+}
+
+/* Информация */
+#registerResult.info,
+#loginResult.info,
+#chatResult.info {
+    background: rgba(0, 176, 244, 0.15); /* ИЗМЕНЕНО */
+    color: var(--info);
+    border-color: var(--info);
+}
+
+/* Статус авторизации */
+#authStatus {
+    background: linear-gradient(135deg, 
+        rgba(26, 26, 36, 0.8), 
+        rgba(37, 37, 51, 0.8)); /* ИЗМЕНЕНО */
+    backdrop-filter: blur(15px); /* ДОБАВЛЕНО */
+    border: 2px solid rgba(88, 101, 242, 0.3);
+    box-shadow: 0 8px 24px rgba(88, 101, 242, 0.2); /* ДОБАВЛЕНО */
+}
+
+#authStatus p {
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+#status {
+    padding: 0.5rem 1rem;
+    background: rgba(37, 37, 51, 0.8); /* ИЗМЕНЕНО */
+    backdrop-filter: blur(10px); /* ДОБАВЛЕНО */
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    color: var(--text-primary);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+#status::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--danger);
+    animation: pulse 2s infinite;
+}
+
+#status.authenticated::before {
+    background: var(--success);
+    box-shadow: 0 0 8px rgba(59, 165, 92, 0.5); /* ДОБАВЛЕНО */
+}

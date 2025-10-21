@@ -1,0 +1,310 @@
+/* ==================== CHAT THREE-COLUMN LAYOUT ==================== */
+
+.chat-app-container {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+    background: transparent; /* ИЗМЕНЕНО: был var(--bg-primary) */
+    position: relative;
+}
+
+/* Левая панель - список чатов */
+.chat-list-sidebar {
+    width: var(--sidebar-width);
+    background: rgba(26, 26, 36, 0.95); /* ИЗМЕНЕНО: добавлена прозрачность */
+    backdrop-filter: blur(10px); /* ДОБАВЛЕНО: эффект размытия */
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* Центральная область - чат */
+.chat-main-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    min-width: 0;
+    overflow: hidden;
+    background: transparent; /* ДОБАВЛЕНО */
+}
+
+/* Правая панель - участники */
+.members-sidebar {
+    width: var(--members-sidebar-width);
+    background: rgba(26, 26, 36, 0.95); /* ИЗМЕНЕНО: добавлена прозрачность */
+    backdrop-filter: blur(10px); /* ДОБАВЛЕНО: эффект размытия */
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* Общие заголовки */
+.sidebar-header {
+    padding: 1rem;
+    background: rgba(37, 37, 51, 0.8); /* ИЗМЕНЕНО: добавлена прозрачность */
+    backdrop-filter: blur(5px); /* ДОБАВЛЕНО */
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.sidebar-header h3 {
+    flex: 1;
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+/* Заголовок чата */
+.chat-header {
+    padding: 1rem 1.5rem;
+    background: rgba(26, 26, 36, 0.95); /* ИЗМЕНЕНО: добавлена прозрачность */
+    backdrop-filter: blur(10px); /* ДОБАВЛЕНО */
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.chat-title {
+    flex: 1;
+}
+
+.chat-title h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+}
+
+.chat-title h2::before {
+    display: none;
+}
+
+.chat-meta {
+    display: flex;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+/* Текущий чат */
+.current-chat-info {
+    padding: 1rem;
+    background: rgba(15, 15, 21, 0.6); /* ИЗМЕНЕНО: добавлена прозрачность */
+    backdrop-filter: blur(5px); /* ДОБАВЛЕНО */
+    border-bottom: 1px solid var(--border);
+}
+
+.chat-status {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--danger);
+    transition: var(--transition);
+    flex-shrink: 0;
+}
+
+.status-dot.active {
+    background: var(--success);
+    box-shadow: 0 0 0 3px rgba(59, 165, 92, 0.2);
+    animation: pulse 2s infinite;
+}
+
+/* Список чатов */
+.other-chats {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    background: transparent; /* ДОБАВЛЕНО */
+}
+
+.section-title {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Чаты в боковой панели */
+.chat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(15, 15, 21, 0.6); /* ИЗМЕНЕНО: добавлена прозрачность */
+    backdrop-filter: blur(5px); /* ДОБАВЛЕНО */
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid transparent;
+}
+
+.chat-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--accent);
+    transform: scaleY(0);
+    transition: transform 0.3s;
+}
+
+.chat-item:hover::before {
+    transform: scaleY(1);
+}
+
+.chat-item:hover {
+    background: rgba(37, 37, 51, 0.9); /* ИЗМЕНЕНО */
+    backdrop-filter: blur(10px); /* ДОБАВЛЕНО */
+    border-color: rgba(88, 101, 242, 0.3);
+    transform: translateX(4px);
+}
+
+.chat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(37, 37, 51, 0.8); /* ИЗМЕНЕНО */
+    backdrop-filter: blur(5px); /* ДОБАВЛЕНО */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+    flex-shrink: 0;
+}
+
+.chat-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.chat-info strong {
+    display: block;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chat-info small {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.no-chats,
+.loading-chats {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 2rem 1rem;
+    background: rgba(37, 37, 51, 0.5); /* ИЗМЕНЕНО */
+    backdrop-filter: blur(5px); /* ДОБАВЛЕНО */
+    border-radius: var(--radius-sm);
+    border: 1px dashed var(--border);
+}
+
+/* Участники */
+.members-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    background: transparent; /* ДОБАВЛЕНО */
+}
+
+.member-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+}
+
+.member-item:hover {
+    background: rgba(15, 15, 21, 0.6); /* ИЗМЕНЕНО */
+    backdrop-filter: blur(5px); /* ДОБАВЛЕНО */
+}
+
+.member-avatar {
+    position: relative;
+    width: 36px;
+    height: 36px;
+}
+
+.member-avatar i {
+    font-size: 2rem;
+    color: var(--text-secondary);
+}
+
+.online-indicator {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 10px;
+    height: 10px;
+    background: var(--success);
+    border: 2px solid var(--bg-secondary);
+    border-radius: 50%;
+}
+
+.member-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.member-info strong {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.member-info small {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.member-count {
+    background: rgba(15, 15, 21, 0.8); /* ИЗМЕНЕНО */
+    backdrop-filter: blur(5px); /* ДОБАВЛЕНО */
+    padding: 0.125rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+/* Footer sidebar */
+.sidebar-footer {
+    padding: 1rem;
+    border-top: 1px solid var(--border);
+    background: rgba(37, 37, 51, 0.8); /* ИЗМЕНЕНО */
+    backdrop-filter: blur(5px); /* ДОБАВЛЕНО */
+}
+
+.user-info-mini {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}

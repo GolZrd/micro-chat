@@ -3,69 +3,358 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Micro Chat</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <title>Micro Chat - Современный мессенджер</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <h1>🚀 Micro Chat</h1>
+    <div class="app-container">
+        <!-- Боковая панель -->
+        <aside class="sidebar">
+            <!-- Логотип приложения -->
+            <div class="app-logo">
+                <i class="fas fa-rocket"></i>
+                <span>Micro Chat</span>
+            </div>
+            
+            <!-- Профиль пользователя -->
+            <div class="user-profile-section">
+                <div class="user-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="user-info">
+                    <!-- ИСПРАВЛЕНО: сначала имя, потом статус -->
+                    <div class="user-name" id="userName">Гость</div>
+                    <div class="user-status">
+                        <!-- ОДИН индикатор -->
+                        <span class="status-indicator offline" id="statusIndicator"></span>
+                        <span id="statusText">Не в сети</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Навигация -->
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" onclick="showSection('home'); return false;">
+                    <i class="fas fa-home"></i>
+                    <span>Главная</span>
+                </a>
+                <a href="#" class="nav-item protected-nav" onclick="showSection('chats'); return false;" style="display:none;">
+                    <i class="fas fa-comments"></i>
+                    <span>Мои чаты</span>
+                    <span class="badge" id="chatCount">0</span>
+                </a>
+                <a href="#" class="nav-item protected-nav" onclick="showSection('profile'); return false;" style="display:none;">
+                    <i class="fas fa-user"></i>
+                    <span>Профиль</span>
+                </a>
+                <a href="#" class="nav-item guest-nav" onclick="showSection('auth'); return false;">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>Вход</span>
+                </a>
+            </nav>
+            
+            <!-- Нижняя часть sidebar -->
+            <div class="sidebar-footer">
+                <button onclick="logout()" id="logoutBtn" class="logout-btn" style="display:none;">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Выйти</span>
+                </button>
+                
+                <div class="app-version">
+                    <small>v1.0.0</small>
+                </div>
+            </div>
+        </aside>
         
-        <!-- Статус авторизации -->
-        <div class="card" id="authStatus">
-            <p>Статус: <span id="status">Не авторизован</span></p>
-            <button onclick="logout()" id="logoutBtn" style="display:none; margin-top: 10px;">🚪 Выйти</button>
-        </div>
+        <!-- Основной контент -->
+        <main class="main-content">
+            <!-- Секция: Главная -->
+            <section id="homeSection" class="content-section active">
+                <div class="section-header">
+                    <h1>
+                        <i class="fas fa-rocket"></i>
+                        Добро пожаловать в Micro Chat
+                    </h1>
+                    <p class="subtitle">Современный мессенджер для вашего общения</p>
+                </div>
+                
+                <!-- Карточки для неавторизованных -->
+                <div class="cards-grid guest-only">
+                    <!-- Регистрация -->
+                    <div class="card">
+                        <h2><i class="fas fa-user-plus"></i> Регистрация</h2>
+                        <form id="registerForm">
+                            <input type="text" id="reg_name" placeholder="👤 Имя" required>
+                            <input type="email" id="reg_email" placeholder="📧 Email" required>
+                            <input type="password" id="reg_password" placeholder="🔒 Пароль" required>
+                            <input type="password" id="reg_password_confirm" placeholder="🔒 Подтвердите пароль" required>
+                            <button type="submit">
+                                <i class="fas fa-check"></i> Зарегистрироваться
+                            </button>
+                        </form>
+                        <div id="registerResult"></div>
+                    </div>
 
-        <!-- ✅ ДОБАВИЛИ КЛАСС: guest-only - показывается только для НЕ авторизованных -->
-        <!-- Регистрация -->
-        <div class="card guest-only">
-            <h2>📝 Регистрация</h2>
-            <form id="registerForm">
-                <input type="text" id="reg_name" placeholder="Имя" required>
-                <input type="email" id="reg_email" placeholder="Email" required>
-                <input type="password" id="reg_password" placeholder="Пароль" required>
-                <input type="password" id="reg_password_confirm" placeholder="Подтвердите пароль" required>
-                <button type="submit">Зарегистрироваться</button>
-            </form>
-            <div id="registerResult"></div>
-        </div>
-
-        <!-- Вход -->
-        <div class="card guest-only">
-            <h2>🔐 Вход</h2>
-            <form id="loginForm">
-                <input type="email" id="login_email" placeholder="Email" required>
-                <input type="password" id="login_password" placeholder="Пароль" required>
-                <button type="submit">Войти</button>
-            </form>
-            <div id="loginResult"></div>
-        </div>
-
-        <!-- Создание чата (требует авторизации) -->
-        <div class="card protected-content" style="display:none;">
-            <h2>➕ Создать чат</h2>
+                    <!-- Вход -->
+                    <div class="card">
+                        <h2><i class="fas fa-sign-in-alt"></i> Вход</h2>
+                        <form id="loginForm">
+                            <input type="email" id="login_email" placeholder="📧 Email" required>
+                            <input type="password" id="login_password" placeholder="🔒 Пароль" required>
+                            <button type="submit">
+                                <i class="fas fa-arrow-right"></i> Войти
+                            </button>
+                        </form>
+                        <div id="loginResult"></div>
+                    </div>
+                </div>
+                
+                <!-- Быстрые действия для авторизованных -->
+                <div class="quick-actions protected-content" style="display:none;">
+                    <div class="action-card">
+                        <i class="fas fa-plus-circle"></i>
+                        <h3>Создать чат</h3>
+                        <p>Начните новую беседу</p>
+                        <button onclick="showCreateChatModal()" class="btn-primary">
+                            Создать
+                        </button>
+                    </div>
+                    <div class="action-card">
+                        <i class="fas fa-inbox"></i>
+                        <h3>Мои чаты</h3>
+                        <p>Просмотр активных чатов</p>
+                        <button onclick="showSection('chats')" class="btn-secondary">
+                            Открыть
+                        </button>
+                    </div>
+                    <div class="action-card">
+                        <i class="fas fa-user-cog"></i>
+                        <h3>Настройки</h3>
+                        <p>Управление профилем</p>
+                        <button onclick="showSection('profile')" class="btn-secondary">
+                            Перейти
+                        </button>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Секция: Авторизация -->
+            <section id="authSection" class="content-section">
+                <div class="section-header">
+                    <h1><i class="fas fa-lock"></i> Авторизация</h1>
+                </div>
+                
+                <div class="auth-container">
+                    <div class="auth-tabs">
+                        <button class="tab-btn active" onclick="switchAuthTab('login')">Вход</button>
+                        <button class="tab-btn" onclick="switchAuthTab('register')">Регистрация</button>
+                    </div>
+                    
+                    <div id="loginTab" class="auth-tab active">
+                        <form id="loginFormTab">
+                            <input type="email" placeholder="📧 Email" required>
+                            <input type="password" placeholder="🔒 Пароль" required>
+                            <button type="submit">
+                                <i class="fas fa-sign-in-alt"></i> Войти
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div id="registerTab" class="auth-tab">
+                        <form id="registerFormTab">
+                            <input type="text" placeholder="👤 Имя" required>
+                            <input type="email" placeholder="📧 Email" required>
+                            <input type="password" placeholder="🔒 Пароль" required>
+                            <input type="password" placeholder="🔒 Подтвердите пароль" required>
+                            <button type="submit">
+                                <i class="fas fa-user-plus"></i> Зарегистрироваться
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Секция: Чаты -->
+            <section id="chatsSection" class="content-section">
+                <div class="section-header">
+                    <h1><i class="fas fa-comments"></i> Мои чаты</h1>
+                    <div class="header-actions">
+                        <button onclick="loadMyChats()" class="btn-icon">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <button onclick="showCreateChatModal()" class="btn-primary">
+                            <i class="fas fa-plus"></i> Новый чат
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="myChats" class="chats-container">
+                    <div class="loading">
+                        <p>Загрузка чатов...</p>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Секция: Профиль -->
+            <section id="profileSection" class="content-section">
+                <div class="section-header">
+                    <h1><i class="fas fa-user"></i> Мой профиль</h1>
+                    <button onclick="loadUserInfo()" class="btn-icon">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                
+                <div id="userInfo" class="profile-container">
+                    <div class="loading">
+                        <p>Загрузка профиля...</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <!-- Модальное окно создания чата -->
+    <div id="createChatModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-plus-circle"></i> Создать новый чат</h2>
+                <button onclick="closeCreateChatModal()" class="close-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
             <form id="createChatForm">
-                <input type="text" id="chat_usernames" placeholder="Имена пользователей через запятую" required>
-                <button type="submit">Создать</button>
+                <label>Участники чата</label>
+                <input type="text" id="chat_usernames" placeholder="Введите имена через запятую" required>
+                <small>Например: user1, user2, user3</small>
+                <div class="modal-actions">
+                    <button type="button" onclick="closeCreateChatModal()" class="btn-secondary">
+                        Отмена
+                    </button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-check"></i> Создать
+                    </button>
+                </div>
             </form>
             <div id="chatResult"></div>
-        </div>
-
-        <!-- Мои чаты (требует авторизации) -->
-        <div class="card protected-content" style="display:none;">
-            <h2>📬 Мои чаты</h2>
-            <button onclick="loadMyChats()">🔄 Загрузить чаты</button>
-            <div id="myChats"></div>
-        </div>
-
-        <!-- Информация о пользователе -->
-        <div class="card protected-content" style="display:none;">
-            <h2>👤 Мой профиль</h2>
-            <button onclick="loadUserInfo()">Загрузить информацию</button>
-            <div id="userInfo"></div>
         </div>
     </div>
 
     <script src="/static/app.js"></script>
+    <!-- Певая тема -->
+    <!-- <script src="/static/js/animated-background.js"></script> -->
+    <!-- Для Liquid Gradient -->
+    <script src="/static/js/liquid-gradient.js"></script>
+
+    <!-- Для Starfall -->
+    <!-- <script src="/static/js/starfall.js"></script> -->
+
+    <script>
+        // Переключение секций
+        function showSection(sectionName) {
+            // Скрываем все секции
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Убираем active у всех nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Показываем нужную секцию
+            switch(sectionName) {
+                case 'home':
+                    document.getElementById('homeSection').classList.add('active');
+                    document.querySelector('.nav-item[onclick*="home"]').classList.add('active');
+                    break;
+                case 'auth':
+                    document.getElementById('authSection').classList.add('active');
+                    document.querySelector('.nav-item[onclick*="auth"]').classList.add('active');
+                    break;
+                case 'chats':
+                    document.getElementById('chatsSection').classList.add('active');
+                    document.querySelector('.nav-item[onclick*="chats"]').classList.add('active');
+                    loadMyChats();
+                    break;
+                case 'profile':
+                    document.getElementById('profileSection').classList.add('active');
+                    document.querySelector('.nav-item[onclick*="profile"]').classList.add('active');
+                    loadUserInfo();
+                    break;
+            }
+        }
+        
+        // Модальное окно создания чата
+        function showCreateChatModal() {
+            document.getElementById('createChatModal').classList.add('active');
+        }
+        
+        function closeCreateChatModal() {
+            document.getElementById('createChatModal').classList.remove('active');
+            document.getElementById('createChatForm').reset();
+            document.getElementById('chatResult').innerHTML = '';
+        }
+        
+        // Переключение табов авторизации
+        function switchAuthTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            
+            if (tab === 'login') {
+                document.querySelector('.tab-btn:first-child').classList.add('active');
+                document.getElementById('loginTab').classList.add('active');
+            } else {
+                document.querySelector('.tab-btn:last-child').classList.add('active');
+                document.getElementById('registerTab').classList.add('active');
+            }
+        }
+        
+        // ИСПРАВЛЕНО: Обновление статуса в sidebar
+        function updateAuthStatus() {
+            const isAuth = TokenManager.isAuthenticated();
+            const statusIndicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+            const userNameEl = document.getElementById('userName');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const protectedContent = document.querySelectorAll('.protected-content');
+            const protectedNav = document.querySelectorAll('.protected-nav');
+            const guestOnly = document.querySelectorAll('.guest-only');
+            const guestNav = document.querySelectorAll('.guest-nav');
+            
+            if (isAuth) {
+                const username = TokenManager.getUsername();
+                
+                // Обновляем статус индикатор - ТОЛЬКО классы
+                statusIndicator.className = 'status-indicator online';
+                statusText.textContent = 'В сети';
+                userNameEl.textContent = username || 'Пользователь';
+                logoutBtn.style.display = 'flex';
+                
+                // Показываем защищенный контент
+                protectedContent.forEach(el => el.style.display = '');
+                protectedNav.forEach(el => el.style.display = 'flex');
+                guestOnly.forEach(el => el.style.display = 'none');
+                guestNav.forEach(el => el.style.display = 'none');
+            } else {
+                // Обновляем статус индикатор - ТОЛЬКО классы
+                statusIndicator.className = 'status-indicator offline';
+                statusText.textContent = 'Не в сети';
+                userNameEl.textContent = 'Гость';
+                logoutBtn.style.display = 'none';
+                
+                // Скрываем защищенный контент
+                protectedContent.forEach(el => el.style.display = 'none');
+                protectedNav.forEach(el => el.style.display = 'none');
+                guestOnly.forEach(el => el.style.display = '');
+                guestNav.forEach(el => el.style.display = 'flex');
+            }
+        }
+        
+        // Вызываем при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            updateAuthStatus();
+        });
+    </script>
 </body>
 </html>

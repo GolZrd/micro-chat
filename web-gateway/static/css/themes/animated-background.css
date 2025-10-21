@@ -1,0 +1,394 @@
+/* ==================== ANIMATED BACKGROUND ==================== */
+/* Красивый анимированный фон в вашей цветовой схеме */
+
+/* Базовый градиентный слой */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(ellipse at 10% 20%, rgba(88, 101, 242, 0.15) 0%, transparent 40%),
+        radial-gradient(ellipse at 90% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
+        radial-gradient(ellipse at 50% 50%, rgba(88, 101, 242, 0.08) 0%, transparent 60%),
+        linear-gradient(135deg, 
+            rgba(15, 15, 21, 1) 0%, 
+            rgba(26, 26, 36, 0.98) 50%, 
+            rgba(15, 15, 21, 1) 100%
+        );
+    z-index: -3;
+    animation: gradientShift 20s ease infinite;
+}
+
+@keyframes gradientShift {
+    0%, 100% { 
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% { 
+        opacity: 0.9;
+        transform: scale(1.05);
+    }
+}
+
+/* Анимированная сетка */
+body::after {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background-image: 
+        linear-gradient(rgba(88, 101, 242, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(88, 101, 242, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    z-index: -2;
+    animation: gridMove 30s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes gridMove {
+    0% { 
+        transform: translate(0, 0) rotate(0deg);
+    }
+    100% { 
+        transform: translate(50px, 50px) rotate(1deg);
+    }
+}
+
+/* Плавающие светящиеся сферы */
+.floating-orbs {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.4;
+    animation: float 20s ease-in-out infinite;
+}
+
+.orb:nth-child(1) {
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(88, 101, 242, 0.4), transparent);
+    top: 10%;
+    left: 10%;
+    animation-duration: 25s;
+    animation-delay: 0s;
+}
+
+.orb:nth-child(2) {
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.3), transparent);
+    top: 60%;
+    right: 10%;
+    animation-duration: 30s;
+    animation-delay: -5s;
+}
+
+.orb:nth-child(3) {
+    width: 350px;
+    height: 350px;
+    background: radial-gradient(circle, rgba(88, 101, 242, 0.35), transparent);
+    bottom: 20%;
+    left: 50%;
+    animation-duration: 28s;
+    animation-delay: -10s;
+}
+
+.orb:nth-child(4) {
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(71, 82, 196, 0.3), transparent);
+    top: 40%;
+    left: 30%;
+    animation-duration: 22s;
+    animation-delay: -15s;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translate(0, 0) scale(1);
+    }
+    25% {
+        transform: translate(50px, -50px) scale(1.1);
+    }
+    50% {
+        transform: translate(-30px, 30px) scale(0.9);
+    }
+    75% {
+        transform: translate(40px, 20px) scale(1.05);
+    }
+}
+
+/* Анимированные волны */
+.animated-waves {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 300px;
+    z-index: -2;
+    pointer-events: none;
+    overflow: hidden;
+    opacity: 0.15;
+}
+
+.wave {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 200%;
+    height: 200%;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse at center, 
+        rgba(88, 101, 242, 0.4) 0%, 
+        rgba(88, 101, 242, 0.2) 30%,
+        transparent 70%
+    );
+    border-radius: 40%;
+    animation: wave 15s ease-in-out infinite;
+}
+
+.wave:nth-child(2) {
+    background: radial-gradient(ellipse at center, 
+        rgba(139, 92, 246, 0.3) 0%, 
+        rgba(139, 92, 246, 0.15) 30%,
+        transparent 70%
+    );
+    animation-duration: 20s;
+    animation-delay: -5s;
+}
+
+.wave:nth-child(3) {
+    background: radial-gradient(ellipse at center, 
+        rgba(88, 101, 242, 0.2) 0%, 
+        rgba(88, 101, 242, 0.1) 30%,
+        transparent 70%
+    );
+    animation-duration: 25s;
+    animation-delay: -10s;
+}
+
+@keyframes wave {
+    0%, 100% {
+        transform: translateX(-50%) translateY(0) rotate(0deg);
+    }
+    50% {
+        transform: translateX(-50%) translateY(-50px) rotate(180deg);
+    }
+}
+
+/* Искры/частицы */
+.particles {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.particle {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: rgba(88, 101, 242, 0.6);
+    border-radius: 50%;
+    box-shadow: 
+        0 0 4px rgba(88, 101, 242, 0.8),
+        0 0 8px rgba(88, 101, 242, 0.6);
+    animation: particleFloat 15s linear infinite;
+}
+
+.particle:nth-child(even) {
+    background: rgba(139, 92, 246, 0.6);
+    box-shadow: 
+        0 0 4px rgba(139, 92, 246, 0.8),
+        0 0 8px rgba(139, 92, 246, 0.6);
+}
+
+@keyframes particleFloat {
+    0% {
+        transform: translateY(100vh) translateX(0) scale(0);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100px) translateX(100px) scale(1);
+        opacity: 0;
+    }
+}
+
+/* Светящиеся линии */
+.glow-lines {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.glow-line {
+    position: absolute;
+    height: 1px;
+    background: linear-gradient(90deg, 
+        transparent 0%,
+        rgba(88, 101, 242, 0.6) 50%,
+        transparent 100%
+    );
+    box-shadow: 0 0 10px rgba(88, 101, 242, 0.8);
+    animation: lineMove 8s linear infinite;
+}
+
+.glow-line:nth-child(1) {
+    top: 20%;
+    width: 40%;
+    left: -40%;
+    animation-delay: 0s;
+}
+
+.glow-line:nth-child(2) {
+    top: 50%;
+    width: 50%;
+    left: -50%;
+    animation-delay: -2s;
+    background: linear-gradient(90deg, 
+        transparent 0%,
+        rgba(139, 92, 246, 0.6) 50%,
+        transparent 100%
+    );
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.8);
+}
+
+.glow-line:nth-child(3) {
+    top: 75%;
+    width: 35%;
+    left: -35%;
+    animation-delay: -4s;
+}
+
+@keyframes lineMove {
+    0% {
+        left: -50%;
+    }
+    100% {
+        left: 150%;
+    }
+}
+
+/* Улучшенные тени и свечение для элементов */
+.card:hover,
+.action-card:hover,
+.chat-card:hover {
+    box-shadow: 
+        0 10px 40px rgba(88, 101, 242, 0.4),
+        0 0 30px rgba(88, 101, 242, 0.3),
+        0 0 60px rgba(88, 101, 242, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.btn-primary:hover,
+.send-btn.active:hover,
+.tab-btn.active {
+    box-shadow: 
+        0 8px 25px rgba(88, 101, 242, 0.5),
+        0 0 20px rgba(88, 101, 242, 0.4),
+        0 0 40px rgba(88, 101, 242, 0.2);
+}
+
+.message.own .message-text {
+    box-shadow: 
+        0 4px 16px rgba(88, 101, 242, 0.5),
+        0 0 10px rgba(88, 101, 242, 0.3);
+}
+
+.message.own:hover .message-text {
+    box-shadow: 
+        0 6px 20px rgba(88, 101, 242, 0.6),
+        0 0 15px rgba(88, 101, 242, 0.4);
+}
+
+.nav-item.active::before {
+    box-shadow: 
+        0 0 15px rgba(88, 101, 242, 0.8),
+        0 0 30px rgba(88, 101, 242, 0.4);
+}
+
+.status-indicator.online {
+    box-shadow: 
+        0 0 10px rgba(59, 165, 92, 0.8),
+        0 0 20px rgba(59, 165, 92, 0.4);
+}
+
+/* Пульсирующий эффект для активных элементов */
+@keyframes pulse {
+    0%, 100% { 
+        opacity: 1; 
+        transform: scale(1);
+        box-shadow: 0 0 10px rgba(88, 101, 242, 0.5);
+    }
+    50% { 
+        opacity: 0.8; 
+        transform: scale(0.95);
+        box-shadow: 0 0 20px rgba(88, 101, 242, 0.8);
+    }
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .orb {
+        filter: blur(40px);
+    }
+    
+    .orb:nth-child(1),
+    .orb:nth-child(2) {
+        width: 300px;
+        height: 300px;
+    }
+    
+    .orb:nth-child(3),
+    .orb:nth-child(4) {
+        width: 200px;
+        height: 200px;
+    }
+    
+    .animated-waves {
+        height: 150px;
+    }
+}
+
+/* Отключение анимаций при низкой производительности */
+@media (prefers-reduced-motion: reduce) {
+    body::before,
+    body::after,
+    .orb,
+    .wave,
+    .particle,
+    .glow-line {
+        animation: none;
+    }
+}

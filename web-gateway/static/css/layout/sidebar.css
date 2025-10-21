@@ -1,0 +1,219 @@
+/* ==================== SIDEBAR LAYOUT ==================== */
+
+.app-container {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+    background: transparent; /* ДОБАВЛЕНО */
+}
+
+.sidebar {
+    width: var(--sidebar-width);
+    background: rgba(26, 26, 36, 0.95); /* ИЗМЕНЕНО: добавлена прозрачность */
+    backdrop-filter: blur(10px); /* ДОБАВЛЕНО: эффект размытия */
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: var(--z-sidebar);
+    animation: slideInLeft 0.3s ease;
+}
+
+/* Логотип */
+.app-logo {
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    border-bottom: 1px solid var(--border);
+}
+
+.app-logo i {
+    font-size: 1.75rem;
+    background: var(--accent-gradient);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Профиль пользователя */
+.user-profile-section {
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: rgba(37, 37, 51, 0.8); /* ИЗМЕНЕНО: добавлена прозрачность */
+    backdrop-filter: blur(5px); /* ДОБАВЛЕНО */
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.user-profile-section:hover {
+    background: rgba(42, 42, 58, 0.9); /* ИЗМЕНЕНО */
+}
+
+.user-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--accent-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(88, 101, 242, 0.3); /* ДОБАВЛЕНО */
+}
+
+.user-avatar i {
+    font-size: 1.5rem;
+    color: white;
+}
+
+.user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.user-name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 0.25rem;
+}
+
+.user-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    animation: pulse 2s infinite;
+}
+
+.status-indicator.offline {
+    background: var(--danger);
+}
+
+.status-indicator.online {
+    background: var(--success);
+    box-shadow: 0 0 8px rgba(59, 165, 92, 0.5); /* ДОБАВЛЕНО: свечение */
+}
+
+#statusText {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+/* Навигация */
+.sidebar-nav {
+    flex: 1;
+    padding: 1rem 0;
+    overflow-y: auto;
+    background: transparent; /* ДОБАВЛЕНО */
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: var(--transition);
+    position: relative;
+    font-weight: 500;
+}
+
+.nav-item:hover {
+    background: rgba(42, 42, 58, 0.6); /* ИЗМЕНЕНО */
+    backdrop-filter: blur(5px); /* ДОБАВЛЕНО */
+    color: var(--text-primary);
+}
+
+.nav-item.active {
+    background: rgba(42, 42, 58, 0.8); /* ИЗМЕНЕНО */
+    backdrop-filter: blur(10px); /* ДОБАВЛЕНО */
+    color: var(--accent);
+}
+
+.nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent); /* ДОБАВЛЕНО: свечение */
+}
+
+.nav-item i {
+    width: 20px;
+    font-size: 1.1rem;
+}
+
+.nav-item .badge {
+    margin-left: auto;
+    background: var(--accent);
+    color: white;
+    padding: 0.125rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(88, 101, 242, 0.4); /* ДОБАВЛЕНО */
+}
+
+/* Footer */
+.sidebar-footer {
+    padding: 1rem;
+    border-top: 1px solid var(--border);
+    background: rgba(37, 37, 51, 0.8); /* ДОБАВЛЕНО */
+    backdrop-filter: blur(5px); /* ДОБАВЛЕНО */
+}
+
+.logout-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: rgba(237, 66, 69, 0.1);
+    color: var(--danger);
+    border: 1px solid rgba(237, 66, 69, 0.2);
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.logout-btn:hover {
+    background: var(--danger);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(237, 66, 69, 0.4); /* ДОБАВЛЕНО */
+}
+
+.app-version {
+    text-align: center;
+    margin-top: 1rem;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
