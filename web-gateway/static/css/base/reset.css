@@ -81,9 +81,10 @@ img {
     height: 8px;
 }
 
-::-webkit-scrollbar-track {
+/* Полоса сбоку для прокрутки */
+/* ::-webkit-scrollbar-track {
     background: var(--bg-primary);
-}
+} */
 
 ::-webkit-scrollbar-thumb {
     background: var(--bg-tertiary);

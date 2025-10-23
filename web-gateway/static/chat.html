@@ -25,7 +25,7 @@
                 <div class="chat-status">
                     <span class="status-dot active"></span>
                     <div>
-                        <strong>Чат #<span id="currentChatId"></span></strong>
+                        <strong>Чат <span id="currentChatId"></span></strong>
                         <small id="connectionStatus">Подключено</small>
                     </div>
                 </div>
@@ -56,7 +56,7 @@
                     <i class="fas fa-bars"></i>
                 </button>
                 <div class="chat-title">
-                    <h2>Чат #<span id="chatIdDisplay">...</span></h2>
+                    <h2>Чат <span id="chatIdDisplay">...</span></h2>
                     <div class="chat-meta">
                         <span id="messageCount">0 сообщений</span>
                         <span class="separator">•</span>
@@ -201,6 +201,7 @@
     </div>
 
     <script src="/static/app.js"></script>
+    <!-- <script src="/static/js/chat-transparency.js"></script> -->
     <!-- Певая тема -->
     <!-- <script src="/static/js/animated-background.js"></script> -->
     <!-- Для Liquid Gradient -->
@@ -384,6 +385,310 @@
             }
         }
 
+        // ==================== ЗАГРУЗКА УЧАСТНИКОВ ЧАТА ====================
+        async function loadChatMembers() {
+            try {
+                console.log('👥 Loading chat members from /api/chat/my...');
+                
+                // Загружаем список всех чатов пользователя
+                const response = await apiRequest('/api/chat/my');
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    console.error('❌ Failed to load chats:', error);
+                    showMembersError('Не удалось загрузить участников');
+                    return;
+                }
+                
+                const data = await response.json();
+                console.log('📦 All chats data:', data);
+                
+                const chats = data.chats || [];
+                
+                // Находим текущий чат по ID
+                const currentChat = chats.find(chat => chat.id == chatId);
+                console.log('🔍 Current chat:', currentChat);
+                
+                if (!currentChat) {
+                    console.error('❌ Chat not found in user chats');
+                    showMembersError('Чат не найден');
+                    return;
+                }
+                
+                // Получаем список участников из текущего чата
+                const members = currentChat.usernames || currentChat.members || [];
+                console.log('👥 Members found:', members);
+                
+                // Обновляем счетчик участников
+                const totalMembersEl = document.getElementById('totalMembers');
+                if (totalMembersEl) {
+                    totalMembersEl.textContent = members.length;
+                }
+                
+                // Обновляем счетчик онлайн (показываем что минимум вы онлайн)
+                const onlineCountEl = document.getElementById('onlineCount');
+                if (onlineCountEl) {
+                    onlineCountEl.textContent = '1 онлайн'; // Минимум вы сами онлайн
+                }
+                
+                // Отображаем участников
+                displayMembers(members);
+                
+            } catch (error) {
+                console.error('❌ Error loading members:', error);
+                
+                // Если совсем ничего не работает, показываем хотя бы текущего пользователя
+                console.log('⚠️ Showing fallback with current user only');
+                const fallbackMembers = [currentUsername];
+                
+                const totalMembersEl = document.getElementById('totalMembers');
+                if (totalMembersEl) {
+                    totalMembersEl.textContent = '1+';
+                }
+                
+                const onlineCountEl = document.getElementById('onlineCount');
+                if (onlineCountEl) {
+                    onlineCountEl.textContent = '1 онлайн';
+                }
+                
+                displayMembers(fallbackMembers);
+            }
+        }
+
+        // ==================== УЛУЧШЕННАЯ ФУНКЦИЯ ОТОБРАЖЕНИЯ ====================
+        function displayMembers(members) {
+            const membersListEl = document.getElementById('membersList');
+            if (!membersListEl) return;
+            
+            // Убеждаемся что members - это массив
+            if (!Array.isArray(members)) {
+                console.warn('⚠️ Members is not an array:', members);
+                members = [];
+            }
+            
+            if (members.length === 0) {
+                membersListEl.innerHTML = `
+                    <div class="no-members">
+                        <i class="fas fa-user-friends"></i>
+                        <p>Участники не найдены</p>
+                        <button onclick="retryLoadMembers()" class="retry-btn" style="margin-top: 1rem;">
+                            <i class="fas fa-sync-alt"></i> Обновить
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            // ✅ ПРЕОБРАЗУЕМ И СОРТИРУЕМ УЧАСТНИКОВ
+            const processedMembers = members.map((member, index) => {
+                let memberName = '';
+                let memberData = {};
+                
+                if (typeof member === 'string') {
+                    memberName = member;
+                    memberData = {
+                        name: memberName,
+                        status: 'offline',
+                        original: member
+                    };
+                } else if (typeof member === 'object' && member !== null) {
+                    memberName = member.username || member.name || member.user || 'Участник ' + (index + 1);
+                    memberData = {
+                        name: memberName,
+                        status: member.status || 'offline',
+                        lastSeen: member.last_seen || null,
+                        original: member
+                    };
+                } else {
+                    memberName = 'Участник ' + (index + 1);
+                    memberData = {
+                        name: memberName,
+                        status: 'offline',
+                        original: member
+                    };
+                }
+                
+                // Проверяем, это текущий пользователь или нет
+                const isCurrentUser = memberName === currentUsername || 
+                                    memberName.toLowerCase() === currentUsername.toLowerCase();
+                
+                memberData.isCurrentUser = isCurrentUser;
+                if (isCurrentUser) {
+                    memberData.status = 'online'; // Текущий пользователь всегда онлайн
+                }
+                
+                return memberData;
+            });
+            
+            // ✅ СОРТИРУЕМ: сначала текущий пользователь, потом онлайн, потом остальные
+            processedMembers.sort((a, b) => {
+                // Текущий пользователь всегда первый
+                if (a.isCurrentUser) return -1;
+                if (b.isCurrentUser) return 1;
+                
+                // Затем сортируем по статусу (онлайн первые)
+                const statusOrder = {
+                    'online': 0,
+                    'away': 1,
+                    'busy': 2,
+                    'offline': 3
+                };
+                
+                const aOrder = statusOrder[a.status] || 3;
+                const bOrder = statusOrder[b.status] || 3;
+                
+                if (aOrder !== bOrder) {
+                    return aOrder - bOrder;
+                }
+                
+                // Если статусы одинаковые, сортируем по имени
+                return a.name.localeCompare(b.name, 'ru');
+            });
+            
+            // ✅ ОТОБРАЖАЕМ ОТСОРТИРОВАННЫХ УЧАСТНИКОВ
+            let html = '';
+            
+            // Опционально: добавляем разделители
+            let lastSection = '';
+            
+            processedMembers.forEach((member) => {
+                // Определяем секцию
+                let currentSection = '';
+                if (member.isCurrentUser) {
+                    currentSection = 'you';
+                } else if (member.status === 'online') {
+                    currentSection = 'online';
+                } else {
+                    currentSection = 'offline';
+                }
+                
+                // Добавляем разделитель секции (опционально)
+                if (currentSection !== lastSection && processedMembers.length > 3) {
+                    if (currentSection === 'online' && !processedMembers.some(m => m.isCurrentUser)) {
+                        html += '<div class="members-section-title">В сети</div>';
+                    } else if (currentSection === 'offline') {
+                        html += '<div class="members-section-title">Не в сети</div>';
+                    }
+                    lastSection = currentSection;
+                }
+                
+                // Генерируем цвет аватара
+                const avatarColor = generateAvatarColor(member.name);
+                const initials = generateAvatarInitials(member.name);
+                
+                // Определяем класс для статуса
+                const statusClass = member.isCurrentUser ? 'online' : member.status;
+                
+                html += `
+                    <div class="member-item ${member.isCurrentUser ? 'current-user' : ''}">
+                        <div class="member-avatar" style="background: ${avatarColor}; color: white;">
+                            ${initials}
+                            <span class="online-indicator ${statusClass}"></span>
+                        </div>
+                        <div class="member-info">
+                            <strong>${escapeHtml(member.name)}</strong>
+                            <small>${getStatusText(member.status, member.lastSeen, member.isCurrentUser)}</small>
+                        </div>
+                        ${member.isCurrentUser ? '<span class="you-badge">Вы</span>' : ''}
+                    </div>
+                `;
+            });
+            
+            membersListEl.innerHTML = html;
+            console.log('✅ Members displayed and sorted successfully');
+        }
+
+        // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
+
+        // Генерация цвета аватара на основе имени
+        function generateAvatarColor(name) {
+            const colors = [
+                'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+                'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
+                'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+                'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)'
+            ];
+            
+            // Простой хеш на основе имени
+            let hash = 0;
+            for (let i = 0; i < name.length; i++) {
+                hash = name.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            
+            return colors[Math.abs(hash) % colors.length];
+        }
+
+        // Генерация инициалов для аватара
+        function generateAvatarInitials(name) {
+            if (!name) return '?';
+            
+            const parts = name.trim().split(' ');
+            if (parts.length >= 2) {
+                return parts[0][0].toUpperCase() + parts[1][0].toUpperCase();
+            }
+            return name.substring(0, 2).toUpperCase();
+        }
+
+        // Получение текста статуса
+        function getStatusText(status, lastSeen, isCurrentUser) {
+            if (isCurrentUser) return 'В сети';
+            
+            switch(status) {
+                case 'online':
+                    return 'В сети';
+                case 'away':
+                    return 'Отошел';
+                case 'busy':
+                    return 'Не беспокоить';
+                case 'offline':
+                    if (lastSeen) {
+                        return `Был(а) ${formatLastSeen(lastSeen)}`;
+                    }
+                    return 'Не в сети';
+                default:
+                    return 'Неизвестно';
+            }
+        }
+
+        // Форматирование времени последнего визита
+        function formatLastSeen(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+            
+            if (minutes < 1) return 'только что';
+            if (minutes < 60) return `${minutes} мин. назад`;
+            if (hours < 24) return `${hours} ч. назад`;
+            if (days === 1) return 'вчера';
+            if (days < 7) return `${days} дн. назад`;
+            
+            return date.toLocaleDateString('ru-RU');
+        }
+
+        // Показать ошибку загрузки участников
+        function showMembersError(message) {
+            const membersListEl = document.getElementById('membersList');
+            if (membersListEl) {
+                membersListEl.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>${message}</p>
+                        <button onclick="loadChatMembers()" class="retry-btn">
+                            <i class="fas fa-sync-alt"></i> Повторить
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
         function toggleLeftSidebar() {
             document.querySelector('.chat-list-sidebar').classList.toggle('active');
         }
@@ -406,6 +711,8 @@
             
             connectWebSocket();
             loadChatsList();
+            // ✅ ЗАГРУЖАЕМ УЧАСТНИКОВ ЧАТА
+            loadChatMembers();
             
             const messageForm = document.getElementById('messageForm');
             const messageInput = document.getElementById('messageInput');

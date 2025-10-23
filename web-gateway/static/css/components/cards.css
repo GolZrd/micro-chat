@@ -47,8 +47,8 @@
 
 /* Action cards */
 .action-card {
-    background: rgba(26, 26, 36, 0.9); /* ИЗМЕНЕНО */
-    backdrop-filter: blur(15px); /* ДОБАВЛЕНО */
+    background: rgba(26, 26, 36, 0.4); /* ИЗМЕНЕНО */
+    backdrop-filter: blur(5px); /* ДОБАВЛЕНО */
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 2rem;
@@ -107,8 +107,8 @@
 
 /* Chat cards */
 .chat-card {
-    background: rgba(37, 37, 51, 0.9); /* ИЗМЕНЕНО */
-    backdrop-filter: blur(15px); /* ДОБАВЛЕНО */
+    background: rgba(37, 37, 51, 0.5); /* ИЗМЕНЕНО */
+    backdrop-filter: blur(4px); /* ДОБАВЛЕНО */
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     padding: 1.5rem;

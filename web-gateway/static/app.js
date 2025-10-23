@@ -230,6 +230,9 @@ function updateAuthStatus() {
         protectedNav.forEach(el => el.style.display = 'flex');
         guestOnly.forEach(el => el.style.display = 'none');
         guestNav.forEach(el => el.style.display = 'none');
+
+        // ✅ ЗАГРУЖАЕМ КОЛИЧЕСТВО ЧАТОВ ПРИ АВТОРИЗАЦИИ
+        loadChatCount();
     } else {
         if (statusEl) {
             statusEl.textContent = '❌ Не авторизован';
@@ -242,6 +245,9 @@ function updateAuthStatus() {
         protectedNav.forEach(el => el.style.display = 'none');
         guestOnly.forEach(el => el.style.display = 'block');
         guestNav.forEach(el => el.style.display = 'flex');
+
+        // ✅ СБРАСЫВАЕМ СЧЕТЧИК ПРИ ВЫХОДЕ
+        updateChatCount(0);
     }
 }
 
@@ -357,7 +363,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     resultEl.style.color = '#155724';
                     
                     document.getElementById('chat_usernames').value = '';
-                    loadMyChats();
+
+                    // ✅ ОБНОВЛЯЕМ СПИСОК ЧАТОВ И СЧЕТЧИК
+                    await loadMyChats();
+
+                    // Если мы не на странице чатов, обновляем только счетчик
+                    const chatsSection = document.getElementById('chatsSection');
+                    if (!chatsSection || !chatsSection.classList.contains('active')) {
+                        loadChatCount();
+                    }
                 } else {
                     resultEl.innerHTML = `❌ ${result.error}`;
                     resultEl.style.background = '#f8d7da';
@@ -409,6 +423,7 @@ async function deleteChat(chatId) {
             if (chatCard) {
                 chatCard.classList.add('deleting');
                 setTimeout(() => {
+                    // ✅ ОБНОВЛЯЕМ СПИСОК И СЧЕТЧИК
                     loadMyChats();
                 }, 300);
             } else {
@@ -436,9 +451,11 @@ async function deleteChat(chatId) {
 
 async function loadMyChats() {
     const chatsDiv = document.getElementById('myChats');
-    if (!chatsDiv) return;
     
-    chatsDiv.innerHTML = '<p style="color: #666;">⏳ Загрузка...</p>';
+    // Показываем загрузку только если элемент существует
+    if (chatsDiv) {
+        chatsDiv.innerHTML = '<p style="color: #666;">⏳ Загрузка...</p>';
+    }
     
     try {
         const response = await apiRequest('/api/chat/my');
@@ -447,7 +464,11 @@ async function loadMyChats() {
         console.log('📦 Server response:', data);
         
         if (!response.ok) {
-            chatsDiv.innerHTML = `<p style="color: #dc3545;">❌ ${data.error || 'Ошибка загрузки'}</p>`;
+            if (chatsDiv) {
+                chatsDiv.innerHTML = `<p style="color: #dc3545;">❌ ${data.error || 'Ошибка загрузки'}</p>`;
+            }
+            // Обновляем счетчик на 0 при ошибке
+            updateChatCount(0);
             return;
         }
         
@@ -455,6 +476,12 @@ async function loadMyChats() {
         chats = chats.filter(chat => chat && chat.id);
         
         console.log('✅ Filtered chats:', chats);
+        
+        // ✅ ОБНОВЛЯЕМ СЧЕТЧИК ЧАТОВ
+        updateChatCount(chats.length);
+        
+        // Если элемент для отображения чатов не существует, выходим
+        if (!chatsDiv) return;
         
         if (chats.length === 0) {
             chatsDiv.innerHTML = '<p style="color: #666;">📭 У вас пока нет чатов. Создайте первый!</p>';
@@ -494,7 +521,7 @@ async function loadMyChats() {
                     <p><strong>👥 Участники:</strong> <span>${usersList}</span></p>
                     <p><strong>📅 Создан:</strong> <span>${createdDate}</span></p>
                     <a href="/chat?id=${chatId}" class="btn-open-chat" onclick="event.stopPropagation();">
-                    Открыть чат →
+                        Открыть чат →
                     </a>
                 </div>
             `;
@@ -505,7 +532,88 @@ async function loadMyChats() {
         
     } catch (error) {
         console.error('❌ Error:', error);
-        chatsDiv.innerHTML = `<p style="color: #dc3545;">❌ Ошибка: ${error.message}</p>`;
+        if (chatsDiv) {
+            chatsDiv.innerHTML = `<p style="color: #dc3545;">❌ Ошибка: ${error.message}</p>`;
+        }
+        // Обновляем счетчик на 0 при ошибке
+        updateChatCount(0);
+    }
+}
+
+// ==================== ОБНОВЛЕНИЕ СЧЕТЧИКА ЧАТОВ ====================
+function updateChatCount(count) {
+    const chatCountEl = document.getElementById('chatCount');
+    if (chatCountEl) {
+        chatCountEl.textContent = count;
+        
+        // Добавляем визуальные эффекты
+        if (count > 0) {
+            chatCountEl.style.display = 'inline-flex';
+            chatCountEl.classList.add('pulse');
+            setTimeout(() => {
+                chatCountEl.classList.remove('pulse');
+            }, 600);
+        } else {
+            chatCountEl.style.display = 'none';
+        }
+    }
+}
+
+// ==================== ЗАГРУЗКА КОЛИЧЕСТВА ЧАТОВ (без UI) ====================
+async function loadChatCount() {
+    try {
+        const response = await apiRequest('/api/chat/my');
+        const data = await response.json();
+        
+        if (response.ok) {
+            let chats = data.chats || [];
+            chats = chats.filter(chat => chat && chat.id);
+            updateChatCount(chats.length);
+        } else {
+            updateChatCount(0);
+        }
+    } catch (error) {
+        console.error('❌ Error loading chat count:', error);
+        updateChatCount(0);
+    }
+}
+
+// ==================== АВТООБНОВЛЕНИЕ СЧЕТЧИКА ====================
+let chatCountInterval = null;
+
+function startChatCountUpdater() {
+    // Обновляем счетчик каждые 30 секунд
+    chatCountInterval = setInterval(() => {
+        if (TokenManager.isAuthenticated()) {
+            loadChatCount();
+        }
+    }, 30000); // 30 секунд
+}
+
+function stopChatCountUpdater() {
+    if (chatCountInterval) {
+        clearInterval(chatCountInterval);
+        chatCountInterval = null;
+    }
+}
+
+// Останавливаем при выходе
+async function logout() {
+    try {
+        stopChatCountUpdater(); // Останавливаем обновление
+        TokenManager.stopRefreshTimer();
+
+        await fetch('/api/logout', {
+            method: 'POST',
+            credentials: 'include'
+        });
+        
+        TokenManager.clear();
+        updateAuthStatus();
+        alert('✅ Вы вышли из системы');
+        location.reload();
+    } catch (error) {
+        alert('❌ Ошибка при выходе: ' + error);
     }
 }
 
@@ -707,5 +815,9 @@ document.addEventListener('DOMContentLoaded', () => {
     updateAuthStatus();
     checkTokenOnLoad();
     initMessageInput();
+    // Запускаем автообновление если авторизован
+    if (TokenManager.isAuthenticated()) {
+        startChatCountUpdater();
+    }
     console.log('✅ App initialized');
 });

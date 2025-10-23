@@ -10,8 +10,8 @@
 
 .sidebar {
     width: var(--sidebar-width);
-    background: rgba(26, 26, 36, 0.95); /* ИЗМЕНЕНО: добавлена прозрачность */
-    backdrop-filter: blur(10px); /* ДОБАВЛЕНО: эффект размытия */
+    background: rgba(26, 26, 36, 0.1); /* ИЗМЕНЕНО: добавлена прозрачность */
+    backdrop-filter: blur(4px); /* ДОБАВЛЕНО: эффект размытия */
     border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;

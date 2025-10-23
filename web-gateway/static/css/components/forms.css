@@ -148,41 +148,77 @@ form small {
     animation-delay: 0.4s;
 }
 
-/* DISCORD-STYLE: Область ввода */
+
 .message-input-area {
     padding: 0 1rem 1.5rem 1rem;
-    background: rgba(26, 26, 36, 0.95); /* ИЗМЕНЕНО: добавлена прозрачность */
-    backdrop-filter: blur(10px); /* ДОБАВЛЕНО */
-    border-top: 1px solid var(--border);
+    background: rgba(26, 26, 36, 0.4); /* ИЗМЕНЕНО: более прозрачный */
+    backdrop-filter: blur(3px) saturate(150%); /* УСИЛЕНО: больше размытия */
+    -webkit-backdrop-filter: blur(25px) saturate(180%); /* Safari */
+    border-top: 1px solid rgba(255, 255, 255, 0.1); /* ИЗМЕНЕНО: более светлая граница */
     width: 100%;
     position: relative;
+    z-index: 10;
 }
 
-/* СПЕЦИФИЧНЫЕ СТИЛИ ДЛЯ ФОРМЫ СООБЩЕНИЙ */
+/* Градиент сверху для плавного перехода */
+.message-input-area::before {
+    content: '';
+    position: absolute;
+    top: -30px;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: linear-gradient(0deg, 
+        rgba(26, 26, 36, 0.3) 0%, 
+        transparent 100%
+    );
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* Стеклянный эффект при фокусе */
+.message-input-area:has(.message-form:focus-within) {
+    background: rgba(26, 26, 36, 0.8);
+    border-top-color: rgba(88, 101, 242, 0.3);
+    transition: all 0.3s ease;
+}
+
+/* ГЛАВНАЯ ФОРМА с улучшенной прозрачностью */
 .message-form {
     display: flex !important;
     flex-direction: row !important;
     align-items: center;
     gap: 0 !important;
-    background: rgba(15, 15, 21, 0.8); /* ИЗМЕНЕНО: добавлена прозрачность */
-    backdrop-filter: blur(5px); /* ДОБАВЛЕНО */
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(15, 15, 21, 0.6); /* ИЗМЕНЕНО: более прозрачный */
+    backdrop-filter: blur(15px); /* ДОБАВЛЕНО */
+    -webkit-backdrop-filter: blur(15px); /* Safari */
+    border: 1px solid rgba(255, 255, 255, 0.1); /* ИЗМЕНЕНО */
     border-radius: 8px;
     padding: 0 !important;
     width: 100%;
     min-height: 44px;
-    transition: all 0.15s ease;
+    transition: all 0.3s ease;
     position: relative;
+    box-shadow: 
+        0 4px 16px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05); /* ДОБАВЛЕНО: внутреннее свечение */
 }
 
 .message-form:hover {
-    border-color: rgba(255, 255, 255, 0.16);
-    background: rgba(15, 15, 21, 0.9); /* ДОБАВЛЕНО */
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(15, 15, 21, 0.7);
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .message-form:focus-within {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 1px var(--accent), 0 0 20px rgba(88, 101, 242, 0.2); /* ДОБАВЛЕНО: свечение */
+    border-color: rgba(88, 101, 242, 0.6);
+    background: rgba(15, 15, 21, 0.8);
+    box-shadow: 
+        0 0 0 1px rgba(88, 101, 242, 0.6), 
+        0 8px 30px rgba(88, 101, 242, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 /* Левая часть - кнопка эмодзи */
@@ -216,11 +252,14 @@ form small {
 }
 
 .emoji-btn:hover {
-    color: var(--text-primary);
+    color: var(--accent);
+    transform: scale(1.2);
 }
 
 .emoji-btn.active {
     color: var(--accent);
+    background: rgba(88, 101, 242, 0.1);
+    border-radius: 50%;
 }
 
 /* Центральная часть - ГЛАВНОЕ ПОЛЕ ВВОДА */
@@ -253,11 +292,12 @@ form small {
     overflow-x: hidden;
     word-wrap: break-word;
     white-space: pre-wrap;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); /* ДОБАВЛЕНО: тень для читаемости */
 }
 
 #messageInput::placeholder {
     color: var(--text-muted);
-    opacity: 1;
+    opacity: 0.7;
 }
 
 #messageInput::-webkit-scrollbar {
@@ -296,7 +336,7 @@ form small {
     border: none;
     color: var(--text-muted);
     cursor: pointer;
-    transition: all 0.1s ease;
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -311,19 +351,21 @@ form small {
 }
 
 .input-action-btn:hover {
-    color: var(--text-primary);
+    color: var(--accent);
+    background: rgba(88, 101, 242, 0.1);
+    transform: scale(1.1);
 }
 
 /* Кнопка отправки */
 .send-btn {
     width: 32px;
     height: 32px;
-    border-radius: 4px;
+    border-radius: 50%;
     background: transparent;
     border: none;
     color: var(--text-muted);
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -340,11 +382,17 @@ form small {
 .send-btn.active {
     background: var(--accent);
     color: white;
+    box-shadow: 
+        0 4px 12px rgba(88, 101, 242, 0.5),
+        0 0 20px rgba(88, 101, 242, 0.3);
 }
 
 .send-btn.active:hover {
     background: var(--accent-hover);
-    transform: scale(1.05);
+    transform: scale(1.15);
+    box-shadow: 
+        0 6px 16px rgba(88, 101, 242, 0.6),
+        0 0 30px rgba(88, 101, 242, 0.4);
 }
 
 .send-btn:disabled {
@@ -362,6 +410,7 @@ form small {
     font-size: 0.75rem;
     color: var(--text-muted);
     min-height: 20px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); /* ДОБАВЛЕНО: тень для читаемости */
 }
 
 .input-hints {
@@ -377,13 +426,14 @@ form small {
 }
 
 .input-hint kbd {
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.08); /* ИЗМЕНЕНО */
     padding: 2px 6px;
     border-radius: 3px;
     font-family: 'Consolas', 'Monaco', monospace;
     font-size: 0.7rem;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(5px); /* ДОБАВЛЕНО */
 }
 
 .char-counter {
@@ -393,11 +443,13 @@ form small {
 
 .char-counter.warning {
     color: var(--warning);
+    text-shadow: 0 0 10px var(--warning);
 }
 
 .char-counter.danger {
     color: var(--danger);
     font-weight: 600;
+    text-shadow: 0 0 10px var(--danger);
 }
 
 /* Адаптивность */

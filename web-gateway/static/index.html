@@ -23,10 +23,8 @@
                     <i class="fas fa-user-circle"></i>
                 </div>
                 <div class="user-info">
-                    <!-- ИСПРАВЛЕНО: сначала имя, потом статус -->
                     <div class="user-name" id="userName">Гость</div>
                     <div class="user-status">
-                        <!-- ОДИН индикатор -->
                         <span class="status-indicator offline" id="statusIndicator"></span>
                         <span id="statusText">Не в сети</span>
                     </div>
@@ -48,10 +46,7 @@
                     <i class="fas fa-user"></i>
                     <span>Профиль</span>
                 </a>
-                <a href="#" class="nav-item guest-nav" onclick="showSection('auth'); return false;">
-                    <i class="fas fa-sign-in-alt"></i>
-                    <span>Вход</span>
-                </a>
+                <!-- УДАЛЕНА ВКЛАДКА "ВХОД" -->
             </nav>
             
             <!-- Нижняя часть sidebar -->
@@ -79,34 +74,45 @@
                     <p class="subtitle">Современный мессенджер для вашего общения</p>
                 </div>
                 
-                <!-- Карточки для неавторизованных -->
-                <div class="cards-grid guest-only">
-                    <!-- Регистрация -->
-                    <div class="card">
-                        <h2><i class="fas fa-user-plus"></i> Регистрация</h2>
-                        <form id="registerForm">
-                            <input type="text" id="reg_name" placeholder="👤 Имя" required>
-                            <input type="email" id="reg_email" placeholder="📧 Email" required>
-                            <input type="password" id="reg_password" placeholder="🔒 Пароль" required>
-                            <input type="password" id="reg_password_confirm" placeholder="🔒 Подтвердите пароль" required>
-                            <button type="submit">
-                                <i class="fas fa-check"></i> Зарегистрироваться
-                            </button>
-                        </form>
-                        <div id="registerResult"></div>
-                    </div>
-
-                    <!-- Вход -->
-                    <div class="card">
-                        <h2><i class="fas fa-sign-in-alt"></i> Вход</h2>
-                        <form id="loginForm">
-                            <input type="email" id="login_email" placeholder="📧 Email" required>
-                            <input type="password" id="login_password" placeholder="🔒 Пароль" required>
-                            <button type="submit">
-                                <i class="fas fa-arrow-right"></i> Войти
-                            </button>
-                        </form>
-                        <div id="loginResult"></div>
+                <!-- НОВАЯ ПЕРЕКЛЮЧАЕМАЯ ФОРМА для неавторизованных -->
+                <div class="guest-only">
+                    <div class="auth-container">
+                        <div class="auth-tabs">
+                            <button class="tab-btn active" onclick="switchAuthTab('login')">Вход</button>
+                            <button class="tab-btn" onclick="switchAuthTab('register')">Регистрация</button>
+                        </div>
+                        
+                        <!-- Таб входа -->
+                        <div id="loginTab" class="auth-tab active">
+                            <div class="card">
+                                <h2><i class="fas fa-sign-in-alt"></i> Вход в систему</h2>
+                                <form id="loginForm">
+                                    <input type="email" id="login_email" placeholder="📧 Email" required>
+                                    <input type="password" id="login_password" placeholder="🔒 Пароль" required>
+                                    <button type="submit">
+                                        <i class="fas fa-arrow-right"></i> Войти
+                                    </button>
+                                </form>
+                                <div id="loginResult"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Таб регистрации -->
+                        <div id="registerTab" class="auth-tab">
+                            <div class="card">
+                                <h2><i class="fas fa-user-plus"></i> Регистрация</h2>
+                                <form id="registerForm">
+                                    <input type="text" id="reg_name" placeholder="👤 Имя" required>
+                                    <input type="email" id="reg_email" placeholder="📧 Email" required>
+                                    <input type="password" id="reg_password" placeholder="🔒 Пароль" required>
+                                    <input type="password" id="reg_password_confirm" placeholder="🔒 Подтвердите пароль" required>
+                                    <button type="submit">
+                                        <i class="fas fa-check"></i> Зарегистрироваться
+                                    </button>
+                                </form>
+                                <div id="registerResult"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
@@ -139,41 +145,7 @@
                 </div>
             </section>
             
-            <!-- Секция: Авторизация -->
-            <section id="authSection" class="content-section">
-                <div class="section-header">
-                    <h1><i class="fas fa-lock"></i> Авторизация</h1>
-                </div>
-                
-                <div class="auth-container">
-                    <div class="auth-tabs">
-                        <button class="tab-btn active" onclick="switchAuthTab('login')">Вход</button>
-                        <button class="tab-btn" onclick="switchAuthTab('register')">Регистрация</button>
-                    </div>
-                    
-                    <div id="loginTab" class="auth-tab active">
-                        <form id="loginFormTab">
-                            <input type="email" placeholder="📧 Email" required>
-                            <input type="password" placeholder="🔒 Пароль" required>
-                            <button type="submit">
-                                <i class="fas fa-sign-in-alt"></i> Войти
-                            </button>
-                        </form>
-                    </div>
-                    
-                    <div id="registerTab" class="auth-tab">
-                        <form id="registerFormTab">
-                            <input type="text" placeholder="👤 Имя" required>
-                            <input type="email" placeholder="📧 Email" required>
-                            <input type="password" placeholder="🔒 Пароль" required>
-                            <input type="password" placeholder="🔒 Подтвердите пароль" required>
-                            <button type="submit">
-                                <i class="fas fa-user-plus"></i> Зарегистрироваться
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </section>
+            <!-- УДАЛЕНА СЕКЦИЯ "АВТОРИЗАЦИЯ" -->
             
             <!-- Секция: Чаты -->
             <section id="chatsSection" class="content-section">
@@ -241,12 +213,8 @@
     </div>
 
     <script src="/static/app.js"></script>
-    <!-- Певая тема -->
     <!-- <script src="/static/js/animated-background.js"></script> -->
-    <!-- Для Liquid Gradient -->
     <script src="/static/js/liquid-gradient.js"></script>
-
-    <!-- Для Starfall -->
     <!-- <script src="/static/js/starfall.js"></script> -->
 
     <script>
@@ -266,20 +234,19 @@
             switch(sectionName) {
                 case 'home':
                     document.getElementById('homeSection').classList.add('active');
-                    document.querySelector('.nav-item[onclick*="home"]').classList.add('active');
-                    break;
-                case 'auth':
-                    document.getElementById('authSection').classList.add('active');
-                    document.querySelector('.nav-item[onclick*="auth"]').classList.add('active');
+                    const homeNav = document.querySelector('.nav-item[onclick*="home"]');
+                    if (homeNav) homeNav.classList.add('active');
                     break;
                 case 'chats':
                     document.getElementById('chatsSection').classList.add('active');
-                    document.querySelector('.nav-item[onclick*="chats"]').classList.add('active');
+                    const chatsNav = document.querySelector('.nav-item[onclick*="chats"]');
+                    if (chatsNav) chatsNav.classList.add('active');
                     loadMyChats();
                     break;
                 case 'profile':
                     document.getElementById('profileSection').classList.add('active');
-                    document.querySelector('.nav-item[onclick*="profile"]').classList.add('active');
+                    const profileNav = document.querySelector('.nav-item[onclick*="profile"]');
+                    if (profileNav) profileNav.classList.add('active');
                     loadUserInfo();
                     break;
             }
@@ -310,7 +277,7 @@
             }
         }
         
-        // ИСПРАВЛЕНО: Обновление статуса в sidebar
+        // Обновление статуса в sidebar
         function updateAuthStatus() {
             const isAuth = TokenManager.isAuthenticated();
             const statusIndicator = document.getElementById('statusIndicator');
@@ -325,7 +292,7 @@
             if (isAuth) {
                 const username = TokenManager.getUsername();
                 
-                // Обновляем статус индикатор - ТОЛЬКО классы
+                // Обновляем статус
                 statusIndicator.className = 'status-indicator online';
                 statusText.textContent = 'В сети';
                 userNameEl.textContent = username || 'Пользователь';
@@ -337,7 +304,7 @@
                 guestOnly.forEach(el => el.style.display = 'none');
                 guestNav.forEach(el => el.style.display = 'none');
             } else {
-                // Обновляем статус индикатор - ТОЛЬКО классы
+                // Обновляем статус
                 statusIndicator.className = 'status-indicator offline';
                 statusText.textContent = 'Не в сети';
                 userNameEl.textContent = 'Гость';
@@ -347,7 +314,7 @@
                 protectedContent.forEach(el => el.style.display = 'none');
                 protectedNav.forEach(el => el.style.display = 'none');
                 guestOnly.forEach(el => el.style.display = '');
-                guestNav.forEach(el => el.style.display = 'flex');
+                guestNav.forEach(el => el.style.display = 'none'); // Убрали показ гостевой навигации
             }
         }
         
