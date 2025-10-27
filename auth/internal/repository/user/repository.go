@@ -2,7 +2,9 @@ package user
 
 import (
 	"context"
+	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/GolZrd/micro-chat/auth/internal/model"
@@ -24,6 +26,8 @@ const (
 	CreatedAtColumn = "created_at"
 	UpdatedAtColumn = "updated_at"
 )
+
+var ErrUserNotFound = errors.New("user not found")
 
 type UserRepository interface {
 	Create(ctx context.Context, info CreateUserDTO) (int64, error)
@@ -53,13 +57,13 @@ func (r *repo) Create(ctx context.Context, info CreateUserDTO) (int64, error) {
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("failed to build query: %w", err)
 	}
 
 	var id int64
 	err = r.db.QueryRow(ctx, query, args...).Scan(&id)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("failed to query row: %w", err)
 	}
 
 	return id, nil
@@ -74,13 +78,13 @@ func (r *repo) Get(ctx context.Context, id int64) (*model.User, error) {
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to build query: %w", err)
 	}
 
 	var user modelRepo.User
 	err = r.db.QueryRow(ctx, query, args...).Scan(&user.Id, &user.Info.Name, &user.Info.Password, &user.Info.Email, &user.Info.Role, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to query row: %w", err)
 	}
 
 	return converter.ToUserFromRepo(&user), nil
@@ -99,12 +103,12 @@ func (r *repo) Update(ctx context.Context, id int64, info UpdateUserDTO) error {
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to build query: %w", err)
 	}
 
 	res, err := r.db.Exec(ctx, query, args...)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to exec query: %w", err)
 	}
 
 	// Проверяем обновились ли данные
@@ -122,12 +126,12 @@ func (r *repo) Delete(ctx context.Context, id int64) error {
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to build query: %w", err)
 	}
 
 	_, err = r.db.Exec(ctx, query, args...)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to exec query: %w", err)
 	}
 
 	return nil
@@ -142,13 +146,16 @@ func (r *repo) GetByEmail(ctx context.Context, email string) (*model.UserAuthDat
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to build query: %w", err)
 	}
 
 	var userData modelRepo.UserAuthData
 	err = r.db.QueryRow(ctx, query, args...).Scan(&userData.Id, &userData.Name, &userData.Password, &userData.Email, &userData.Role)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrUserNotFound
+		}
+		return nil, fmt.Errorf("failed to query row: %w", err)
 	}
 
 	return converter.ToUserAuthDataFromRepo(&userData), nil

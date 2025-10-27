@@ -21,7 +21,6 @@ func (s *Implementation) Login(ctx context.Context, req *descAuth.LoginRequest) 
 
 	refreshToken, userId, err := s.authService.Login(ctx, req.GetEmail(), req.GetPassword())
 	if err != nil {
-		//TODO: обработка в зависимости от ошибки
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 

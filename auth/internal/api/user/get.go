@@ -2,19 +2,22 @@ package user
 
 import (
 	"context"
-	"log"
 
 	"github.com/GolZrd/micro-chat/auth/internal/converter"
 	descUser "github.com/GolZrd/micro-chat/auth/pkg/user_v1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func (s *Implementation) Get(ctx context.Context, req *descUser.GetRequest) (*descUser.GetResponse, error) {
-	userObj, err := s.userService.Get(ctx, req.Id)
-	if err != nil {
-		return nil, err
+	if req.Id <= 0 {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 
-	log.Printf("Get user with Id: %d, Name: %s, Email: %s, Password: %s, Role: %s", userObj.Id, userObj.Info.Name, userObj.Info.Email, userObj.Info.Password, userObj.Info.Role)
+	userObj, err := s.userService.Get(ctx, req.Id)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
 
 	return &descUser.GetResponse{
 		User: converter.ToUserFromService(userObj),

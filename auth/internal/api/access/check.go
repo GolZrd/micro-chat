@@ -2,7 +2,6 @@ package access
 
 import (
 	"context"
-	"log"
 	"strings"
 
 	descAccess "github.com/GolZrd/micro-chat/auth/pkg/access_v1"
@@ -18,8 +17,13 @@ const (
 )
 
 func (s *Implementation) Check(ctx context.Context, req *descAccess.CheckRequest) (*emptypb.Empty, error) {
-	// для отладки
-	log.Println("Начинаем проверку доступа")
+	// Получаем endpoint
+	endPoint := req.GetEndpointAddress()
+
+	// Валидируем endpoint
+	if endPoint == "" {
+		return nil, status.Error(codes.InvalidArgument, "endpoint_address is required")
+	}
 
 	// Достаем acessToken из контекста
 	md, ok := metadata.FromIncomingContext(ctx)
@@ -40,19 +44,11 @@ func (s *Implementation) Check(ctx context.Context, req *descAccess.CheckRequest
 	// Если всё ок, то отрезаем этот префикс
 	accessToken := strings.TrimPrefix(authheader[0], authPrefix)
 
-	// Получаем endpoint
-	endPoint := req.GetEndpointAddress()
-	if endPoint == "" {
-		return nil, status.Error(codes.InvalidArgument, "endpoint_address is required")
-	}
-
 	// Вызываем сервисный слой
 	err := s.accessService.Check(ctx, accessToken, endPoint)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-
-	log.Println("access granted for endpoint: ", endPoint)
 
 	return &emptypb.Empty{}, nil
 }

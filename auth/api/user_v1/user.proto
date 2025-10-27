@@ -54,9 +54,10 @@ message GetResponse {
     User user = 1;
 }
 
+// Исправил порядок полей, теперь начинается с 1
 message UpdateUserInfo {
-    google.protobuf.StringValue name = 2;
-    google.protobuf.StringValue email = 3;
+    google.protobuf.StringValue name = 1;
+    google.protobuf.StringValue email = 2;
 }
 
 message UpdateRequest {

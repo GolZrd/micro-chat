@@ -2,6 +2,7 @@ package access
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -36,26 +37,26 @@ func (r *repo) EndPointRoles(ctx context.Context, endPoint string) (map[string]s
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("build query for endpoint %s: %w", endPoint, err)
 	}
 
 	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query endpoint roles for %s: %w", endPoint, err)
 	}
 
 	roles := make(map[string]struct{})
 	for rows.Next() {
 		var role string
 		if err := rows.Scan(&role); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("scan row: %w", err)
 		}
 
 		roles[role] = struct{}{}
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("iterate rows: %w", err)
 	}
 
 	return roles, nil

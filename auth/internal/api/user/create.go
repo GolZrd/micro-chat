@@ -2,13 +2,19 @@ package user
 
 import (
 	"context"
-	"log"
 
 	userService "github.com/GolZrd/micro-chat/auth/internal/service/user"
 	descUser "github.com/GolZrd/micro-chat/auth/pkg/user_v1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func (s *Implementation) Create(ctx context.Context, req *descUser.CreateRequest) (*descUser.CreateRespone, error) {
+	// Валидируем входные данные
+	if err := validateCreateUser(req); err != nil {
+		return nil, err
+	}
+
 	// proto → service DTO
 	input := userService.CreateUserDTO{
 		Name:            req.Info.Name,
@@ -20,13 +26,38 @@ func (s *Implementation) Create(ctx context.Context, req *descUser.CreateRequest
 
 	id, err := s.userService.Create(ctx, input)
 	if err != nil {
-		log.Printf("Error creating user: %v", err)
-		return nil, err
+		return nil, status.Error(codes.Internal, err.Error())
 	}
-
-	log.Printf("Create user with id: %d", id)
 
 	return &descUser.CreateRespone{
 		Id: id,
 	}, nil
+}
+
+func validateCreateUser(req *descUser.CreateRequest) error {
+	if req.Info == nil {
+		return status.Error(codes.InvalidArgument, "info is required")
+	}
+
+	if req.Info.Name == "" {
+		return status.Error(codes.InvalidArgument, "name is required")
+	}
+
+	if req.Info.Email == "" {
+		return status.Error(codes.InvalidArgument, "email is required")
+	}
+
+	if req.Info.Password == "" {
+		return status.Error(codes.InvalidArgument, "password is required")
+	}
+
+	if req.Info.PasswordConfirm == "" {
+		return status.Error(codes.InvalidArgument, "password_confirm is required")
+	}
+
+	if req.Info.Role.String() == "" {
+		return status.Error(codes.InvalidArgument, "role is required")
+	}
+
+	return nil
 }

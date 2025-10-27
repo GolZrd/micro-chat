@@ -2,30 +2,36 @@ package auth
 
 import (
 	"context"
-	"log"
+	"fmt"
 
+	"github.com/GolZrd/micro-chat/auth/internal/logger"
 	"github.com/GolZrd/micro-chat/auth/internal/model"
 	"github.com/GolZrd/micro-chat/auth/internal/utils/jwt"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"go.uber.org/zap"
 )
 
 func (s *service) AccessToken(ctx context.Context, refreshToken string) (accessToken string, err error) {
-	log.Println("Get refresh token: ", refreshToken)
 	// Сначала проверяем валидность токена
 	userData, err := jwt.VerifyToken(refreshToken, []byte(s.RefreshSecretKey))
 	if err != nil {
-		log.Println("failed to verify refresh token:", err)
-		// TODO: Возможно стоит добавить доп. проверки токена на разные ошибки
-		return "", status.Errorf(codes.Aborted, "invalid refresh token")
+		logger.Warn("Invalid refresh token", zap.String("refresh_token", refreshToken[:8]), zap.Error(err))
+
+		return "", fmt.Errorf("invalid refresh token: %w", err)
 	}
-	log.Println("Verify refresh token with user id: ", userData.UID)
+
+	// Используем уровень дебаг, для отладки
+	logger.Debug("Token verified",
+		zap.String("user", userData.Name),
+		zap.String("role", userData.Role),
+		zap.String("refresh_token", refreshToken[:8]),
+	)
+
 	// Если токен валиден, генерируем новый access токен
 	accessToken, err = jwt.GenerateToken(model.UserAuthData{Id: userData.UID, Name: userData.Name, Role: userData.Role}, s.AccessSecretKey, s.accessTTL)
 	if err != nil {
-		log.Println("failed to generate access token:", err)
-		return "", status.Errorf(codes.Internal, "failed to generate access token")
+		// Уровень Error в логах
+		logger.Error("Failed to generate access token", zap.Error(err))
+		return "", fmt.Errorf("failed to generate access token: %w", err)
 	}
 
 	// И просто возвращаем access токен

@@ -25,11 +25,8 @@ var (
 
 type AuthRepository interface {
 	RevokeAllByUserId(ctx context.Context, userId int64) error                                      // Метод для обнуления всех токенов пользователя
-	RevokeToken(ctx context.Context, token string) error                                            // Метод для обнуления токена
-	CreateRefreshToken(ctx context.Context, userId int64, token string, expiers_at time.Time) error // Метод для сохранения нового токена
-	//RefreshOldToken(ctx context.Context, oldRefreshToken string) (refreshToken string, err error) // Метод для обновления старого токена
-	//AccessToken(ctx context.Context, refreshToken string) (accessToken string, err error)         // Метод для получения аксесс токена
-
+	RevokeToken(ctx context.Context, token string) error                                            // Метод для обнуления определенного токена
+	CreateRefreshToken(ctx context.Context, userId int64, token string, expiers_at time.Time) error // Метод для сохранения нового токена, используется для refreshToken
 }
 
 type repo struct {
@@ -43,7 +40,6 @@ func NewRepository(db *pgxpool.Pool) AuthRepository {
 }
 
 // Описываем методы
-
 // Метод для обнуления всех токенов пользователя
 func (r *repo) RevokeAllByUserId(ctx context.Context, userId int64) error {
 	builder := squirrel.Update(tableName).
@@ -54,11 +50,11 @@ func (r *repo) RevokeAllByUserId(ctx context.Context, userId int64) error {
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return fmt.Errorf("build RevokeAllByUserId: %w", err)
+		return fmt.Errorf("failed to build RevokeAllByUserId: %w", err)
 	}
 
 	if _, err := r.db.Exec(ctx, query, args...); err != nil {
-		return fmt.Errorf("exec RevokeAllByUserId userId=%d: %w", userId, err)
+		return fmt.Errorf("failed to exec RevokeAllByUserId userId=%d: %w", userId, err)
 	}
 
 	return nil
@@ -73,12 +69,12 @@ func (r *repo) RevokeToken(ctx context.Context, token string) error {
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return fmt.Errorf("build RevokeToken: %w", err)
+		return fmt.Errorf("failed to build RevokeToken: %w", err)
 	}
 
 	res, err := r.db.Exec(ctx, query, args...)
 	if err != nil {
-		return fmt.Errorf("exec RevokeToken: %w", err)
+		return fmt.Errorf("failed to exec RevokeToken: %w", err)
 	}
 
 	if res.RowsAffected() == 0 {
@@ -97,7 +93,7 @@ func (r *repo) CreateRefreshToken(ctx context.Context, userId int64, token strin
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return fmt.Errorf("failed tobuild CreateRefreshToken: %w", err)
+		return fmt.Errorf("failed to build CreateRefreshToken: %w", err)
 	}
 
 	_, err = r.db.Exec(ctx, query, args...)
