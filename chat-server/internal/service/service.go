@@ -11,7 +11,7 @@ type ChatService interface {
 	Create(ctx context.Context, usernames []string) (int64, error)
 	Delete(ctx context.Context, id int64) error
 	SendMessage(ctx context.Context, msg SendMessageDTO) error
-	ConnectToChat(ctx context.Context, chatID int64) (<-chan MessageDTO, error)
+	ConnectToChat(ctx context.Context, userId int64, chatID int64) (<-chan MessageDTO, error)
 	DisconnectFromChat(chatID int64, subscriberId string)
 	MyChats(ctx context.Context, username string) ([]ChatInfoDTO, error)
 }

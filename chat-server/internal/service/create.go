@@ -3,6 +3,10 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
+
+	"github.com/GolZrd/micro-chat/chat-server/internal/logger"
+	"go.uber.org/zap"
 )
 
 func (s *service) Create(ctx context.Context, usernames []string) (int64, error) {
@@ -16,8 +20,17 @@ func (s *service) Create(ctx context.Context, usernames []string) (int64, error)
 
 	id, err := s.ChatRepository.Create(ctx, usernames)
 	if err != nil {
-		return 0, err
+		logger.Error("failed to create chat",
+			zap.Strings("usernames", usernames),
+			zap.Error(err),
+		)
+		return 0, fmt.Errorf("failed to create chat: %w", err)
 	}
+
+	logger.Info(
+		"chat created successfully",
+		zap.Strings("usernames", usernames),
+	)
 
 	return id, nil
 }

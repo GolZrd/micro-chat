@@ -2,16 +2,26 @@ package service
 
 import (
 	"context"
-	"log"
+	"fmt"
+
+	"github.com/GolZrd/micro-chat/chat-server/internal/logger"
+	"go.uber.org/zap"
 )
 
 func (s *service) Delete(ctx context.Context, id int64) error {
 	err := s.ChatRepository.Delete(ctx, id)
 	if err != nil {
-		return err
+		logger.Error("failed to delete chat",
+			zap.Int64("chat_id", id),
+			zap.Error(err),
+		)
+		return fmt.Errorf("failed to delete chat: %w", err)
 	}
 
-	log.Printf("Deleted chat with id: %d", id)
+	logger.Info(
+		"chat deleted successfully",
+		zap.Int64("chat_id", id),
+	)
 
 	return nil
 }

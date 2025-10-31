@@ -3,10 +3,13 @@ module github.com/GolZrd/micro-chat/chat-server
 go 1.24.0
 
 require (
-	github.com/GolZrd/micro-chat/auth v0.0.0-20251009070815-27316154d650
+	github.com/GolZrd/micro-chat/auth v0.0.0-20251027142230-c9daea0d871b
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/golang-jwt/jwt/v5 v5.3.0
+	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/jackc/pgx/v5 v5.7.5
+	github.com/natefinch/lumberjack v2.0.0+incompatible
+	go.uber.org/zap v1.27.0
 	google.golang.org/grpc v1.73.0
 	google.golang.org/protobuf v1.36.6
 )
@@ -17,6 +20,7 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
+	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/crypto v0.37.0 // indirect
 	golang.org/x/net v0.38.0 // indirect
 	golang.org/x/sync v0.13.0 // indirect

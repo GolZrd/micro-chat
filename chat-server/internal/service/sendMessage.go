@@ -2,22 +2,15 @@ package service
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
+	"github.com/GolZrd/micro-chat/chat-server/internal/logger"
 	"github.com/GolZrd/micro-chat/chat-server/internal/repository"
+	"go.uber.org/zap"
 )
 
 // SendMessage сохраняет сообщение и рассылает подписчикам
 func (s *service) SendMessage(ctx context.Context, msg SendMessageDTO) error {
-	// Добавим проверку что chat_id существует и отправитель есть в этом чате
-	if msg.Chat_id <= 0 {
-		return errors.New("chat_id cannot be empty")
-	}
-
-	if msg.From_username == "" || msg.Text == "" {
-		return errors.New("from and text cannot be empty")
-	}
-
 	input := repository.MessageCreateDTO{
 		Chat_id:       msg.Chat_id,
 		From_username: msg.From_username,
@@ -25,10 +18,13 @@ func (s *service) SendMessage(ctx context.Context, msg SendMessageDTO) error {
 		Created_at:    msg.Created_at,
 	}
 
+	logger.Info("sending message", zap.Int64("chat_id", msg.Chat_id), zap.String("sent by", msg.From_username))
+
 	// Сохраняем сообщение в БД
 	err := s.ChatRepository.SendMessage(ctx, input)
 	if err != nil {
-		return err
+		logger.Error("failed to save message", zap.Int64("chat_id", msg.Chat_id), zap.String("sent by", msg.From_username), zap.Error(err))
+		return fmt.Errorf("database: failed to save message: %w", err)
 	}
 
 	// Создаем DTO для рассылки
@@ -55,6 +51,7 @@ func (s *service) broadcastMessage(chatID int64, msg MessageDTO) {
 			case ch <- msg:
 				// Отправлено успешно
 			default:
+				logger.Debug("failed to deliver message - channel full", zap.String("sent by", msg.From), zap.Int64("chat_id", chatID))
 				// Канал переполнен, пропускаем
 			}
 

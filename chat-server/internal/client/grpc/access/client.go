@@ -3,9 +3,10 @@ package access
 import (
 	"context"
 	"fmt"
-	"log"
 
 	access_v1 "github.com/GolZrd/micro-chat/auth/pkg/access_v1"
+	"github.com/GolZrd/micro-chat/chat-server/internal/logger"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -28,7 +29,7 @@ func NewClient(authServiceAddr string) (*Client, error) {
 
 func (c *Client) CheckAccess(ctx context.Context, endpoint string) error {
 	// Для отладки
-	log.Println("Вызываем клиент access сервис и передаем контекст")
+	logger.Debug("Check access", zap.String("endpoint", endpoint))
 
 	_, err := c.api.Check(ctx, &access_v1.CheckRequest{
 		EndpointAddress: endpoint,
