@@ -6,8 +6,10 @@ import (
 
 	user_v1 "github.com/GolZrd/micro-chat/auth/pkg/user_v1"
 	"github.com/GolZrd/micro-chat/web-gateway/internal/clients"
+	"github.com/GolZrd/micro-chat/web-gateway/internal/logger"
 	"github.com/GolZrd/micro-chat/web-gateway/internal/utils"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -16,6 +18,7 @@ func GetUser(client *clients.AuthClient) gin.HandlerFunc {
 		id := c.Param("id")
 		userId, err := strconv.ParseInt(id, 10, 64)
 		if err != nil {
+			logger.Debug("invalid user id", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -27,6 +30,7 @@ func GetUser(client *clients.AuthClient) gin.HandlerFunc {
 			Id: userId,
 		})
 		if err != nil {
+			logger.Error("Failed to get user", zap.Int64("user_id", userId), zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -47,6 +51,7 @@ func UpdateUser(client *clients.AuthClient) gin.HandlerFunc {
 		id := c.Param("id")
 		userId, err := strconv.ParseInt(id, 10, 64)
 		if err != nil {
+			logger.Debug("invalid user id", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -57,6 +62,7 @@ func UpdateUser(client *clients.AuthClient) gin.HandlerFunc {
 		}
 
 		if err := c.BindJSON(&req); err != nil {
+			logger.Debug("invalid update user request", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -78,6 +84,7 @@ func UpdateUser(client *clients.AuthClient) gin.HandlerFunc {
 		})
 
 		if err != nil {
+			logger.Error("Failed to update user", zap.Int64("user_id", userId), zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -91,6 +98,7 @@ func DeleteUser(client *clients.AuthClient) gin.HandlerFunc {
 		id := c.Param("id")
 		userId, err := strconv.ParseInt(id, 10, 64)
 		if err != nil {
+			logger.Debug("invalid user id", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -103,6 +111,7 @@ func DeleteUser(client *clients.AuthClient) gin.HandlerFunc {
 		})
 
 		if err != nil {
+			logger.Error("Failed to delete user", zap.Int64("user_id", userId), zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}

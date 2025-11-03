@@ -18,7 +18,7 @@ type AuthClient struct {
 func NewAuthClient(addr string) (*AuthClient, error) {
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return nil, fmt.Errorf("подключение к auth сервису: %w", err)
+		return nil, fmt.Errorf("failed to connect to auth service: %w", err)
 	}
 
 	return &AuthClient{

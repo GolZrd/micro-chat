@@ -2,16 +2,17 @@ package handlers
 
 import (
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	chat_v1 "github.com/GolZrd/micro-chat/chat-server/pkg/chat_v1"
 	"github.com/GolZrd/micro-chat/web-gateway/internal/clients"
+	"github.com/GolZrd/micro-chat/web-gateway/internal/logger"
 	"github.com/GolZrd/micro-chat/web-gateway/internal/utils"
 )
 
@@ -28,9 +29,14 @@ func CreateChat(client *clients.ChatClient) gin.HandlerFunc {
 		}
 
 		if err := c.BindJSON(&req); err != nil {
+			logger.Debug("invalid create chat request", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+
+		logger.Info("create chat attempt",
+			zap.Strings("usernames", req.Usernames),
+		)
 
 		// Создаем контекст с токеном из HTTP заголовка
 		ctx := utils.ContextWithToken(c)
@@ -40,10 +46,13 @@ func CreateChat(client *clients.ChatClient) gin.HandlerFunc {
 			Usernames: req.Usernames,
 		})
 		if err != nil {
+			logger.Error("failed to create chat", zap.Error(err))
 			// Интерцептор вернет ошибку если токен невалиден
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+
+		logger.Info("chat created", zap.Int64("chat_id", resp.ChatId))
 
 		c.JSON(http.StatusOK, gin.H{"chat_id": resp.ChatId})
 	}
@@ -57,10 +66,12 @@ func MyChats(client *clients.ChatClient) gin.HandlerFunc {
 
 		resp, err := client.Client.MyChats(ctx, &chat_v1.MyChatsRequest{})
 		if err != nil {
-			log.Println("failed to get my chats")
+			logger.Error("failed to get my chats")
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+
+		logger.Info("got user chats", zap.Int("count", len(resp.Chats)))
 
 		c.JSON(http.StatusOK, gin.H{"chats": resp.Chats})
 	}
@@ -74,14 +85,13 @@ func SendMessage(client *clients.ChatClient) gin.HandlerFunc {
 		}
 
 		if err := c.BindJSON(&req); err != nil {
+			logger.Debug("invalid send message request", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
 		// Создаем контекст с токеном - chat-server сам извлечет username
 		ctx := utils.ContextWithToken(c)
-
-		log.Printf("Sending message to chat %d: %s", req.ChatId, req.Text)
 
 		// Вызываем gRPC БЕЗ указания From - chat-server извлечет из токена
 		_, err := client.Client.SendMessage(ctx, &chat_v1.SendMessageRequest{
@@ -90,6 +100,7 @@ func SendMessage(client *clients.ChatClient) gin.HandlerFunc {
 			CreatedAt: timestamppb.Now(),
 		})
 		if err != nil {
+			logger.Error("failed to send message", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -102,6 +113,7 @@ func ConnectChat(client *clients.ChatClient) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		chatId, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
+			logger.Warn("invalid chat id", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -109,7 +121,7 @@ func ConnectChat(client *clients.ChatClient) gin.HandlerFunc {
 		// Используем Upgrader для установки соединения WebSocket
 		ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
-			log.Println("WebSocket upgrade error:", err)
+			logger.Error("WebSocket upgrade failed", zap.Error(err))
 			return
 		}
 		defer ws.Close()
@@ -122,7 +134,7 @@ func ConnectChat(client *clients.ChatClient) gin.HandlerFunc {
 			ChatId: chatId,
 		})
 		if err != nil {
-			log.Println("gRPC stream error:", err)
+			logger.Error("failed to connect to chat", zap.Error(err))
 			return
 		}
 
@@ -133,7 +145,7 @@ func ConnectChat(client *clients.ChatClient) gin.HandlerFunc {
 				break
 			}
 			if err != nil {
-				log.Println("Stream receive error:", err)
+				logger.Error("failed to receive message", zap.Error(err))
 				break
 			}
 
@@ -144,7 +156,7 @@ func ConnectChat(client *clients.ChatClient) gin.HandlerFunc {
 				"createdAt": msg.CreatedAt.AsTime(),
 			})
 			if err != nil {
-				log.Println("WebSocket write error:", err)
+				logger.Error("WebSocket write error", zap.Error(err))
 				break
 			}
 		}
@@ -157,25 +169,24 @@ func DeleteChat(client *clients.ChatClient) gin.HandlerFunc {
 		// Получам ID чата из URL параметра
 		chatId, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
+			logger.Warn("invalid chat id", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid chat_id"})
 			return
 		}
 
 		ctx := utils.ContextWithToken(c)
 
-		log.Printf("Deleting chat %d", chatId)
-
 		// Вызываем grpc метод удаления чата
 		_, err = client.Client.Delete(ctx, &chat_v1.DeleteRequest{
 			Id: chatId,
 		})
 		if err != nil {
-			log.Printf("Failed to delete chat: %v", err)
+			logger.Error("Failed to delete chat", zap.Int64("chat_id", chatId), zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
-		log.Printf("Chat %d deleted successfully", chatId)
+		logger.Info("Chat deleted successfully", zap.Int64("chat_id", chatId))
 
 		c.JSON(http.StatusOK, gin.H{"status": "chat deleted successfully"})
 	}

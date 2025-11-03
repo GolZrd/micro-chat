@@ -17,7 +17,7 @@ type ChatClient struct {
 func NewChatClient(addr string) (*ChatClient, error) {
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return nil, fmt.Errorf("подключение к chat сервису: %w", err)
+		return nil, fmt.Errorf("failed to connect to chat service: %w", err)
 	}
 
 	return &ChatClient{

@@ -1,8 +1,7 @@
 package middleware
 
 import (
-	"log"
-
+	"github.com/GolZrd/micro-chat/web-gateway/internal/logger"
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,10 +13,10 @@ func ExtractTokenMiddleware() gin.HandlerFunc {
 		// Сначала пробуем извлечь токен из заголовка authorization
 		authHeader := c.GetHeader("authorization")
 		if authHeader != "" {
-			log.Println("get token from header")
+			logger.Debug("get token from header")
 			token = authHeader
 		} else if queryToken := c.Query("token"); queryToken != "" {
-			log.Println("get token from quary")
+			logger.Debug("get token from quary")
 			token = "Bearer " + queryToken
 		}
 

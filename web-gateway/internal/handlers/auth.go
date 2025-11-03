@@ -2,13 +2,14 @@ package handlers
 
 import (
 	"context"
-	"log"
 	"net/http"
 
 	auth_v1 "github.com/GolZrd/micro-chat/auth/pkg/auth_v1"
 	user_v1 "github.com/GolZrd/micro-chat/auth/pkg/user_v1"
 	"github.com/GolZrd/micro-chat/web-gateway/internal/clients"
+	"github.com/GolZrd/micro-chat/web-gateway/internal/logger"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 func Register(client *clients.AuthClient) gin.HandlerFunc {
@@ -21,9 +22,15 @@ func Register(client *clients.AuthClient) gin.HandlerFunc {
 		}
 
 		if err := c.BindJSON(&req); err != nil {
+			logger.Debug("invalid registration request", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+
+		logger.Info("registration attempt",
+			zap.String("email", req.Email),
+			zap.String("name", req.Name),
+		)
 
 		resp, err := client.UserClient.Create(context.Background(), &user_v1.CreateRequest{
 			Info: &user_v1.UserInfo{
@@ -35,9 +42,12 @@ func Register(client *clients.AuthClient) gin.HandlerFunc {
 			},
 		})
 		if err != nil {
+			logger.Error("Registration failed", zap.String("email", req.Email), zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+
+		logger.Info("user registration successful", zap.Int64("user_id", resp.Id), zap.String("email", req.Email))
 
 		c.JSON(http.StatusOK, gin.H{"user_id": resp.Id})
 	}
@@ -51,9 +61,14 @@ func Login(client *clients.AuthClient) gin.HandlerFunc {
 		}
 
 		if err := c.BindJSON(&req); err != nil {
+			logger.Debug("invalid login request", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+
+		logger.Info("login attempt",
+			zap.String("email", req.Email),
+		)
 
 		// Получаем refresh token
 		loginResp, err := client.AuthClient.Login(context.Background(), &auth_v1.LoginRequest{
@@ -61,6 +76,7 @@ func Login(client *clients.AuthClient) gin.HandlerFunc {
 			Password: req.Password,
 		})
 		if err != nil {
+			logger.Error("Login failed", zap.String("email", req.Email), zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -70,6 +86,7 @@ func Login(client *clients.AuthClient) gin.HandlerFunc {
 			RefreshToken: loginResp.RefreshToken,
 		})
 		if err != nil {
+			logger.Error("Failed to get access token after login", zap.String("email", req.Email), zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get access token"})
 			return
 		}
@@ -83,6 +100,11 @@ func Login(client *clients.AuthClient) gin.HandlerFunc {
 			"",
 			false,
 			true,
+		)
+
+		logger.Info("User logged in successfully",
+			zap.Int64("user_id", loginResp.UserId),
+			zap.String("email", req.Email),
 		)
 
 		// Access token отправляем в ответе (клиент сохранит в localStorage)
@@ -99,18 +121,19 @@ func RefreshAccessToken(client *clients.AuthClient) gin.HandlerFunc {
 		// Получаем refresh token из cookie
 		refreshToken, err := c.Cookie("refresh_token")
 		if err != nil {
+			logger.Debug("Refresh token not found in coockie")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "refresh token not found"})
 			return
 		}
 
-		log.Printf("Refreshing access token...")
+		logger.Debug("refreshing access token")
 
 		// Получаем новый access token
 		accessResp, err := client.AuthClient.GetAccessToken(context.Background(), &auth_v1.GetAccessTokenRequest{
 			RefreshToken: refreshToken,
 		})
 		if err != nil {
-			log.Printf("Failed to refresh access token: %v", err)
+			logger.Warn("Failed to refresh access token", zap.Error(err))
 
 			// Удаляем невалидный refresh token cookie
 			c.SetCookie(
@@ -127,7 +150,7 @@ func RefreshAccessToken(client *clients.AuthClient) gin.HandlerFunc {
 			return
 		}
 
-		log.Printf("Access token refreshed successfully")
+		logger.Info("Access token refreshed successfully")
 
 		c.JSON(http.StatusOK, gin.H{
 			"access_token": accessResp.AccessToken,
@@ -149,6 +172,8 @@ func Logout() gin.HandlerFunc {
 			true,
 		)
 
+		logger.Info("User logged out")
+
 		c.JSON(http.StatusOK, gin.H{"status": "logged out"})
 	}
 }
@@ -159,18 +184,19 @@ func NewRefreshToken(client *clients.AuthClient) gin.HandlerFunc {
 		// Получаем старый refresh token из cookie
 		oldRefreshToken, err := c.Cookie("refresh_token")
 		if err != nil {
+			logger.Debug("Refresh token not found in coockie")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "refresh token not found"})
 			return
 		}
 
-		log.Printf("Updating refresh token...")
+		logger.Debug("Updating refresh token...")
 
 		// Получаем новый refresh token
 		refreshResp, err := client.AuthClient.GetRefreshToken(context.Background(), &auth_v1.GetRefreshTokenRequest{
 			OldRefreshToken: oldRefreshToken,
 		})
 		if err != nil {
-			log.Printf("Failed to update refresh token: %v", err)
+			logger.Warn("Failed to update refresh token", zap.Error(err))
 
 			// Удаляем невалидный refresh token cookie
 			c.SetCookie(
@@ -187,7 +213,7 @@ func NewRefreshToken(client *clients.AuthClient) gin.HandlerFunc {
 			return
 		}
 
-		log.Printf("Refresh token updated successfully")
+		logger.Info("Refresh token updated successfully")
 
 		// Сохраняем новый refresh token в cookie
 		c.SetCookie(

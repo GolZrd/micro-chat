@@ -6,31 +6,51 @@ import (
 
 	"github.com/GolZrd/micro-chat/web-gateway/internal/clients"
 	"github.com/GolZrd/micro-chat/web-gateway/internal/handlers"
+	"github.com/GolZrd/micro-chat/web-gateway/internal/logger"
 	"github.com/GolZrd/micro-chat/web-gateway/internal/middleware"
 	"github.com/gin-gonic/gin"
+	"github.com/natefinch/lumberjack"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func main() {
+	if err := InitLogger(); err != nil {
+		log.Fatalf("Failed to initialize logger: %v", err)
+	}
+
+	logger.Info("Starting web-gateway")
+
 	// Создаем подключения к gRPC сервисам
 	authClient, err := clients.NewAuthClient(os.Getenv("AUTH_GRPC_ADDR"))
 	if err != nil {
-		log.Fatalf("Failed to connect to auth service: %v", err)
+		logger.Fatal("Failed to connect to auth service", zap.Error(err))
 	}
 
-	defer authClient.Close()
+	defer func() {
+		if err := authClient.Close(); err != nil {
+			logger.Error("Failed to close auth client", zap.Error(err))
+		}
+	}()
 
 	chatClient, err := clients.NewChatClient(os.Getenv("CHAT_GRPC_ADDR"))
 	if err != nil {
-		log.Fatalf("Failed to connect to chat service: %v", err)
+		logger.Fatal("Failed to connect to chat service", zap.Error(err))
 	}
 
-	defer chatClient.Close()
+	defer func() {
+		if err := chatClient.Close(); err != nil {
+			logger.Error("Failed to close chat client", zap.Error(err))
+		}
+	}()
+
+	logger.Info("Connected to gRPC services")
 
 	// Создаем HTTP сервер
 	r := gin.Default()
 
 	// Middleware для извлечения токена (применяется ко всем запросам)
-	r.Use(middleware.ExtractTokenMiddleware())
+	r.Use(middleware.ExtractTokenMiddleware(), middleware.LoggingMiddleware())
 
 	// Подключаем статистические файлы
 	r.Static("/static", "./static")
@@ -63,8 +83,46 @@ func main() {
 		port = "8080"
 	}
 
-	log.Printf("Starting server on port %s", port)
+	logger.Info("Starting server", zap.String("port", port))
 
 	r.Run(":" + port)
 
+}
+
+func InitLogger() error {
+	// Указываем уровень логирования
+	var level zapcore.Level
+	if err := level.Set(os.Getenv("WEB_LOG_LVL")); err != nil {
+		log.Fatalf("failed to set log level: %v", err)
+	}
+
+	atomicLevel := zap.NewAtomicLevelAt(level)
+
+	stdout := zapcore.AddSync(os.Stdout)
+	// Настраиваем запись в файл
+	file := zapcore.AddSync(&lumberjack.Logger{
+		Filename:   "logs/app.log",
+		MaxSize:    10, // megabytes
+		MaxBackups: 3,
+		MaxAge:     3, // days
+	})
+
+	productionCfg := zap.NewProductionEncoderConfig()
+	productionCfg.TimeKey = "timestamp"
+	productionCfg.EncodeTime = zapcore.ISO8601TimeEncoder
+
+	developmentCfg := zap.NewDevelopmentEncoderConfig()
+	developmentCfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
+
+	consoleEncoder := zapcore.NewConsoleEncoder(developmentCfg)
+	fileEncoder := zapcore.NewJSONEncoder(productionCfg)
+
+	core := zapcore.NewTee(
+		zapcore.NewCore(consoleEncoder, stdout, atomicLevel),
+		zapcore.NewCore(fileEncoder, file, atomicLevel),
+	)
+
+	logger.Init(core)
+
+	return nil
 }
