@@ -3,10 +3,8 @@ package user
 import (
 	"context"
 
-	"github.com/GolZrd/micro-chat/auth/internal/logger"
 	userService "github.com/GolZrd/micro-chat/auth/internal/service/user"
 	descUser "github.com/GolZrd/micro-chat/auth/pkg/user_v1"
-	"go.uber.org/zap"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -27,14 +25,15 @@ func (s *Implementation) Update(ctx context.Context, req *descUser.UpdateRequest
 	}
 
 	// proto → service DTO
-	input := userService.UpdateUserDTO{
-		Name:  &req.Info.Name.Value,
-		Email: &req.Info.Email.Value,
+	input := userService.UpdateUserDTO{}
+
+	if req.Info.Name != nil {
+		input.Name = &req.Info.Name.Value
 	}
 
-	logger.Debug("updating user",
-		zap.Int64("user_id", req.Id),
-	)
+	if req.Info.Email != nil {
+		input.Email = &req.Info.Email.Value
+	}
 
 	err := s.userService.Update(ctx, req.Id, input)
 	if err != nil {
