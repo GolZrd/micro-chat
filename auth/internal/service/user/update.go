@@ -28,19 +28,14 @@ func (s *service) Update(ctx context.Context, id int64, info UpdateUserDTO) erro
 	}
 
 	if info.Email != nil {
-		// Убираем лишние пробелы
-		email := strings.TrimSpace(*info.Email)
+		// Убираем лишние пробелы и переводим в нижний регистр
+		email := strings.TrimSpace(strings.ToLower(*info.Email))
 
 		// TODO: добавить валидацию email
 
 		// Добавляем в DTO
 		params.Email = &email
 		fieldsToUpdate = append(fieldsToUpdate, "email")
-	}
-
-	if len(fieldsToUpdate) == 0 {
-		logger.Debug("No fields to update", zap.Int64("user_id", id))
-		return nil
 	}
 
 	err := s.userRepository.Update(ctx, id, params)
@@ -51,8 +46,7 @@ func (s *service) Update(ctx context.Context, id int64, info UpdateUserDTO) erro
 
 	logger.Info("user updated successfully",
 		zap.Int64("user_id", id),
-		zap.String("updated_name", *params.Name),
-		zap.String("updated_email", *params.Email),
+		zap.Strings("fields", fieldsToUpdate),
 	)
 
 	return nil

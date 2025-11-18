@@ -11,7 +11,7 @@ import (
 )
 
 // Функция для генерации токена. Передаем информацию о пользователе, секретный ключ и время жизни
-func GenerateToken(user model.UserAuthData, secretKey string, ttl time.Duration) (string, error) {
+func (m *Manager) GenerateToken(user model.UserAuthData, secretKey string, ttl time.Duration) (string, error) {
 	// Добавляем в токен информацию о пользователе
 	claims := model.UserClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -33,7 +33,7 @@ func GenerateToken(user model.UserAuthData, secretKey string, ttl time.Duration)
 }
 
 // Функция для проверки токена на валидность
-func VerifyToken(tokenStr string, secretKey []byte) (*model.UserClaims, error) {
+func (m *Manager) VerifyToken(tokenStr string, secretKey []byte) (*model.UserClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, &model.UserClaims{}, func(token *jwt.Token) (any, error) {
 		_, ok := token.Method.(*jwt.SigningMethodHMAC)
 		if !ok {

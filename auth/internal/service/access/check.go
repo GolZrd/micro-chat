@@ -5,13 +5,12 @@ import (
 	"fmt"
 
 	"github.com/GolZrd/micro-chat/auth/internal/logger"
-	"github.com/GolZrd/micro-chat/auth/internal/utils/jwt"
 	"go.uber.org/zap"
 )
 
 func (s *service) Check(ctx context.Context, accessToken string, endPoint string) error {
 	// Верифицируем токен
-	claims, err := jwt.VerifyToken(accessToken, []byte(s.AccessSecretKey))
+	claims, err := s.jwtManager.VerifyToken(accessToken, []byte(s.AccessSecretKey))
 	if err != nil {
 		logger.Warn("Invalid access token", zap.String("enpoint", endPoint), zap.Error(err))
 

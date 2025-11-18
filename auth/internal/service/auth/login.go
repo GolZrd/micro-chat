@@ -10,7 +10,6 @@ import (
 	"github.com/GolZrd/micro-chat/auth/internal/logger"
 	"github.com/GolZrd/micro-chat/auth/internal/model"
 	authRepo "github.com/GolZrd/micro-chat/auth/internal/repository/auth"
-	"github.com/GolZrd/micro-chat/auth/internal/utils/jwt"
 	"go.uber.org/zap"
 )
 
@@ -57,7 +56,7 @@ func (s *service) Login(ctx context.Context, email string, password string) (ref
 	}
 
 	// Генерируем новый токен
-	token, err := jwt.GenerateToken(model.UserAuthData{Id: userData.Id, Name: userData.Name, Role: userData.Role}, s.RefreshSecretKey, s.refreshTTL)
+	token, err := s.jwtManager.GenerateToken(model.UserAuthData{Id: userData.Id, Name: userData.Name, Role: userData.Role}, s.RefreshSecretKey, s.refreshTTL)
 	if err != nil {
 		logger.Error("failed to generate refresh token", zap.Int64("user_id", userData.Id), zap.Error(err))
 		return "", 0, fmt.Errorf("failed to generate refresh token: %w", err)

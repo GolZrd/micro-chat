@@ -16,6 +16,7 @@ import (
 	accessService "github.com/GolZrd/micro-chat/auth/internal/service/access"
 	authService "github.com/GolZrd/micro-chat/auth/internal/service/auth"
 	userService "github.com/GolZrd/micro-chat/auth/internal/service/user"
+	"github.com/GolZrd/micro-chat/auth/internal/utils/jwt"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -25,6 +26,8 @@ type serviceProvider struct {
 	cfg        *config.Config
 	pgPool     *pgxpool.Pool
 	redisCache *cache.RedisCache
+
+	jwtManager jwt.JWTManager
 
 	userRepository   userRepository.UserRepository
 	authRepository   authRepository.AuthRepository
@@ -96,6 +99,14 @@ func (s *serviceProvider) RedisCache(ctx context.Context) *cache.RedisCache {
 	return s.redisCache
 }
 
+func (s *serviceProvider) JWTManager() jwt.JWTManager {
+	if s.jwtManager == nil {
+		s.jwtManager = jwt.NewManager()
+	}
+
+	return s.jwtManager
+}
+
 func (s *serviceProvider) UserRepository(ctx context.Context) userRepository.UserRepository {
 	if s.userRepository == nil {
 		s.userRepository = userRepository.NewRepository(s.PgPool(ctx))
@@ -130,7 +141,7 @@ func (s *serviceProvider) AuthRepository(ctx context.Context) authRepository.Aut
 
 func (s *serviceProvider) AuthService(ctx context.Context) authService.AuthService {
 	if s.authService == nil {
-		s.authService = authService.NewService(s.AuthRepository(ctx), s.UserRepository(ctx), s.Config())
+		s.authService = authService.NewService(s.AuthRepository(ctx), s.UserRepository(ctx), s.JWTManager(), s.Config())
 	}
 
 	return s.authService
@@ -154,7 +165,7 @@ func (s *serviceProvider) AccessRepository(ctx context.Context) accessRepository
 
 func (s *serviceProvider) AccessService(ctx context.Context) accessService.AccessService {
 	if s.accessService == nil {
-		s.accessService = accessService.NewService(s.AccessRepository(ctx), s.RedisCache(ctx), s.Config())
+		s.accessService = accessService.NewService(s.AccessRepository(ctx), s.JWTManager(), s.RedisCache(ctx), s.Config())
 	}
 
 	return s.accessService

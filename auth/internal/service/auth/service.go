@@ -7,6 +7,7 @@ import (
 	"github.com/GolZrd/micro-chat/auth/internal/config"
 	"github.com/GolZrd/micro-chat/auth/internal/model"
 	authRepository "github.com/GolZrd/micro-chat/auth/internal/repository/auth"
+	"github.com/GolZrd/micro-chat/auth/internal/utils/jwt"
 )
 
 type AuthService interface {
@@ -24,15 +25,17 @@ type UsersReader interface {
 type service struct {
 	authRepository   authRepository.AuthRepository
 	userRepository   UsersReader
+	jwtManager       jwt.JWTManager // Добавляем JWTManager в зависимости
 	RefreshSecretKey string
 	AccessSecretKey  string
 	accessTTL        time.Duration
 	refreshTTL       time.Duration
 }
 
-func NewService(authRepository authRepository.AuthRepository, users UsersReader, cfg *config.Config) AuthService {
+func NewService(authRepository authRepository.AuthRepository, users UsersReader, jwtManager jwt.JWTManager, cfg *config.Config) AuthService {
 	return &service{authRepository: authRepository,
 		userRepository:   users,
+		jwtManager:       jwtManager,
 		RefreshSecretKey: cfg.RefreshSecretKey,
 		AccessSecretKey:  cfg.AccessSecretKey,
 		accessTTL:        cfg.AccessTTL,

@@ -7,16 +7,15 @@ import (
 
 	"github.com/GolZrd/micro-chat/auth/internal/logger"
 	"github.com/GolZrd/micro-chat/auth/internal/model"
-	"github.com/GolZrd/micro-chat/auth/internal/utils/jwt"
 	"go.uber.org/zap"
 )
 
 // Исходим из того, что на стороне клиента следят за сроком действия токена, поэтому токен всегда валиден
 func (s *service) RefreshToken(ctx context.Context, oldRefreshToken string) (refreshToken string, err error) {
 	//Проверяем что токен валиден
-	userData, err := jwt.VerifyToken(oldRefreshToken, []byte(s.RefreshSecretKey))
+	userData, err := s.jwtManager.VerifyToken(oldRefreshToken, []byte(s.RefreshSecretKey))
 	if err != nil {
-		logger.Warn("Invalid refresh token", zap.String("refresh_token", refreshToken[:8]), zap.Error(err))
+		logger.Warn("Invalid refresh token", zap.String("refresh_token", oldRefreshToken[:8]), zap.Error(err))
 
 		return "", fmt.Errorf("invalid refresh token: %w", err)
 	}
@@ -30,7 +29,7 @@ func (s *service) RefreshToken(ctx context.Context, oldRefreshToken string) (ref
 	}
 
 	// Создаем новый токен
-	refreshToken, err = jwt.GenerateToken(model.UserAuthData{Id: userData.UID, Name: userData.Name, Role: userData.Role}, s.RefreshSecretKey, s.refreshTTL)
+	refreshToken, err = s.jwtManager.GenerateToken(model.UserAuthData{Id: userData.UID, Name: userData.Name, Role: userData.Role}, s.RefreshSecretKey, s.refreshTTL)
 	if err != nil {
 		logger.Error("failed to generate refresh token", zap.Int64("user_id", userData.UID), zap.Error(err))
 		return "", fmt.Errorf("failed to generate refresh token: %w", err)
