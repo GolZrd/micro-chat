@@ -35,7 +35,6 @@ body::before {
                 radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
                 radial-gradient(circle at 40% 40%, rgba(88, 101, 242, 0.05) 0%, transparent 50%);
     z-index: -2;
-    animation: floatingGradient 20s ease infinite;
 }
 
 body::after {

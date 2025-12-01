@@ -28,7 +28,6 @@ body::before {
             rgba(102, 126, 234, 0.1) 100%
         );
     z-index: -3;
-    animation: liquidRotate 30s linear infinite;
 }
 
 @keyframes liquidRotate {
