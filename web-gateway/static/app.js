@@ -328,6 +328,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     resultEl.style.color = '#155724';
                     
                     updateAuthStatus();
+                    loadChatCount();           // Загружаем количество чатов
+                    startChatCountUpdater();   // Запускаем автообновление
                     loginForm.reset();
                 } else {
                     resultEl.innerHTML = `❌ Ошибка: ${result.error}`;
@@ -812,12 +814,16 @@ function initMessageInput() {
 // ==================== INITIALIZATION ====================
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 App initializing...');
-    updateAuthStatus();
     checkTokenOnLoad();
+    updateAuthStatus();
     initMessageInput();
     // Запускаем автообновление если авторизован
     if (TokenManager.isAuthenticated()) {
-        startChatCountUpdater();
+        console.log('👤 Пользователь авторизован, загружаем чаты...');
+        setTimeout(() => {
+            loadChatCount();
+            startChatCountUpdater();
+        }, 100);
     }
     console.log('✅ App initialized');
 });
