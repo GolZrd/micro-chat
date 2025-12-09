@@ -20,6 +20,13 @@ type UserServiceMock struct {
 	t          minimock.Tester
 	finishOnce sync.Once
 
+	funcCheckUsersExists          func(ctx context.Context, usernames []string) (notFoundUsers []string, err error)
+	funcCheckUsersExistsOrigin    string
+	inspectFuncCheckUsersExists   func(ctx context.Context, usernames []string)
+	afterCheckUsersExistsCounter  uint64
+	beforeCheckUsersExistsCounter uint64
+	CheckUsersExistsMock          mUserServiceMockCheckUsersExists
+
 	funcCreate          func(ctx context.Context, info mm_user.CreateUserDTO) (i1 int64, err error)
 	funcCreateOrigin    string
 	inspectFuncCreate   func(ctx context.Context, info mm_user.CreateUserDTO)
@@ -57,6 +64,9 @@ func NewUserServiceMock(t minimock.Tester) *UserServiceMock {
 		controller.RegisterMocker(m)
 	}
 
+	m.CheckUsersExistsMock = mUserServiceMockCheckUsersExists{mock: m}
+	m.CheckUsersExistsMock.callArgs = []*UserServiceMockCheckUsersExistsParams{}
+
 	m.CreateMock = mUserServiceMockCreate{mock: m}
 	m.CreateMock.callArgs = []*UserServiceMockCreateParams{}
 
@@ -72,6 +82,349 @@ func NewUserServiceMock(t minimock.Tester) *UserServiceMock {
 	t.Cleanup(m.MinimockFinish)
 
 	return m
+}
+
+type mUserServiceMockCheckUsersExists struct {
+	optional           bool
+	mock               *UserServiceMock
+	defaultExpectation *UserServiceMockCheckUsersExistsExpectation
+	expectations       []*UserServiceMockCheckUsersExistsExpectation
+
+	callArgs []*UserServiceMockCheckUsersExistsParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// UserServiceMockCheckUsersExistsExpectation specifies expectation struct of the UserService.CheckUsersExists
+type UserServiceMockCheckUsersExistsExpectation struct {
+	mock               *UserServiceMock
+	params             *UserServiceMockCheckUsersExistsParams
+	paramPtrs          *UserServiceMockCheckUsersExistsParamPtrs
+	expectationOrigins UserServiceMockCheckUsersExistsExpectationOrigins
+	results            *UserServiceMockCheckUsersExistsResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// UserServiceMockCheckUsersExistsParams contains parameters of the UserService.CheckUsersExists
+type UserServiceMockCheckUsersExistsParams struct {
+	ctx       context.Context
+	usernames []string
+}
+
+// UserServiceMockCheckUsersExistsParamPtrs contains pointers to parameters of the UserService.CheckUsersExists
+type UserServiceMockCheckUsersExistsParamPtrs struct {
+	ctx       *context.Context
+	usernames *[]string
+}
+
+// UserServiceMockCheckUsersExistsResults contains results of the UserService.CheckUsersExists
+type UserServiceMockCheckUsersExistsResults struct {
+	notFoundUsers []string
+	err           error
+}
+
+// UserServiceMockCheckUsersExistsOrigins contains origins of expectations of the UserService.CheckUsersExists
+type UserServiceMockCheckUsersExistsExpectationOrigins struct {
+	origin          string
+	originCtx       string
+	originUsernames string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmCheckUsersExists *mUserServiceMockCheckUsersExists) Optional() *mUserServiceMockCheckUsersExists {
+	mmCheckUsersExists.optional = true
+	return mmCheckUsersExists
+}
+
+// Expect sets up expected params for UserService.CheckUsersExists
+func (mmCheckUsersExists *mUserServiceMockCheckUsersExists) Expect(ctx context.Context, usernames []string) *mUserServiceMockCheckUsersExists {
+	if mmCheckUsersExists.mock.funcCheckUsersExists != nil {
+		mmCheckUsersExists.mock.t.Fatalf("UserServiceMock.CheckUsersExists mock is already set by Set")
+	}
+
+	if mmCheckUsersExists.defaultExpectation == nil {
+		mmCheckUsersExists.defaultExpectation = &UserServiceMockCheckUsersExistsExpectation{}
+	}
+
+	if mmCheckUsersExists.defaultExpectation.paramPtrs != nil {
+		mmCheckUsersExists.mock.t.Fatalf("UserServiceMock.CheckUsersExists mock is already set by ExpectParams functions")
+	}
+
+	mmCheckUsersExists.defaultExpectation.params = &UserServiceMockCheckUsersExistsParams{ctx, usernames}
+	mmCheckUsersExists.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmCheckUsersExists.expectations {
+		if minimock.Equal(e.params, mmCheckUsersExists.defaultExpectation.params) {
+			mmCheckUsersExists.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmCheckUsersExists.defaultExpectation.params)
+		}
+	}
+
+	return mmCheckUsersExists
+}
+
+// ExpectCtxParam1 sets up expected param ctx for UserService.CheckUsersExists
+func (mmCheckUsersExists *mUserServiceMockCheckUsersExists) ExpectCtxParam1(ctx context.Context) *mUserServiceMockCheckUsersExists {
+	if mmCheckUsersExists.mock.funcCheckUsersExists != nil {
+		mmCheckUsersExists.mock.t.Fatalf("UserServiceMock.CheckUsersExists mock is already set by Set")
+	}
+
+	if mmCheckUsersExists.defaultExpectation == nil {
+		mmCheckUsersExists.defaultExpectation = &UserServiceMockCheckUsersExistsExpectation{}
+	}
+
+	if mmCheckUsersExists.defaultExpectation.params != nil {
+		mmCheckUsersExists.mock.t.Fatalf("UserServiceMock.CheckUsersExists mock is already set by Expect")
+	}
+
+	if mmCheckUsersExists.defaultExpectation.paramPtrs == nil {
+		mmCheckUsersExists.defaultExpectation.paramPtrs = &UserServiceMockCheckUsersExistsParamPtrs{}
+	}
+	mmCheckUsersExists.defaultExpectation.paramPtrs.ctx = &ctx
+	mmCheckUsersExists.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmCheckUsersExists
+}
+
+// ExpectUsernamesParam2 sets up expected param usernames for UserService.CheckUsersExists
+func (mmCheckUsersExists *mUserServiceMockCheckUsersExists) ExpectUsernamesParam2(usernames []string) *mUserServiceMockCheckUsersExists {
+	if mmCheckUsersExists.mock.funcCheckUsersExists != nil {
+		mmCheckUsersExists.mock.t.Fatalf("UserServiceMock.CheckUsersExists mock is already set by Set")
+	}
+
+	if mmCheckUsersExists.defaultExpectation == nil {
+		mmCheckUsersExists.defaultExpectation = &UserServiceMockCheckUsersExistsExpectation{}
+	}
+
+	if mmCheckUsersExists.defaultExpectation.params != nil {
+		mmCheckUsersExists.mock.t.Fatalf("UserServiceMock.CheckUsersExists mock is already set by Expect")
+	}
+
+	if mmCheckUsersExists.defaultExpectation.paramPtrs == nil {
+		mmCheckUsersExists.defaultExpectation.paramPtrs = &UserServiceMockCheckUsersExistsParamPtrs{}
+	}
+	mmCheckUsersExists.defaultExpectation.paramPtrs.usernames = &usernames
+	mmCheckUsersExists.defaultExpectation.expectationOrigins.originUsernames = minimock.CallerInfo(1)
+
+	return mmCheckUsersExists
+}
+
+// Inspect accepts an inspector function that has same arguments as the UserService.CheckUsersExists
+func (mmCheckUsersExists *mUserServiceMockCheckUsersExists) Inspect(f func(ctx context.Context, usernames []string)) *mUserServiceMockCheckUsersExists {
+	if mmCheckUsersExists.mock.inspectFuncCheckUsersExists != nil {
+		mmCheckUsersExists.mock.t.Fatalf("Inspect function is already set for UserServiceMock.CheckUsersExists")
+	}
+
+	mmCheckUsersExists.mock.inspectFuncCheckUsersExists = f
+
+	return mmCheckUsersExists
+}
+
+// Return sets up results that will be returned by UserService.CheckUsersExists
+func (mmCheckUsersExists *mUserServiceMockCheckUsersExists) Return(notFoundUsers []string, err error) *UserServiceMock {
+	if mmCheckUsersExists.mock.funcCheckUsersExists != nil {
+		mmCheckUsersExists.mock.t.Fatalf("UserServiceMock.CheckUsersExists mock is already set by Set")
+	}
+
+	if mmCheckUsersExists.defaultExpectation == nil {
+		mmCheckUsersExists.defaultExpectation = &UserServiceMockCheckUsersExistsExpectation{mock: mmCheckUsersExists.mock}
+	}
+	mmCheckUsersExists.defaultExpectation.results = &UserServiceMockCheckUsersExistsResults{notFoundUsers, err}
+	mmCheckUsersExists.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmCheckUsersExists.mock
+}
+
+// Set uses given function f to mock the UserService.CheckUsersExists method
+func (mmCheckUsersExists *mUserServiceMockCheckUsersExists) Set(f func(ctx context.Context, usernames []string) (notFoundUsers []string, err error)) *UserServiceMock {
+	if mmCheckUsersExists.defaultExpectation != nil {
+		mmCheckUsersExists.mock.t.Fatalf("Default expectation is already set for the UserService.CheckUsersExists method")
+	}
+
+	if len(mmCheckUsersExists.expectations) > 0 {
+		mmCheckUsersExists.mock.t.Fatalf("Some expectations are already set for the UserService.CheckUsersExists method")
+	}
+
+	mmCheckUsersExists.mock.funcCheckUsersExists = f
+	mmCheckUsersExists.mock.funcCheckUsersExistsOrigin = minimock.CallerInfo(1)
+	return mmCheckUsersExists.mock
+}
+
+// When sets expectation for the UserService.CheckUsersExists which will trigger the result defined by the following
+// Then helper
+func (mmCheckUsersExists *mUserServiceMockCheckUsersExists) When(ctx context.Context, usernames []string) *UserServiceMockCheckUsersExistsExpectation {
+	if mmCheckUsersExists.mock.funcCheckUsersExists != nil {
+		mmCheckUsersExists.mock.t.Fatalf("UserServiceMock.CheckUsersExists mock is already set by Set")
+	}
+
+	expectation := &UserServiceMockCheckUsersExistsExpectation{
+		mock:               mmCheckUsersExists.mock,
+		params:             &UserServiceMockCheckUsersExistsParams{ctx, usernames},
+		expectationOrigins: UserServiceMockCheckUsersExistsExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmCheckUsersExists.expectations = append(mmCheckUsersExists.expectations, expectation)
+	return expectation
+}
+
+// Then sets up UserService.CheckUsersExists return parameters for the expectation previously defined by the When method
+func (e *UserServiceMockCheckUsersExistsExpectation) Then(notFoundUsers []string, err error) *UserServiceMock {
+	e.results = &UserServiceMockCheckUsersExistsResults{notFoundUsers, err}
+	return e.mock
+}
+
+// Times sets number of times UserService.CheckUsersExists should be invoked
+func (mmCheckUsersExists *mUserServiceMockCheckUsersExists) Times(n uint64) *mUserServiceMockCheckUsersExists {
+	if n == 0 {
+		mmCheckUsersExists.mock.t.Fatalf("Times of UserServiceMock.CheckUsersExists mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmCheckUsersExists.expectedInvocations, n)
+	mmCheckUsersExists.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmCheckUsersExists
+}
+
+func (mmCheckUsersExists *mUserServiceMockCheckUsersExists) invocationsDone() bool {
+	if len(mmCheckUsersExists.expectations) == 0 && mmCheckUsersExists.defaultExpectation == nil && mmCheckUsersExists.mock.funcCheckUsersExists == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmCheckUsersExists.mock.afterCheckUsersExistsCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmCheckUsersExists.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// CheckUsersExists implements mm_user.UserService
+func (mmCheckUsersExists *UserServiceMock) CheckUsersExists(ctx context.Context, usernames []string) (notFoundUsers []string, err error) {
+	mm_atomic.AddUint64(&mmCheckUsersExists.beforeCheckUsersExistsCounter, 1)
+	defer mm_atomic.AddUint64(&mmCheckUsersExists.afterCheckUsersExistsCounter, 1)
+
+	mmCheckUsersExists.t.Helper()
+
+	if mmCheckUsersExists.inspectFuncCheckUsersExists != nil {
+		mmCheckUsersExists.inspectFuncCheckUsersExists(ctx, usernames)
+	}
+
+	mm_params := UserServiceMockCheckUsersExistsParams{ctx, usernames}
+
+	// Record call args
+	mmCheckUsersExists.CheckUsersExistsMock.mutex.Lock()
+	mmCheckUsersExists.CheckUsersExistsMock.callArgs = append(mmCheckUsersExists.CheckUsersExistsMock.callArgs, &mm_params)
+	mmCheckUsersExists.CheckUsersExistsMock.mutex.Unlock()
+
+	for _, e := range mmCheckUsersExists.CheckUsersExistsMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.notFoundUsers, e.results.err
+		}
+	}
+
+	if mmCheckUsersExists.CheckUsersExistsMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmCheckUsersExists.CheckUsersExistsMock.defaultExpectation.Counter, 1)
+		mm_want := mmCheckUsersExists.CheckUsersExistsMock.defaultExpectation.params
+		mm_want_ptrs := mmCheckUsersExists.CheckUsersExistsMock.defaultExpectation.paramPtrs
+
+		mm_got := UserServiceMockCheckUsersExistsParams{ctx, usernames}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmCheckUsersExists.t.Errorf("UserServiceMock.CheckUsersExists got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmCheckUsersExists.CheckUsersExistsMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.usernames != nil && !minimock.Equal(*mm_want_ptrs.usernames, mm_got.usernames) {
+				mmCheckUsersExists.t.Errorf("UserServiceMock.CheckUsersExists got unexpected parameter usernames, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmCheckUsersExists.CheckUsersExistsMock.defaultExpectation.expectationOrigins.originUsernames, *mm_want_ptrs.usernames, mm_got.usernames, minimock.Diff(*mm_want_ptrs.usernames, mm_got.usernames))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmCheckUsersExists.t.Errorf("UserServiceMock.CheckUsersExists got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmCheckUsersExists.CheckUsersExistsMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmCheckUsersExists.CheckUsersExistsMock.defaultExpectation.results
+		if mm_results == nil {
+			mmCheckUsersExists.t.Fatal("No results are set for the UserServiceMock.CheckUsersExists")
+		}
+		return (*mm_results).notFoundUsers, (*mm_results).err
+	}
+	if mmCheckUsersExists.funcCheckUsersExists != nil {
+		return mmCheckUsersExists.funcCheckUsersExists(ctx, usernames)
+	}
+	mmCheckUsersExists.t.Fatalf("Unexpected call to UserServiceMock.CheckUsersExists. %v %v", ctx, usernames)
+	return
+}
+
+// CheckUsersExistsAfterCounter returns a count of finished UserServiceMock.CheckUsersExists invocations
+func (mmCheckUsersExists *UserServiceMock) CheckUsersExistsAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmCheckUsersExists.afterCheckUsersExistsCounter)
+}
+
+// CheckUsersExistsBeforeCounter returns a count of UserServiceMock.CheckUsersExists invocations
+func (mmCheckUsersExists *UserServiceMock) CheckUsersExistsBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmCheckUsersExists.beforeCheckUsersExistsCounter)
+}
+
+// Calls returns a list of arguments used in each call to UserServiceMock.CheckUsersExists.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmCheckUsersExists *mUserServiceMockCheckUsersExists) Calls() []*UserServiceMockCheckUsersExistsParams {
+	mmCheckUsersExists.mutex.RLock()
+
+	argCopy := make([]*UserServiceMockCheckUsersExistsParams, len(mmCheckUsersExists.callArgs))
+	copy(argCopy, mmCheckUsersExists.callArgs)
+
+	mmCheckUsersExists.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockCheckUsersExistsDone returns true if the count of the CheckUsersExists invocations corresponds
+// the number of defined expectations
+func (m *UserServiceMock) MinimockCheckUsersExistsDone() bool {
+	if m.CheckUsersExistsMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.CheckUsersExistsMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.CheckUsersExistsMock.invocationsDone()
+}
+
+// MinimockCheckUsersExistsInspect logs each unmet expectation
+func (m *UserServiceMock) MinimockCheckUsersExistsInspect() {
+	for _, e := range m.CheckUsersExistsMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to UserServiceMock.CheckUsersExists at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterCheckUsersExistsCounter := mm_atomic.LoadUint64(&m.afterCheckUsersExistsCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.CheckUsersExistsMock.defaultExpectation != nil && afterCheckUsersExistsCounter < 1 {
+		if m.CheckUsersExistsMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to UserServiceMock.CheckUsersExists at\n%s", m.CheckUsersExistsMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to UserServiceMock.CheckUsersExists at\n%s with params: %#v", m.CheckUsersExistsMock.defaultExpectation.expectationOrigins.origin, *m.CheckUsersExistsMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcCheckUsersExists != nil && afterCheckUsersExistsCounter < 1 {
+		m.t.Errorf("Expected call to UserServiceMock.CheckUsersExists at\n%s", m.funcCheckUsersExistsOrigin)
+	}
+
+	if !m.CheckUsersExistsMock.invocationsDone() && afterCheckUsersExistsCounter > 0 {
+		m.t.Errorf("Expected %d calls to UserServiceMock.CheckUsersExists at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.CheckUsersExistsMock.expectedInvocations), m.CheckUsersExistsMock.expectedInvocationsOrigin, afterCheckUsersExistsCounter)
+	}
 }
 
 type mUserServiceMockCreate struct {
@@ -1479,6 +1832,8 @@ func (m *UserServiceMock) MinimockUpdateInspect() {
 func (m *UserServiceMock) MinimockFinish() {
 	m.finishOnce.Do(func() {
 		if !m.minimockDone() {
+			m.MinimockCheckUsersExistsInspect()
+
 			m.MinimockCreateInspect()
 
 			m.MinimockDeleteInspect()
@@ -1509,6 +1864,7 @@ func (m *UserServiceMock) MinimockWait(timeout mm_time.Duration) {
 func (m *UserServiceMock) minimockDone() bool {
 	done := true
 	return done &&
+		m.MinimockCheckUsersExistsDone() &&
 		m.MinimockCreateDone() &&
 		m.MinimockDeleteDone() &&
 		m.MinimockGetDone() &&
