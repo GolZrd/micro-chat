@@ -35,6 +35,7 @@ type UserRepository interface {
 	Update(ctx context.Context, id int64, info UpdateUserDTO) error
 	Delete(ctx context.Context, id int64) error
 	GetByEmail(ctx context.Context, email string) (*model.UserAuthData, error)
+	GetByUsernames(ctx context.Context, usernames []string) ([]string, error)
 }
 
 type repo struct {
@@ -159,4 +160,27 @@ func (r *repo) GetByEmail(ctx context.Context, email string) (*model.UserAuthDat
 	}
 
 	return converter.ToUserAuthDataFromRepo(&userData), nil
+}
+
+// GetByUsernames возвращает имена существующих пользователей
+func (r *repo) GetByUsernames(ctx context.Context, usernames []string) ([]string, error) {
+	// Простой запрос, потому что проверяем только имя, squirrel builder избыточен
+	query := "SELECT username FROM users WHERE username = ANY($1)"
+
+	rows, err := r.db.Query(ctx, query, usernames)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query: %w", err)
+	}
+
+	var existingUsers []string
+	for rows.Next() {
+		var username string
+		if err := rows.Scan(&username); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
+		}
+
+		existingUsers = append(existingUsers, username)
+	}
+	// Возвращаются только те пользователи, которые есть в БД
+	return existingUsers, nil
 }

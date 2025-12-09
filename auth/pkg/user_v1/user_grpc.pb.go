@@ -20,10 +20,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UserAPI_Create_FullMethodName = "/user_v1.UserAPI/Create"
-	UserAPI_Get_FullMethodName    = "/user_v1.UserAPI/Get"
-	UserAPI_Update_FullMethodName = "/user_v1.UserAPI/Update"
-	UserAPI_Delete_FullMethodName = "/user_v1.UserAPI/Delete"
+	UserAPI_Create_FullMethodName           = "/user_v1.UserAPI/Create"
+	UserAPI_Get_FullMethodName              = "/user_v1.UserAPI/Get"
+	UserAPI_Update_FullMethodName           = "/user_v1.UserAPI/Update"
+	UserAPI_Delete_FullMethodName           = "/user_v1.UserAPI/Delete"
+	UserAPI_CheckUsersExists_FullMethodName = "/user_v1.UserAPI/CheckUsersExists"
 )
 
 // UserAPIClient is the client API for UserAPI service.
@@ -34,6 +35,7 @@ type UserAPIClient interface {
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	CheckUsersExists(ctx context.Context, in *CheckUsersExistsRequest, opts ...grpc.CallOption) (*CheckUsersExistsResponse, error)
 }
 
 type userAPIClient struct {
@@ -84,6 +86,16 @@ func (c *userAPIClient) Delete(ctx context.Context, in *DeleteRequest, opts ...g
 	return out, nil
 }
 
+func (c *userAPIClient) CheckUsersExists(ctx context.Context, in *CheckUsersExistsRequest, opts ...grpc.CallOption) (*CheckUsersExistsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CheckUsersExistsResponse)
+	err := c.cc.Invoke(ctx, UserAPI_CheckUsersExists_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserAPIServer is the server API for UserAPI service.
 // All implementations must embed UnimplementedUserAPIServer
 // for forward compatibility.
@@ -92,6 +104,7 @@ type UserAPIServer interface {
 	Get(context.Context, *GetRequest) (*GetResponse, error)
 	Update(context.Context, *UpdateRequest) (*emptypb.Empty, error)
 	Delete(context.Context, *DeleteRequest) (*emptypb.Empty, error)
+	CheckUsersExists(context.Context, *CheckUsersExistsRequest) (*CheckUsersExistsResponse, error)
 	mustEmbedUnimplementedUserAPIServer()
 }
 
@@ -113,6 +126,9 @@ func (UnimplementedUserAPIServer) Update(context.Context, *UpdateRequest) (*empt
 }
 func (UnimplementedUserAPIServer) Delete(context.Context, *DeleteRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedUserAPIServer) CheckUsersExists(context.Context, *CheckUsersExistsRequest) (*CheckUsersExistsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CheckUsersExists not implemented")
 }
 func (UnimplementedUserAPIServer) mustEmbedUnimplementedUserAPIServer() {}
 func (UnimplementedUserAPIServer) testEmbeddedByValue()                 {}
@@ -207,6 +223,24 @@ func _UserAPI_Delete_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserAPI_CheckUsersExists_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckUsersExistsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserAPIServer).CheckUsersExists(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserAPI_CheckUsersExists_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserAPIServer).CheckUsersExists(ctx, req.(*CheckUsersExistsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserAPI_ServiceDesc is the grpc.ServiceDesc for UserAPI service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -229,6 +263,10 @@ var UserAPI_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Delete",
 			Handler:    _UserAPI_Delete_Handler,
+		},
+		{
+			MethodName: "CheckUsersExists",
+			Handler:    _UserAPI_CheckUsersExists_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

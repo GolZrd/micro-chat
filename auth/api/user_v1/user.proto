@@ -13,7 +13,9 @@ service UserAPI {
     rpc Get(GetRequest) returns (GetResponse);                 // Get - ручка получения информации о пользователе по его идентификатору. 
     rpc Update(UpdateRequest) returns (google.protobuf.Empty); // Update - ручка обновления информации о пользователе по его идентификатору
     rpc Delete(DeleteRequest) returns (google.protobuf.Empty); // Delete - удаление пользователя из системы по его идентификатору. 
+    rpc CheckUsersExists(CheckUsersExistsRequest) returns (CheckUsersExistsResponse); // CheckUsersExists - ручка проверки существования пользователей
 }
+
 
 enum Role {
     guest = 0;
@@ -67,4 +69,12 @@ message UpdateRequest {
 
 message DeleteRequest {
     int64 id = 1;
+}
+
+message CheckUsersExistsRequest {
+    repeated string usernames = 1;
+}
+
+message CheckUsersExistsResponse {
+    repeated string notFoundUsers = 1; // Имена пользователей, которые не найдены
 }
