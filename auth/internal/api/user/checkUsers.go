@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *Implementation) CheckUsers(ctx context.Context, req *descUser.CheckUsersExistsRequest) (*descUser.CheckUsersExistsResponse, error) {
+func (s *Implementation) CheckUsersExists(ctx context.Context, req *descUser.CheckUsersExistsRequest) (*descUser.CheckUsersExistsResponse, error) {
 	if len(req.Usernames) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "usernames is required")
 	}

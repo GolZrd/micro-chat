@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/GolZrd/micro-chat/chat-server/internal/client/grpc/access"
+	"github.com/GolZrd/micro-chat/chat-server/internal/client/grpc/auth"
 	"github.com/GolZrd/micro-chat/chat-server/internal/logger"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -19,12 +19,12 @@ const (
 )
 
 type AuthInterceptor struct {
-	accessClient *access.Client
+	authClient *auth.Client
 }
 
-func NewAuthInterceptor(accessClient *access.Client) *AuthInterceptor {
+func NewAuthInterceptor(authClient *auth.Client) *AuthInterceptor {
 	return &AuthInterceptor{
-		accessClient: accessClient,
+		authClient: authClient,
 	}
 }
 
@@ -58,7 +58,7 @@ func (i *AuthInterceptor) Unary() grpc.UnaryServerInterceptor {
 		outgoingCtx := metadata.AppendToOutgoingContext(ctx, "authorization", authHeader[0])
 
 		// Вызываем метод для проревки доступа
-		err = i.accessClient.CheckAccess(outgoingCtx, info.FullMethod)
+		err = i.authClient.CheckAccess(outgoingCtx, info.FullMethod)
 		if err != nil {
 			logger.Debug("access check failed",
 				zap.String("method", info.FullMethod),
