@@ -4,10 +4,13 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	chat_v1 "github.com/GolZrd/micro-chat/chat-server/pkg/chat_v1"
@@ -47,8 +50,7 @@ func CreateChat(client *clients.ChatClient) gin.HandlerFunc {
 		})
 		if err != nil {
 			logger.Error("failed to create chat", zap.Error(err))
-			// Интерцептор вернет ошибку если токен невалиден
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			handleChatError(c, err)
 			return
 		}
 
@@ -189,5 +191,56 @@ func DeleteChat(client *clients.ChatClient) gin.HandlerFunc {
 		logger.Info("Chat deleted successfully", zap.Int64("chat_id", chatId))
 
 		c.JSON(http.StatusOK, gin.H{"status": "chat deleted successfully"})
+	}
+}
+
+func handleChatError(c *gin.Context, err error) {
+	st, ok := status.FromError(err)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Внутренняя ошибка",
+			"code":  "INTERNAL_ERROR",
+		})
+		return
+	}
+
+	msg := st.Message()
+	switch st.Code() {
+	case codes.NotFound:
+		if strings.HasPrefix(msg, "USERS_NOT_FOUND:") {
+			usersList := strings.TrimPrefix(msg, "USERS_NOT_FOUND:")
+			users := strings.Split(usersList, ",")
+
+			c.JSON(http.StatusNotFound, gin.H{
+				"error":           "Пользователи не найдены",
+				"code":            "USERS_NOT_FOUND",
+				"not_found_users": users,
+			})
+			return
+		}
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": msg,
+		})
+	case codes.InvalidArgument:
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": msg,
+			"code":  "INVALID_ARGUMENT",
+		})
+	case codes.Unauthenticated:
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "Требуется авторизация",
+			"code":  "UNAUTHENTICATED",
+		})
+	case codes.PermissionDenied:
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "Доступ запрещен",
+			"code":  "PERMISSION_DENIED",
+		})
+	default:
+		logger.Error("grpc error", zap.String("code", st.Code().String()), zap.String("msg", msg))
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Внутренняя ошибка",
+			"code":  "INTERNAL_ERROR",
+		})
 	}
 }

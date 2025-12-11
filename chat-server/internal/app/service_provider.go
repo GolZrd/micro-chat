@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/GolZrd/micro-chat/chat-server/internal/api"
-	"github.com/GolZrd/micro-chat/chat-server/internal/client/grpc/access"
+	"github.com/GolZrd/micro-chat/chat-server/internal/client/grpc/auth"
 	"github.com/GolZrd/micro-chat/chat-server/internal/closer"
 	"github.com/GolZrd/micro-chat/chat-server/internal/config"
 	"github.com/GolZrd/micro-chat/chat-server/internal/interceptor"
@@ -20,7 +20,7 @@ type serviceProvider struct {
 	cfg    *config.Config
 	pgPool *pgxpool.Pool
 
-	accessClient    *access.Client
+	authClient      *auth.Client
 	authInterceptor *interceptor.AuthInterceptor
 
 	chatRepository repository.ChatRepository
@@ -68,24 +68,30 @@ func (s *serviceProvider) PgPool(ctx context.Context) *pgxpool.Pool {
 	return s.pgPool
 }
 
-func (s *serviceProvider) AccessClient() *access.Client {
-	if s.accessClient == nil {
+func (s *serviceProvider) AuthClient() *auth.Client {
+	if s.authClient == nil {
 		cfg := s.Config()
 
 		address := "auth:" + cfg.GRPCAuthPort
-		client, err := access.NewClient(address)
+		client, err := auth.NewClient(address)
 		if err != nil {
 			log.Fatalf("failed to create access client: %v", err)
 		}
-		s.accessClient = client
+
+		// Добавляем в closer
+		closer.Add(func() error {
+			return client.Close()
+		})
+
+		s.authClient = client
 	}
 
-	return s.accessClient
+	return s.authClient
 }
 
 func (s *serviceProvider) AuthInterceptor() *interceptor.AuthInterceptor {
 	if s.authInterceptor == nil {
-		s.authInterceptor = interceptor.NewAuthInterceptor(s.AccessClient())
+		s.authInterceptor = interceptor.NewAuthInterceptor(s.AuthClient())
 	}
 
 	return s.authInterceptor
@@ -101,7 +107,7 @@ func (s *serviceProvider) ChatRepository(ctx context.Context) repository.ChatRep
 
 func (s *serviceProvider) ChatService(ctx context.Context) service.ChatService {
 	if s.chatService == nil {
-		s.chatService = service.NewService(s.ChatRepository(ctx))
+		s.chatService = service.NewService(s.ChatRepository(ctx), s.AuthClient())
 	}
 
 	return s.chatService

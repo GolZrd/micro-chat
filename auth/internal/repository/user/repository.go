@@ -165,7 +165,7 @@ func (r *repo) GetByEmail(ctx context.Context, email string) (*model.UserAuthDat
 // GetByUsernames возвращает имена существующих пользователей
 func (r *repo) GetByUsernames(ctx context.Context, usernames []string) ([]string, error) {
 	// Простой запрос, потому что проверяем только имя, squirrel builder избыточен
-	query := "SELECT username FROM users WHERE username = ANY($1)"
+	query := "SELECT name FROM users WHERE name = ANY($1)"
 
 	rows, err := r.db.Query(ctx, query, usernames)
 	if err != nil {

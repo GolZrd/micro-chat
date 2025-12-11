@@ -348,43 +348,146 @@ document.addEventListener('DOMContentLoaded', () => {
         createChatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const usernames = document.getElementById('chat_usernames').value.split(',').map(s => s.trim());
+            const inputEl = document.getElementById('chat_usernames');
+            const usernames = inputEl.value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+            const resultEl = document.getElementById('chatResult');
+
+            // Валидация на клиенте
+            if (usernames.length === 0) {
+                showToast({
+                    type: 'warning',
+                    title: 'Внимание',
+                    message: 'Введите имена пользователей через запятую'
+                });
+                return;
+            }
 
             try {
                 const response = await apiRequest('/api/chat/create', {
                     method: 'POST',
-                    body: JSON.stringify({usernames})
+                    body: JSON.stringify({ usernames })
                 });
                 
                 const result = await response.json();
-                const resultEl = document.getElementById('chatResult');
                 
                 if (response.ok) {
-                    resultEl.innerHTML = `✅ Чат создан! <a href="/chat?id=${result.chat_id}" style="color: #007bff;">Открыть →</a>`;
-                    resultEl.style.background = '#d4edda';
-                    resultEl.style.color = '#155724';
-                    
-                    document.getElementById('chat_usernames').value = '';
+                    // Успех - показываем toast и обновляем UI
+                    showToast({
+                        type: 'success',
+                        title: 'Чат создан!',
+                        message: `Чат #${result.chat_id} успешно создан`
+                    });
 
-                    // ✅ ОБНОВЛЯЕМ СПИСОК ЧАТОВ И СЧЕТЧИК
+                    // Показываем ссылку на чат
+                    if (resultEl) {
+                        resultEl.innerHTML = `✅ <a href="/chat?id=${result.chat_id}" style="color: #007bff;">Открыть чат →</a>`;
+                        resultEl.style.background = '#d4edda';
+                        resultEl.style.color = '#155724';
+                    }
+                    
+                    inputEl.value = '';
+
+                    // Обновляем список чатов и счетчик
                     await loadMyChats();
 
-                    // Если мы не на странице чатов, обновляем только счетчик
                     const chatsSection = document.getElementById('chatsSection');
                     if (!chatsSection || !chatsSection.classList.contains('active')) {
                         loadChatCount();
                     }
                 } else {
-                    resultEl.innerHTML = `❌ ${result.error}`;
+                    // Ошибка - обрабатываем по коду
+                    handleCreateChatError(result, resultEl);
+                }
+            } catch (error) {
+                console.error('Network error:', error);
+                showToast({
+                    type: 'error',
+                    title: 'Ошибка сети',
+                    message: 'Не удалось подключиться к серверу'
+                });
+                
+                if (resultEl) {
+                    resultEl.innerHTML = `❌ Ошибка сети`;
                     resultEl.style.background = '#f8d7da';
                     resultEl.style.color = '#721c24';
                 }
-            } catch (error) {
-                document.getElementById('chatResult').innerHTML = `❌ ${error}`;
             }
         });
     }
 });
+
+// Обработка ошибок создания чата
+function handleCreateChatError(result, resultEl) {
+    console.log('Create chat error:', result);
+
+    switch (result.code) {
+        case 'USERS_NOT_FOUND':
+            showToast({
+                type: 'error',
+                title: 'Пользователи не найдены',
+                message: 'Следующие пользователи не зарегистрированы:',
+                users: result.not_found_users || [],
+                duration: 10000
+            });
+            
+            if (resultEl) {
+                const usersList = (result.not_found_users || []).join(', ');
+                resultEl.innerHTML = `❌ Пользователи не найдены: ${usersList}`;
+                resultEl.style.background = '#f8d7da';
+                resultEl.style.color = '#721c24';
+            }
+            break;
+
+        case 'UNAUTHENTICATED':
+            showToast({
+                type: 'error',
+                title: 'Сессия истекла',
+                message: 'Пожалуйста, войдите снова'
+            });
+            
+            // Можно добавить редирект на логин
+            setTimeout(() => {
+                TokenManager.clear();
+                updateAuthStatus();
+            }, 2000);
+            break;
+
+        case 'INVALID_ARGUMENT':
+            showToast({
+                type: 'warning',
+                title: 'Ошибка валидации',
+                message: result.error
+            });
+            
+            if (resultEl) {
+                resultEl.innerHTML = `❌ ${result.error}`;
+                resultEl.style.background = '#fff3cd';
+                resultEl.style.color = '#856404';
+            }
+            break;
+
+        case 'PERMISSION_DENIED':
+            showToast({
+                type: 'error',
+                title: 'Доступ запрещён',
+                message: result.error || 'У вас нет прав для создания чата'
+            });
+            break;
+
+        default:
+            showToast({
+                type: 'error',
+                title: 'Ошибка',
+                message: result.error || 'Не удалось создать чат'
+            });
+            
+            if (resultEl) {
+                resultEl.innerHTML = `❌ ${result.error || 'Неизвестная ошибка'}`;
+                resultEl.style.background = '#f8d7da';
+                resultEl.style.color = '#721c24';
+            }
+    }
+}
 
 async function logout() {
     try {
@@ -809,6 +912,57 @@ function initMessageInput() {
     }
     
     console.log('✅ Emoji picker initialized');
+}
+
+// ==================== TOAST УВЕДОМЛЕНИЯ ====================
+
+function showToast({ type = 'error', title, message, users = [], duration = 6000 }) {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const icons = {
+        success: '✅',
+        error: '❌',
+        warning: '⚠️'
+    };
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+
+    // Генерируем HTML для списка пользователей
+    let usersHtml = '';
+    if (users.length > 0) {
+        usersHtml = `
+            <div class="toast-users">
+                ${users.map(u => `<span class="toast-user">@${u}</span>`).join('')}
+            </div>
+        `;
+    }
+
+    toast.innerHTML = `
+        <span class="toast-icon">${icons[type] || 'ℹ️'}</span>
+        <div class="toast-content">
+            <div class="toast-title">${title}</div>
+            <div class="toast-message">${message}</div>
+            ${usersHtml}
+        </div>
+        <button class="toast-close" onclick="closeToast(this)">×</button>
+    `;
+
+    container.appendChild(toast);
+
+    // Автоматическое закрытие
+    if (duration > 0) {
+        setTimeout(() => closeToast(toast.querySelector('.toast-close')), duration);
+    }
+}
+
+function closeToast(btn) {
+    const toast = btn.closest('.toast');
+    if (toast) {
+        toast.classList.add('hiding');
+        setTimeout(() => toast.remove(), 300);
+    }
 }
 
 // ==================== INITIALIZATION ====================
