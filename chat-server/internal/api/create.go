@@ -2,8 +2,11 @@ package api
 
 import (
 	"context"
+	"errors"
+	"strings"
 
 	"github.com/GolZrd/micro-chat/chat-server/internal/logger"
+	"github.com/GolZrd/micro-chat/chat-server/internal/service"
 	"github.com/GolZrd/micro-chat/chat-server/internal/utils"
 	desc "github.com/GolZrd/micro-chat/chat-server/pkg/chat_v1"
 	"go.uber.org/zap"
@@ -26,9 +29,6 @@ func (s *Implementation) Create(ctx context.Context, req *desc.CreateRequest) (*
 	// Создаем срез участников
 	participants := make([]string, 0, len(req.Usernames))
 
-	// Добавляем создателя
-	participants = append(participants, creatorUsername)
-
 	// Добавляем остальных участников чата, и проверяем чтобы не было создателя
 	for _, username := range req.Usernames {
 		if username == "" || username == creatorUsername {
@@ -41,6 +41,11 @@ func (s *Implementation) Create(ctx context.Context, req *desc.CreateRequest) (*
 	// Передаем создателя отдельно от приглашенных
 	id, err := s.chatService.Create(ctx, creatorUsername, participants)
 	if err != nil {
+		// Проверяем типизированную ошибку
+		var usersNotFound *service.ErrUserNotFound
+		if errors.As(err, &usersNotFound) {
+			return nil, status.Errorf(codes.NotFound, "USERS_NOT_FOUND:%s", strings.Join(usersNotFound.Usernames, ","))
+		}
 		return nil, status.Errorf(codes.Internal, "failed to create chat: %v", err)
 	}
 

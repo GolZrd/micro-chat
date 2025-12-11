@@ -4,10 +4,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/GolZrd/micro-chat/chat-server/internal/logger"
 	"go.uber.org/zap"
 )
+
+type ErrUserNotFound struct {
+	Usernames []string
+}
+
+func (e *ErrUserNotFound) Error() string {
+	return fmt.Sprintf("users not found: %s", strings.Join(e.Usernames, ","))
+}
 
 func (s *service) Create(ctx context.Context, creatorUsername string, usernames []string) (int64, error) {
 	// Проверяем что Usernames не пусто
@@ -25,7 +34,7 @@ func (s *service) Create(ctx context.Context, creatorUsername string, usernames 
 	// Если переданных пользователей не существуют, то возвращаем ошибку
 	if len(notFoundUsers) > 0 {
 		logger.Warn("users not found", zap.Strings("usernames", notFoundUsers))
-		return 0, fmt.Errorf("users not found: %v", notFoundUsers)
+		return 0, &ErrUserNotFound{Usernames: notFoundUsers}
 	}
 
 	// Собираем всех участников
