@@ -5,15 +5,18 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"os"
 
 	"github.com/GolZrd/micro-chat/auth/internal/closer"
 	"github.com/GolZrd/micro-chat/auth/internal/interceptor"
 	"github.com/GolZrd/micro-chat/auth/internal/logger"
+	"github.com/GolZrd/micro-chat/auth/internal/metric"
 	descAccess "github.com/GolZrd/micro-chat/auth/pkg/access_v1"
 	descAuth "github.com/GolZrd/micro-chat/auth/pkg/auth_v1"
 	descUser "github.com/GolZrd/micro-chat/auth/pkg/user_v1"
 	"github.com/natefinch/lumberjack"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
@@ -25,6 +28,7 @@ import (
 type App struct {
 	serviceProvider *serviceProvider
 	grpcServer      *grpc.Server
+	httpServer      *http.Server
 }
 
 // Создаем объект нашей структуры App
@@ -45,6 +49,13 @@ func (a *App) Run() error {
 		closer.Wait()
 	}()
 
+	// В отдельной горутине запускаем http-сервер для prometheus
+	go func() {
+		if err := a.RunHttpServer(); err != nil {
+			log.Fatalf("failed to run http server: %v", err)
+		}
+	}()
+
 	return a.RunGRPCServer()
 }
 
@@ -53,7 +64,9 @@ func (a *App) InitDeps(ctx context.Context) error {
 	inits := []func(context.Context) error{
 		a.InitServiceProvider,
 		a.InitLogger,
+		a.InitMetrics,
 		a.InitGRPCServer,
+		a.InitHttpServer,
 	}
 
 	for _, f := range inits {
@@ -114,7 +127,7 @@ func (a *App) InitGRPCServer(ctx context.Context) error {
 	// Добовляем интерцептор
 	a.grpcServer = grpc.NewServer(
 		grpc.Creds(insecure.NewCredentials()),
-		grpc.UnaryInterceptor(interceptor.LogInterceptor),
+		grpc.ChainUnaryInterceptor(interceptor.MetricsInterceptor, interceptor.LogInterceptor),
 	)
 
 	reflection.Register(a.grpcServer)
@@ -135,6 +148,29 @@ func (a *App) RunGRPCServer() error {
 	}
 	err = a.grpcServer.Serve(lis)
 	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *App) InitMetrics(ctx context.Context) error {
+	return metric.Init(ctx)
+}
+
+func (a *App) InitHttpServer(_ context.Context) error {
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.Handler())
+
+	a.httpServer = &http.Server{
+		Addr:    ":2112",
+		Handler: mux,
+	}
+
+	return nil
+}
+
+func (a *App) RunHttpServer() error {
+	if err := a.httpServer.ListenAndServe(); err != nil {
 		return err
 	}
 	return nil
