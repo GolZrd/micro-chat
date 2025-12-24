@@ -1,6 +1,7 @@
 volumes:
   postgres_data:
   redis_data:
+  prometheus_data:
 
 networks:
   app-network:
@@ -13,6 +14,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "${GRPC_AUTH_PORT}:50051"
+      - "2112:2112" # Metrics
     environment:
       - DB_HOST=${PG_HOST}
       - DB_PORT=${PG_PORT}
@@ -147,5 +149,14 @@ services:
     depends_on:
       - auth
       - chat-server
+    networks:
+      - app-network
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
     networks:
       - app-network
