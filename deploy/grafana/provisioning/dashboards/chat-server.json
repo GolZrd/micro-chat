@@ -1,0 +1,146 @@
+{
+  "title": "Micro Chat - Chat Server",
+  "uid": "micro-chat-chat",
+  "tags": ["micro-chat", "chat"],
+  "timezone": "browser",
+  "refresh": "10s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Requests per Second by Method",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        {
+          "expr": "sum by (method) (rate(micro_chat_grpc_chat_server_request_total[1m]))",
+          "legendFormat": "{{method}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Latency by Method (p50, p95, p99)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (method, le) (rate(micro_chat_grpc_chat_server_request_duration_seconds_bucket[5m])))",
+          "legendFormat": "{{method}} p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (method, le) (rate(micro_chat_grpc_chat_server_request_duration_seconds_bucket[5m])))",
+          "legendFormat": "{{method}} p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by (method, le) (rate(micro_chat_grpc_chat_server_request_duration_seconds_bucket[5m])))",
+          "legendFormat": "{{method}} p99"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Request Status Distribution",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        {
+          "expr": "sum by (status) (increase(micro_chat_grpc_chat_server_request_total[1h]))",
+          "legendFormat": "{{status}}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": ["value", "percent"]
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Errors by Method",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        {
+          "expr": "sum by (method, status) (rate(micro_chat_grpc_chat_server_request_total{status!=\"OK\"}[5m]))",
+          "legendFormat": "{{method}} - {{status}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 50
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Requests In Flight",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        {
+          "expr": "micro_chat_grpc_chat_server_requests_in_flight",
+          "legendFormat": "In Flight"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              { "value": null, "color": "green" },
+              { "value": 50, "color": "yellow" },
+              { "value": 100, "color": "red" }
+            ]
+          }
+        }
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area"
+      }
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus"
+      }
+    ]
+  },
+  "schemaVersion": 38
+}
