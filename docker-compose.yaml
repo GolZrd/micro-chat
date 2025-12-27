@@ -2,6 +2,7 @@ volumes:
   postgres_data:
   redis_data:
   prometheus_data:
+  grafana_data:
 
 networks:
   app-network:
@@ -44,6 +45,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "${GRPC_CHAT_PORT}:50052"
+      - "2113:2113" # Metrics
     environment:
       - DB_HOST=${PG_HOST}
       - DB_PORT=${PG_PORT}
@@ -142,6 +144,7 @@ services:
       dockerfile: Dockerfile
     ports: 
       - "${HTTP_PORT}:8080"
+      - "2114:2114" # Metrics
     environment:
       - HTTP_PORT=8080
       - AUTH_GRPC_ADDR=${AUTH_GRPC_ADDR}
@@ -158,5 +161,16 @@ services:
     volumes:
       - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
+    networks:
+      - app-network
+  grafana:
+    image: grafana/grafana-oss:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
     networks:
       - app-network

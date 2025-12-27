@@ -2,14 +2,17 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/GolZrd/micro-chat/web-gateway/internal/clients"
 	"github.com/GolZrd/micro-chat/web-gateway/internal/handlers"
 	"github.com/GolZrd/micro-chat/web-gateway/internal/logger"
+	"github.com/GolZrd/micro-chat/web-gateway/internal/metric"
 	"github.com/GolZrd/micro-chat/web-gateway/internal/middleware"
 	"github.com/gin-gonic/gin"
 	"github.com/natefinch/lumberjack"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -20,6 +23,11 @@ func main() {
 	}
 
 	logger.Info("Starting web-gateway")
+
+	// Инициализируем Prometheus метрики
+	if err := metric.Init(); err != nil {
+		logger.Fatal("Failed to initialize Prometheus metrics", zap.Error(err))
+	}
 
 	// Создаем подключения к gRPC сервисам
 	authClient, err := clients.NewAuthClient(os.Getenv("AUTH_GRPC_ADDR"))
@@ -50,7 +58,7 @@ func main() {
 	r := gin.Default()
 
 	// Middleware для извлечения токена (применяется ко всем запросам)
-	r.Use(middleware.ExtractTokenMiddleware(), middleware.LoggingMiddleware())
+	r.Use(middleware.MetricsMiddleware(), middleware.ExtractTokenMiddleware(), middleware.LoggingMiddleware())
 
 	// Подключаем статистические файлы
 	r.Static("/static", "./static")
@@ -77,6 +85,20 @@ func main() {
 
 	// WebSocket для чата
 	r.GET("/ws/chat/:id", handlers.ConnectChat(chatClient))
+
+	// Запускаем HTTP сервер для прометеуса в горутине
+	go func() {
+		mux := http.NewServeMux()
+		mux.Handle("/metrics", promhttp.Handler())
+
+		metricsPort := "2114"
+
+		logger.Info("Metrics server starting", zap.String("port", metricsPort))
+
+		if err := http.ListenAndServe(":"+metricsPort, mux); err != nil {
+			logger.Fatal("Metrics server failed", zap.Error(err))
+		}
+	}()
 
 	port := os.Getenv("PORT")
 	if port == "" {

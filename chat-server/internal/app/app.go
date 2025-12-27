@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"os"
 
 	"github.com/GolZrd/micro-chat/chat-server/internal/closer"
 	"github.com/GolZrd/micro-chat/chat-server/internal/interceptor"
 	"github.com/GolZrd/micro-chat/chat-server/internal/logger"
+	"github.com/GolZrd/micro-chat/chat-server/internal/metric"
 	"github.com/natefinch/lumberjack"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
@@ -25,6 +28,7 @@ import (
 type App struct {
 	serviceProvider *serviceProvider
 	grpcServer      *grpc.Server
+	httpServer      *http.Server
 }
 
 // Создаем объект нашей структуры App
@@ -45,6 +49,12 @@ func (a *App) Run() error {
 		closer.Wait()
 	}()
 
+	go func() {
+		if err := a.RunHttpServer(); err != nil {
+			log.Fatalf("failed to run http server: %v", err)
+		}
+	}()
+
 	return a.RunGRPCServer()
 }
 
@@ -53,7 +63,9 @@ func (a *App) InitDeps(ctx context.Context) error {
 	inits := []func(context.Context) error{
 		a.InitServiceProvider,
 		a.InitLogger,
+		a.InitMetrics,
 		a.InitGRPCServer,
+		a.InitHttpServer,
 	}
 
 	for _, f := range inits {
@@ -114,7 +126,7 @@ func (a *App) InitGRPCServer(ctx context.Context) error {
 	// создаем gRPC-сервер c интерцептором
 	a.grpcServer = grpc.NewServer(
 		grpc.Creds(insecure.NewCredentials()),
-		grpc.UnaryInterceptor(grpcMiddleware.ChainUnaryServer(interceptor.LogInterceptor, a.serviceProvider.AuthInterceptor().Unary())),
+		grpc.UnaryInterceptor(grpcMiddleware.ChainUnaryServer(interceptor.MetricsInterceptor, interceptor.LogInterceptor, a.serviceProvider.AuthInterceptor().Unary())),
 	)
 
 	reflection.Register(a.grpcServer)
@@ -133,6 +145,28 @@ func (a *App) RunGRPCServer() error {
 	}
 	err = a.grpcServer.Serve(lis)
 	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *App) InitMetrics(ctx context.Context) error {
+	return metric.Init(ctx)
+}
+
+func (a *App) InitHttpServer(_ context.Context) error {
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.Handler())
+
+	a.httpServer = &http.Server{
+		Addr:    ":2113",
+		Handler: mux,
+	}
+	return nil
+}
+
+func (a *App) RunHttpServer() error {
+	if err := a.httpServer.ListenAndServe(); err != nil {
 		return err
 	}
 	return nil
