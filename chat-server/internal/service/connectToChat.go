@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -11,7 +10,6 @@ import (
 )
 
 // ConnectToChat подписывает на получение сообщений из чата
-// Может следует все таки добавить username подписчика, чтобы было нагляднее
 func (s *service) ConnectToChat(ctx context.Context, userId int64, chatID int64) (<-chan MessageDTO, error) {
 
 	logger.Info("Connecting to chat", zap.Int64("user_id", userId), zap.Int64("chat_id", chatID))
@@ -47,22 +45,6 @@ func (s *service) ConnectToChat(ctx context.Context, userId int64, chatID int64)
 		zap.String("subscriber_id", subscriberId),
 		zap.Int64("total_subscribers", s.subIDCounter),
 	)
-
-	// Запускаем горутину для отслеживания отмены контекста
-	go func() {
-		<-ctx.Done()
-
-		// Логгируем причину отключения
-		if err := ctx.Err(); err != nil {
-			if errors.Is(err, context.Canceled) {
-				logger.Debug("subscriber disconected", zap.String("subsriber_id", subscriberId), zap.String("reason", "canceld"))
-			} else if errors.Is(err, context.DeadlineExceeded) {
-				logger.Warn("subscriber timeout", zap.String("subsriber_id", subscriberId))
-			}
-		}
-
-		s.DisconnectFromChat(chatID, subscriberId)
-	}()
 
 	// Отправляем последние сообщения
 	go s.sendRecentMessages(ctx, chatID, subscriberId, msgChan)

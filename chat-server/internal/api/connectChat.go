@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"io"
 
 	"github.com/GolZrd/micro-chat/chat-server/internal/logger"
@@ -30,14 +31,18 @@ func (s *Implementation) ConnectChat(req *desc.ConnectChatRequest, stream desc.C
 		return status.Errorf(codes.NotFound, "failed to connect to chat: %v", err)
 	}
 
-	// Горутина в SubscribeToChat автоматически отпишется при отмене контекста
-	defer logger.Debug("Client disconnected from chat", zap.Int64("chat_id", req.ChatId))
+	// Формируем ID подписчика
+	subscriberId := fmt.Sprintf("sub_%d_%d", req.ChatId, userId)
+
+	// При отключении от чата отписываемся
+	defer s.chatService.DisconnectFromChat(req.ChatId, subscriberId)
 
 	// Слушаем канал и отправляем сообщения клиенту
 	for {
 		select {
 		case msg, ok := <-msgChan:
 			if !ok {
+				logger.Debug("Message channel closed", zap.Int64("chat_id", req.ChatId))
 				return nil
 			}
 			// Преобразуем в proto

@@ -52,3 +52,50 @@ func LogInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServer
 
 	return resp, err
 }
+
+func LogStreamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+	// Логируем начало
+	logger.Info("stream started", zap.String("method", info.FullMethod))
+
+	start := time.Now()
+
+	err := handler(srv, stream)
+
+	// Логируем результат
+	duration := time.Since(start)
+
+	if err != nil {
+		code := status.Code(err)
+
+		switch code {
+		// При обычном завершении
+		case codes.Canceled:
+			logger.Info("stream ended (client disconnected)",
+				zap.String("method", info.FullMethod),
+				zap.Duration("duration", duration),
+			)
+		// Клиентские ошибки
+		case codes.InvalidArgument, codes.NotFound,
+			codes.Unauthenticated, codes.PermissionDenied:
+			logger.Warn("stream ended with client error",
+				zap.String("method", info.FullMethod),
+				zap.Duration("duration", duration),
+				zap.String("code", code.String()),
+			)
+		// Серверные ошибки
+		default:
+			logger.Error("stream ended with server error",
+				zap.String("method", info.FullMethod),
+				zap.Duration("duration", duration),
+				zap.Error(err),
+			)
+		}
+	} else {
+		logger.Info("stream completed",
+			zap.String("method", info.FullMethod),
+			zap.Duration("duration", duration),
+		)
+	}
+
+	return err
+}
