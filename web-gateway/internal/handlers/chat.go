@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"strconv"
@@ -128,8 +129,9 @@ func ConnectChat(client *clients.ChatClient) gin.HandlerFunc {
 		}
 		defer ws.Close()
 
-		// Создаем контекст с токеном
-		ctx := utils.ContextWithToken(c)
+		// Создаем контекст с Отменой через контекст с токеном
+		ctx, cancel := context.WithCancel(utils.ContextWithToken(c))
+		defer cancel() // Отменяем контекст
 
 		// Подключаемся к gRPC стриму
 		stream, err := client.Client.ConnectChat(ctx, &chat_v1.ConnectChatRequest{
@@ -140,13 +142,33 @@ func ConnectChat(client *clients.ChatClient) gin.HandlerFunc {
 			return
 		}
 
+		logger.Info("connected to chat", zap.Int64("chat_id", chatId))
+
+		// Канал для завершения webSocket соединения
+		done := make(chan struct{})
+
+		// Делаем горутину, которая отслеживает закрытие webSocket соединения
+		go func() {
+			defer close(done)
+
+			// ждем закрытия webSocket
+			for {
+				_, _, err := ws.ReadMessage()
+				if err != nil {
+					logger.Debug("Websocket closed", zap.Int64("chat_id", chatId))
+					cancel() // Отменяем контекст
+					return
+				}
+			}
+		}()
+
 		// Читаем сообщения из стрима и отправляем их в WebSocket
 		for {
 			msg, err := stream.Recv()
-			if err == io.EOF {
-				break
-			}
 			if err != nil {
+				if err == io.EOF || ctx.Err() != nil {
+					break
+				}
 				logger.Error("failed to receive message", zap.Error(err))
 				break
 			}
@@ -162,6 +184,9 @@ func ConnectChat(client *clients.ChatClient) gin.HandlerFunc {
 				break
 			}
 		}
+
+		// Ожидаем завершения webSocket соединения
+		<-done
 	}
 
 }

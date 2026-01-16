@@ -127,6 +127,7 @@ func (a *App) InitGRPCServer(ctx context.Context) error {
 	a.grpcServer = grpc.NewServer(
 		grpc.Creds(insecure.NewCredentials()),
 		grpc.UnaryInterceptor(grpcMiddleware.ChainUnaryServer(interceptor.MetricsInterceptor, interceptor.LogInterceptor, a.serviceProvider.AuthInterceptor().Unary())),
+		grpc.StreamInterceptor(interceptor.LogStreamInterceptor), // Добавил стрим интерцептор
 	)
 
 	reflection.Register(a.grpcServer)
