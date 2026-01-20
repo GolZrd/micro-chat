@@ -17,7 +17,7 @@ func (s *Implementation) Create(ctx context.Context, req *descUser.CreateRequest
 
 	// proto → service DTO
 	input := userService.CreateUserDTO{
-		Name:            req.Info.Name,
+		Username:        req.Info.Username,
 		Email:           req.Info.Email,
 		Password:        req.Info.Password,
 		PasswordConfirm: req.Info.PasswordConfirm,
@@ -39,7 +39,7 @@ func validateCreateUser(req *descUser.CreateRequest) error {
 		return status.Error(codes.InvalidArgument, "info is required")
 	}
 
-	if req.Info.Name == "" {
+	if req.Info.Username == "" {
 		return status.Error(codes.InvalidArgument, "name is required")
 	}
 

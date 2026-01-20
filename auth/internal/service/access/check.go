@@ -19,7 +19,7 @@ func (s *service) Check(ctx context.Context, accessToken string, endPoint string
 
 	// Используем уровень дебаг, для отладки
 	logger.Debug("Token verified",
-		zap.String("user", claims.Name),
+		zap.String("user", claims.Username),
 		zap.String("role", claims.Role),
 		zap.String("endpoint", endPoint),
 	)
@@ -42,14 +42,14 @@ func (s *service) Check(ctx context.Context, accessToken string, endPoint string
 	_, ok := allowedRoles[claims.Role]
 	if !ok {
 		// Не критическая ошибка, поэтому уровень Warn
-		logger.Warn("Permission denied", zap.String("user", claims.Name), zap.String("user_role", claims.Role), zap.Strings("allowedRoles", getRolesList(allowedRoles)), zap.String("endpoint", endPoint))
+		logger.Warn("Permission denied", zap.String("username", claims.Username), zap.String("user_role", claims.Role), zap.Strings("allowedRoles", getRolesList(allowedRoles)), zap.String("endpoint", endPoint))
 
 		return fmt.Errorf("permission_denied: user %s with role %s has no access to %s",
-			claims.Name, claims.Role, endPoint)
+			claims.Username, claims.Role, endPoint)
 	}
 	// логируем на DEBUG (API слой уже залогировал на INFO)
 	logger.Debug("Access granted by service",
-		zap.String("user", claims.Name),
+		zap.String("user", claims.Username),
 		zap.String("role", claims.Role),
 		zap.String("endpoint", endPoint),
 	)

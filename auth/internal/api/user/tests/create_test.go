@@ -29,7 +29,7 @@ func TestCreate(t *testing.T) {
 			name: "success case",
 			req: &desc.CreateRequest{
 				Info: &desc.UserInfo{
-					Name:            "test",
+					Username:        "test",
 					Email:           "test@mail.ru",
 					Password:        "test",
 					PasswordConfirm: "test",
@@ -56,7 +56,7 @@ func TestCreate(t *testing.T) {
 			name: "validation error - name is empty",
 			req: &desc.CreateRequest{
 				Info: &desc.UserInfo{
-					Name:            "",
+					Username:        "",
 					Email:           "test@mail.ru",
 					Password:        "test",
 					PasswordConfirm: "test",
@@ -72,7 +72,7 @@ func TestCreate(t *testing.T) {
 			name: "validation error - email is empty",
 			req: &desc.CreateRequest{
 				Info: &desc.UserInfo{
-					Name:            "test",
+					Username:        "test",
 					Email:           "",
 					Password:        "test",
 					PasswordConfirm: "test",
@@ -88,7 +88,7 @@ func TestCreate(t *testing.T) {
 			name: "validation error - password is empty",
 			req: &desc.CreateRequest{
 				Info: &desc.UserInfo{
-					Name:            "test",
+					Username:        "test",
 					Email:           "test@mail.ru",
 					Password:        "",
 					PasswordConfirm: "test",
@@ -104,7 +104,7 @@ func TestCreate(t *testing.T) {
 			name: "validation error - password confirm is empty",
 			req: &desc.CreateRequest{
 				Info: &desc.UserInfo{
-					Name:            "test",
+					Username:        "test",
 					Email:           "test@mail.ru",
 					Password:        "test",
 					PasswordConfirm: "",
@@ -120,7 +120,7 @@ func TestCreate(t *testing.T) {
 			name: "service error",
 			req: &desc.CreateRequest{
 				Info: &desc.UserInfo{
-					Name:            "test",
+					Username:        "test",
 					Email:           "test@mail.ru",
 					Password:        "test",
 					PasswordConfirm: "test",
@@ -146,7 +146,7 @@ func TestCreate(t *testing.T) {
 
 			if tt.req.Info != nil {
 				tt.InitMock(serviceMock, ctx, userService.CreateUserDTO{
-					Name:            tt.req.Info.Name,
+					Username:        tt.req.Info.Username,
 					Email:           tt.req.Info.Email,
 					Password:        tt.req.Info.Password,
 					PasswordConfirm: tt.req.Info.PasswordConfirm,

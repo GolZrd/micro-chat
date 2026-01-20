@@ -20,7 +20,7 @@ func (s *service) Get(ctx context.Context, id int64) (*model.User, error) {
 	logger.Info(
 		"Get user",
 		zap.Int64("user_id", id),
-		zap.String("Name", user.Info.Name),
+		zap.String("Name", user.Info.Username),
 		zap.String("Role", user.Info.Role),
 	)
 

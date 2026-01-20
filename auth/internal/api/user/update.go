@@ -20,15 +20,15 @@ func (s *Implementation) Update(ctx context.Context, req *descUser.UpdateRequest
 		return nil, status.Error(codes.InvalidArgument, "info is required")
 	}
 
-	if req.Info.Name == nil && req.Info.Email == nil {
+	if req.Info.Username == nil && req.Info.Email == nil {
 		return nil, status.Error(codes.InvalidArgument, "at least one field is required")
 	}
 
 	// proto → service DTO
 	input := userService.UpdateUserDTO{}
 
-	if req.Info.Name != nil {
-		input.Name = &req.Info.Name.Value
+	if req.Info.Username != nil {
+		input.Username = &req.Info.Username.Value
 	}
 
 	if req.Info.Email != nil {

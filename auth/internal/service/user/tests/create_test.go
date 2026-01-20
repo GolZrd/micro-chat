@@ -32,7 +32,7 @@ func TestCreate(t *testing.T) {
 		{
 			name: "success case",
 			input: userService.CreateUserDTO{
-				Name:            "test",
+				Username:        "test",
 				Email:           "test@mail.ru",
 				Password:        "test",
 				PasswordConfirm: "test",
@@ -41,7 +41,7 @@ func TestCreate(t *testing.T) {
 			UserRepositoryMock: func(mock *repoMocks.UserRepositoryMock, ctx context.Context, input userService.CreateUserDTO) {
 				mock.GetByEmailMock.Expect(ctx, input.Email).Return(nil, userRepository.ErrUserNotFound)
 				mock.CreateMock.Expect(ctx, userRepository.CreateUserDTO{
-					Name:     input.Name,
+					Username: input.Username,
 					Email:    input.Email,
 					Password: input.Password,
 					Role:     input.Role,
@@ -53,7 +53,7 @@ func TestCreate(t *testing.T) {
 		{
 			name: "passwords do not match",
 			input: userService.CreateUserDTO{
-				Name:            "test",
+				Username:        "test",
 				Email:           "test@mail.ru",
 				Password:        "test",
 				PasswordConfirm: "Test2",
@@ -66,7 +66,7 @@ func TestCreate(t *testing.T) {
 		{
 			name: "user already exists",
 			input: userService.CreateUserDTO{
-				Name:            "test",
+				Username:        "test",
 				Email:           "test@mail.ru",
 				Password:        "test",
 				PasswordConfirm: "test",
@@ -82,7 +82,7 @@ func TestCreate(t *testing.T) {
 		{
 			name: "get user by email - db error",
 			input: userService.CreateUserDTO{
-				Name:            "test",
+				Username:        "test",
 				Email:           "test@mail.ru",
 				Password:        "test",
 				PasswordConfirm: "test",
@@ -97,7 +97,7 @@ func TestCreate(t *testing.T) {
 		{
 			name: "create user - db error",
 			input: userService.CreateUserDTO{
-				Name:            "test",
+				Username:        "test",
 				Email:           "test@mail.ru",
 				Password:        "test",
 				PasswordConfirm: "test",
@@ -106,7 +106,7 @@ func TestCreate(t *testing.T) {
 			UserRepositoryMock: func(mock *repoMocks.UserRepositoryMock, ctx context.Context, input userService.CreateUserDTO) {
 				mock.GetByEmailMock.Expect(ctx, input.Email).Return(nil, userRepository.ErrUserNotFound)
 				mock.CreateMock.Expect(ctx, userRepository.CreateUserDTO{
-					Name:     input.Name,
+					Username: input.Username,
 					Email:    input.Email,
 					Password: input.Password,
 					Role:     input.Role,

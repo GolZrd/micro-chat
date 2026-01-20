@@ -29,7 +29,7 @@ func (s *service) RefreshToken(ctx context.Context, oldRefreshToken string) (ref
 	}
 
 	// Создаем новый токен
-	refreshToken, err = s.jwtManager.GenerateToken(model.UserAuthData{Id: userData.UID, Name: userData.Name, Role: userData.Role}, s.RefreshSecretKey, s.refreshTTL)
+	refreshToken, err = s.jwtManager.GenerateToken(model.UserAuthData{Id: userData.UID, Username: userData.Username, Role: userData.Role}, s.RefreshSecretKey, s.refreshTTL)
 	if err != nil {
 		logger.Error("failed to generate refresh token", zap.Int64("user_id", userData.UID), zap.Error(err))
 		return "", fmt.Errorf("failed to generate refresh token: %w", err)

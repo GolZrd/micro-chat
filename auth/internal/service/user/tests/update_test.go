@@ -20,7 +20,7 @@ func init() {
 }
 
 func TestUpdate(t *testing.T) {
-	nameToUpdate := "test"
+	usernameToUpdate := "test"
 	emailToUpdate := "test@mail.ru"
 
 	tests := []struct {
@@ -35,13 +35,13 @@ func TestUpdate(t *testing.T) {
 			name:   "success case - update only name",
 			userId: int64(1),
 			input: userService.UpdateUserDTO{
-				Name:  &nameToUpdate,
-				Email: nil,
+				Username: &usernameToUpdate,
+				Email:    nil,
 			},
 			UserRepositoryMock: func(mock *repoMocks.UserRepositoryMock, ctx context.Context, userId int64, input userService.UpdateUserDTO) {
 				mock.UpdateMock.Expect(ctx, userId, userRepository.UpdateUserDTO{
-					Name:  input.Name,
-					Email: input.Email,
+					Username: input.Username,
+					Email:    input.Email,
 				}).Return(nil)
 			},
 			expectSuccess: true,
@@ -50,13 +50,13 @@ func TestUpdate(t *testing.T) {
 			name:   "success case - update only email",
 			userId: int64(1),
 			input: userService.UpdateUserDTO{
-				Name:  nil,
-				Email: &emailToUpdate,
+				Username: nil,
+				Email:    &emailToUpdate,
 			},
 			UserRepositoryMock: func(mock *repoMocks.UserRepositoryMock, ctx context.Context, userId int64, input userService.UpdateUserDTO) {
 				mock.UpdateMock.Expect(ctx, userId, userRepository.UpdateUserDTO{
-					Name:  input.Name,
-					Email: input.Email,
+					Username: input.Username,
+					Email:    input.Email,
 				}).Return(nil)
 			},
 			expectSuccess: true,
@@ -65,13 +65,13 @@ func TestUpdate(t *testing.T) {
 			name:   "success case - update both name and email",
 			userId: int64(1),
 			input: userService.UpdateUserDTO{
-				Name:  &nameToUpdate,
-				Email: &emailToUpdate,
+				Username: &usernameToUpdate,
+				Email:    &emailToUpdate,
 			},
 			UserRepositoryMock: func(mock *repoMocks.UserRepositoryMock, ctx context.Context, userId int64, input userService.UpdateUserDTO) {
 				mock.UpdateMock.Expect(ctx, userId, userRepository.UpdateUserDTO{
-					Name:  input.Name,
-					Email: input.Email,
+					Username: input.Username,
+					Email:    input.Email,
 				}).Return(nil)
 			},
 			expectSuccess: true,
@@ -80,13 +80,13 @@ func TestUpdate(t *testing.T) {
 			name:   "failed to update user - db error",
 			userId: int64(1),
 			input: userService.UpdateUserDTO{
-				Name:  &nameToUpdate,
-				Email: &emailToUpdate,
+				Username: &usernameToUpdate,
+				Email:    &emailToUpdate,
 			},
 			UserRepositoryMock: func(mock *repoMocks.UserRepositoryMock, ctx context.Context, userId int64, input userService.UpdateUserDTO) {
 				mock.UpdateMock.Expect(ctx, userId, userRepository.UpdateUserDTO{
-					Name:  input.Name,
-					Email: input.Email,
+					Username: input.Username,
+					Email:    input.Email,
 				}).Return(errors.New("failed to update user - db error"))
 			},
 			expectedErr:   "failed to update user - db error",

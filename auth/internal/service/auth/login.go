@@ -38,7 +38,7 @@ func (s *service) Login(ctx context.Context, email string, password string) (ref
 	// Проверяем пароль в упрощенном варианте
 	// TODO: Добавить хеширование
 	if userData.Password != password {
-		logger.Debug("login failed: invalid password", zap.String("user_id", userData.Name))
+		logger.Debug("login failed: invalid password", zap.String("email", userData.Email))
 		return "", 0, errors.New("invalid credentials")
 	}
 
@@ -56,7 +56,7 @@ func (s *service) Login(ctx context.Context, email string, password string) (ref
 	}
 
 	// Генерируем новый токен
-	token, err := s.jwtManager.GenerateToken(model.UserAuthData{Id: userData.Id, Name: userData.Name, Role: userData.Role}, s.RefreshSecretKey, s.refreshTTL)
+	token, err := s.jwtManager.GenerateToken(model.UserAuthData{Id: userData.Id, Username: userData.Username, Role: userData.Role}, s.RefreshSecretKey, s.refreshTTL)
 	if err != nil {
 		logger.Error("failed to generate refresh token", zap.Int64("user_id", userData.Id), zap.Error(err))
 		return "", 0, fmt.Errorf("failed to generate refresh token: %w", err)

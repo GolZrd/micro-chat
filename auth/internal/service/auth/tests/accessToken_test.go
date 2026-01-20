@@ -26,9 +26,9 @@ func TestAccessToken(t *testing.T) {
 	accessTTL := 15 * time.Minute
 
 	testClaims := model.UserClaims{
-		UID:  1,
-		Name: "Test user",
-		Role: "user",
+		UID:      1,
+		Username: "Test user",
+		Role:     "user",
 	}
 
 	tests := []struct {
@@ -45,7 +45,7 @@ func TestAccessToken(t *testing.T) {
 				mock.VerifyTokenMock.Expect("test-refresh-token", []byte(refreshSecretKey)).Return(&testClaims, nil)
 
 				mock.GenerateTokenMock.Expect(
-					model.UserAuthData{Id: testClaims.UID, Name: testClaims.Name, Role: testClaims.Role},
+					model.UserAuthData{Id: testClaims.UID, Username: testClaims.Username, Role: testClaims.Role},
 					accessSecretKey,
 					accessTTL,
 				).Return("generated-access-token", nil)
@@ -68,7 +68,7 @@ func TestAccessToken(t *testing.T) {
 				mock.VerifyTokenMock.Expect("test-refresh-token", []byte(refreshSecretKey)).Return(&testClaims, nil)
 
 				mock.GenerateTokenMock.Expect(
-					model.UserAuthData{Id: testClaims.UID, Name: testClaims.Name, Role: testClaims.Role},
+					model.UserAuthData{Id: testClaims.UID, Username: testClaims.Username, Role: testClaims.Role},
 					accessSecretKey,
 					accessTTL,
 				).Return("", errors.New("generate token error"))
