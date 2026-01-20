@@ -30,8 +30,8 @@ func TestUpdate(t *testing.T) {
 			req: &desc.UpdateRequest{
 				Id: 64,
 				Info: &desc.UpdateUserInfo{
-					Name:  wrapperspb.String("New name"),
-					Email: nil,
+					Username: wrapperspb.String("New name"),
+					Email:    nil,
 				},
 			},
 			InitMock: func(mock *serviceMocks.UserServiceMock, ctx context.Context, userId int64, dto userService.UpdateUserDTO) {
@@ -44,8 +44,8 @@ func TestUpdate(t *testing.T) {
 			req: &desc.UpdateRequest{
 				Id: 64,
 				Info: &desc.UpdateUserInfo{
-					Name:  nil,
-					Email: wrapperspb.String("New email"),
+					Username: nil,
+					Email:    wrapperspb.String("New email"),
 				},
 			},
 			InitMock: func(mock *serviceMocks.UserServiceMock, ctx context.Context, userId int64, dto userService.UpdateUserDTO) {
@@ -58,8 +58,8 @@ func TestUpdate(t *testing.T) {
 			req: &desc.UpdateRequest{
 				Id: 64,
 				Info: &desc.UpdateUserInfo{
-					Name:  wrapperspb.String("New name"),
-					Email: wrapperspb.String("New email"),
+					Username: wrapperspb.String("New name"),
+					Email:    wrapperspb.String("New email"),
 				},
 			},
 			InitMock: func(mock *serviceMocks.UserServiceMock, ctx context.Context, userId int64, dto userService.UpdateUserDTO) {
@@ -72,7 +72,7 @@ func TestUpdate(t *testing.T) {
 			req: &desc.UpdateRequest{
 				Id: 0,
 				Info: &desc.UpdateUserInfo{
-					Name: wrapperspb.String("Name"),
+					Username: wrapperspb.String("Name"),
 				}},
 			InitMock: func(mock *serviceMocks.UserServiceMock, ctx context.Context, userId int64, dto userService.UpdateUserDTO) {
 			},
@@ -96,8 +96,8 @@ func TestUpdate(t *testing.T) {
 			req: &desc.UpdateRequest{
 				Id: 52,
 				Info: &desc.UpdateUserInfo{
-					Name:  nil,
-					Email: nil,
+					Username: nil,
+					Email:    nil,
 				}},
 			InitMock: func(mock *serviceMocks.UserServiceMock, ctx context.Context, userId int64, dto userService.UpdateUserDTO) {
 			},
@@ -110,8 +110,8 @@ func TestUpdate(t *testing.T) {
 			req: &desc.UpdateRequest{
 				Id: 64,
 				Info: &desc.UpdateUserInfo{
-					Name:  wrapperspb.String("New name"),
-					Email: wrapperspb.String("New email"),
+					Username: wrapperspb.String("New name"),
+					Email:    wrapperspb.String("New email"),
 				},
 			},
 			InitMock: func(mock *serviceMocks.UserServiceMock, ctx context.Context, userId int64, dto userService.UpdateUserDTO) {
@@ -134,8 +134,8 @@ func TestUpdate(t *testing.T) {
 			dto := userService.UpdateUserDTO{}
 			// Проверяем что Info не nil
 			if tt.req.Info != nil {
-				if tt.req.Info.Name != nil {
-					dto.Name = &tt.req.Info.Name.Value
+				if tt.req.Info.Username != nil {
+					dto.Username = &tt.req.Info.Username.Value
 				}
 				if tt.req.Info.Email != nil {
 					dto.Email = &tt.req.Info.Email.Value

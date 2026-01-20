@@ -20,7 +20,7 @@ func ToUserFromRepo(user *modelRepo.User) *model.User {
 func ToUserInfoFromRepo(info modelRepo.UserInfo) *model.UserInfo {
 
 	return &model.UserInfo{
-		Name:     info.Name,
+		Username: info.Username,
 		Email:    info.Email,
 		Password: info.Password,
 		Role:     info.Role,
@@ -30,7 +30,7 @@ func ToUserInfoFromRepo(info modelRepo.UserInfo) *model.UserInfo {
 func ToUserAuthDataFromRepo(user *modelRepo.UserAuthData) *model.UserAuthData {
 	return &model.UserAuthData{
 		Id:       user.Id,
-		Name:     user.Name,
+		Username: user.Username,
 		Email:    user.Email,
 		Password: user.Password,
 		Role:     user.Role,

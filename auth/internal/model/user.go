@@ -15,21 +15,21 @@ type User struct {
 
 // поле PasswordConfirm здесь не нужно
 type UserInfo struct {
-	Name     string
+	Username string
 	Email    string
 	Password string
 	Role     string
 }
 
 type UpdateUserInfo struct {
-	Name  *string `db:"name"`
-	Email *string `db:"email"`
+	Username *string `db:"username"`
+	Email    *string `db:"email"`
 }
 
 // Модель для получения пользователя по email
 type UserAuthData struct {
 	Id       int64
-	Name     string
+	Username string
 	Email    string
 	Password string
 	Role     string

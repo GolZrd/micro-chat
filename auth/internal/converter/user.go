@@ -36,7 +36,7 @@ func ToUserInfoFromService(info model.UserInfo) *descUser.UserInfo {
 	}
 
 	return &descUser.UserInfo{
-		Name:     info.Name,
+		Username: info.Username,
 		Email:    info.Email,
 		Password: info.Password,
 		Role:     role,

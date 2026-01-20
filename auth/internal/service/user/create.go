@@ -21,7 +21,7 @@ func (s *service) Create(ctx context.Context, info CreateUserDTO) (int64, error)
 
 	// service DTO → repository DTO
 	params := userRepository.CreateUserDTO{
-		Name:     strings.TrimSpace(info.Name),
+		Username: strings.TrimSpace(info.Username),
 		Email:    strings.TrimSpace(email),
 		Password: info.Password,
 		Role:     info.Role,

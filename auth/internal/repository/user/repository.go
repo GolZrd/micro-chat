@@ -19,7 +19,7 @@ const (
 	tableName = "users"
 
 	idColumn        = "id"
-	nameColumn      = "name"
+	usernameColumn  = "username"
 	emailColumn     = "email"
 	passwordColumn  = "password"
 	roleColumn      = "role"
@@ -52,8 +52,8 @@ func NewRepository(db *pgxpool.Pool) UserRepository {
 func (r *repo) Create(ctx context.Context, info CreateUserDTO) (int64, error) {
 	builder := squirrel.Insert(tableName).
 		PlaceholderFormat(squirrel.Dollar).
-		Columns(nameColumn, emailColumn, passwordColumn, roleColumn).
-		Values(info.Name, info.Email, info.Password, info.Role).
+		Columns(usernameColumn, emailColumn, passwordColumn, roleColumn).
+		Values(info.Username, info.Email, info.Password, info.Role).
 		Suffix("RETURNING id")
 
 	query, args, err := builder.ToSql()
@@ -71,7 +71,7 @@ func (r *repo) Create(ctx context.Context, info CreateUserDTO) (int64, error) {
 }
 
 func (r *repo) Get(ctx context.Context, id int64) (*model.User, error) {
-	builder := squirrel.Select(idColumn, nameColumn, passwordColumn, emailColumn, roleColumn, CreatedAtColumn, UpdatedAtColumn).
+	builder := squirrel.Select(idColumn, usernameColumn, passwordColumn, emailColumn, roleColumn, CreatedAtColumn, UpdatedAtColumn).
 		PlaceholderFormat(squirrel.Dollar).
 		From(tableName).
 		Where(squirrel.Eq{idColumn: id}).
@@ -83,7 +83,7 @@ func (r *repo) Get(ctx context.Context, id int64) (*model.User, error) {
 	}
 
 	var user modelRepo.User
-	err = r.db.QueryRow(ctx, query, args...).Scan(&user.Id, &user.Info.Name, &user.Info.Password, &user.Info.Email, &user.Info.Role, &user.CreatedAt, &user.UpdatedAt)
+	err = r.db.QueryRow(ctx, query, args...).Scan(&user.Id, &user.Info.Username, &user.Info.Password, &user.Info.Email, &user.Info.Role, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query row: %w", err)
 	}
@@ -97,7 +97,7 @@ func (r *repo) Update(ctx context.Context, id int64, info UpdateUserDTO) error {
 		PlaceholderFormat(squirrel.Dollar).
 		Where(squirrel.Eq{idColumn: id}).
 		SetMap(map[string]interface{}{
-			nameColumn:      info.Name,
+			usernameColumn:  info.Username,
 			emailColumn:     info.Email,
 			UpdatedAtColumn: time.Now(),
 		})
@@ -139,7 +139,7 @@ func (r *repo) Delete(ctx context.Context, id int64) error {
 }
 
 func (r *repo) GetByEmail(ctx context.Context, email string) (*model.UserAuthData, error) {
-	builder := squirrel.Select(idColumn, nameColumn, passwordColumn, emailColumn, roleColumn).
+	builder := squirrel.Select(idColumn, usernameColumn, passwordColumn, emailColumn, roleColumn).
 		PlaceholderFormat(squirrel.Dollar).
 		From(tableName).
 		Where(squirrel.Eq{emailColumn: email}).
@@ -151,7 +151,7 @@ func (r *repo) GetByEmail(ctx context.Context, email string) (*model.UserAuthDat
 	}
 
 	var userData modelRepo.UserAuthData
-	err = r.db.QueryRow(ctx, query, args...).Scan(&userData.Id, &userData.Name, &userData.Password, &userData.Email, &userData.Role)
+	err = r.db.QueryRow(ctx, query, args...).Scan(&userData.Id, &userData.Username, &userData.Password, &userData.Email, &userData.Role)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrUserNotFound
@@ -165,7 +165,7 @@ func (r *repo) GetByEmail(ctx context.Context, email string) (*model.UserAuthDat
 // GetByUsernames возвращает имена существующих пользователей
 func (r *repo) GetByUsernames(ctx context.Context, usernames []string) ([]string, error) {
 	// Простой запрос, потому что проверяем только имя, squirrel builder избыточен
-	query := "SELECT name FROM users WHERE name = ANY($1)"
+	query := "SELECT username FROM users WHERE username = ANY($1)"
 
 	rows, err := r.db.Query(ctx, query, usernames)
 	if err != nil {

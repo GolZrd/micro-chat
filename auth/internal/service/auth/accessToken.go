@@ -20,13 +20,13 @@ func (s *service) AccessToken(ctx context.Context, refreshToken string) (accessT
 
 	// Используем уровень дебаг, для отладки
 	logger.Debug("Token verified",
-		zap.String("user", userData.Name),
+		zap.String("user", userData.Username),
 		zap.String("role", userData.Role),
 		zap.String("refresh_token", refreshToken[:8]),
 	)
 
 	// Если токен валиден, генерируем новый access токен
-	accessToken, err = s.jwtManager.GenerateToken(model.UserAuthData{Id: userData.UID, Name: userData.Name, Role: userData.Role}, s.AccessSecretKey, s.accessTTL)
+	accessToken, err = s.jwtManager.GenerateToken(model.UserAuthData{Id: userData.UID, Username: userData.Username, Role: userData.Role}, s.AccessSecretKey, s.accessTTL)
 	if err != nil {
 		// Уровень Error в логах
 		logger.Error("Failed to generate access token", zap.Error(err))

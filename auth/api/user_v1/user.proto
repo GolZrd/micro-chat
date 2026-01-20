@@ -25,7 +25,7 @@ enum Role {
 
 // Лучше разделять по методам, например, для создания пользователя передается пароль, но для других методов этот message UserInfo не нужен 
 message UserInfo {
-    string name = 1;
+    string username = 1;
     string email = 2;
     string password = 3;
     string password_confirm = 4;
@@ -58,7 +58,7 @@ message GetResponse {
 
 // Исправил порядок полей, теперь начинается с 1
 message UpdateUserInfo {
-    google.protobuf.StringValue name = 1;
+    google.protobuf.StringValue username = 1;
     google.protobuf.StringValue email = 2;
 }
 

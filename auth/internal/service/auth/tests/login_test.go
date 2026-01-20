@@ -29,7 +29,7 @@ func TestLogin(t *testing.T) {
 
 	userData := &model.UserAuthData{
 		Id:       1,
-		Name:     "Test user",
+		Username: "Test user",
 		Email:    "test@mail.ru",
 		Password: "test-password",
 		Role:     "user",
@@ -66,7 +66,7 @@ func TestLogin(t *testing.T) {
 			},
 			jwtManagerMock: func(mock *jwtMocks.JWTManagerMock) {
 				mock.GenerateTokenMock.Expect(
-					model.UserAuthData{Id: userData.Id, Name: userData.Name, Role: userData.Role},
+					model.UserAuthData{Id: userData.Id, Username: userData.Username, Role: userData.Role},
 					secretKey,
 					RefreshTTL,
 				).Return("generated-refresh-token", nil)
@@ -130,7 +130,7 @@ func TestLogin(t *testing.T) {
 			},
 			jwtManagerMock: func(mock *jwtMocks.JWTManagerMock) {
 				mock.GenerateTokenMock.Expect(
-					model.UserAuthData{Id: userData.Id, Name: userData.Name, Role: userData.Role},
+					model.UserAuthData{Id: userData.Id, Username: userData.Username, Role: userData.Role},
 					secretKey,
 					RefreshTTL,
 				).Return("generated-refresh-token", nil)
@@ -157,7 +157,7 @@ func TestLogin(t *testing.T) {
 			},
 			jwtManagerMock: func(mock *jwtMocks.JWTManagerMock) {
 				mock.GenerateTokenMock.Expect(
-					model.UserAuthData{Id: userData.Id, Name: userData.Name, Role: userData.Role},
+					model.UserAuthData{Id: userData.Id, Username: userData.Username, Role: userData.Role},
 					secretKey,
 					RefreshTTL,
 				).Return("generated-refresh-token", nil)
@@ -180,7 +180,7 @@ func TestLogin(t *testing.T) {
 			},
 			jwtManagerMock: func(mock *jwtMocks.JWTManagerMock) {
 				mock.GenerateTokenMock.Expect(
-					model.UserAuthData{Id: userData.Id, Name: userData.Name, Role: userData.Role},
+					model.UserAuthData{Id: userData.Id, Username: userData.Username, Role: userData.Role},
 					secretKey,
 					RefreshTTL,
 				).Return("", errors.New("jwt generation failed"))

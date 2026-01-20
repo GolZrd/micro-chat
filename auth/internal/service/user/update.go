@@ -16,14 +16,14 @@ func (s *service) Update(ctx context.Context, id int64, info UpdateUserDTO) erro
 	fieldsToUpdate := []string{}
 
 	// Проверяем что хотя бы одно поле заполнено
-	if info.Name != nil {
+	if info.Username != nil {
 		// Убираем лишние пробелы
-		name := strings.TrimSpace(*info.Name)
+		name := strings.TrimSpace(*info.Username)
 
 		// TODO: добавить валидацию имени
 
 		// Добавляем в DTO
-		params.Name = &name
+		params.Username = &name
 		fieldsToUpdate = append(fieldsToUpdate, "name")
 	}
 

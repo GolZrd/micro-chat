@@ -15,7 +15,7 @@ type User struct {
 
 // UserInfo — модель для info
 type UserInfo struct {
-	Name     string `db:"name"`
+	Username string `db:"username"`
 	Email    string `db:"email"`
 	Password string `db:"password"`
 	Role     string `db:"role"`
@@ -23,14 +23,14 @@ type UserInfo struct {
 
 // UpdateUserInfo — для частичного обновления
 type UpdateUserInfo struct {
-	Name  *string `db:"name"`
-	Email *string `db:"email"`
+	Username *string `db:"username"`
+	Email    *string `db:"email"`
 }
 
 // Для метода GetByEmail, но для squirrel нужны теги, поэтому эта структура тут дублируется
 type UserAuthData struct {
 	Id       int64  `db:"id"`
-	Name     string `db:"name"`
+	Username string `db:"username"`
 	Email    string `db:"email"`
 	Password string `db:"password"`
 	Role     string `db:"role"`
