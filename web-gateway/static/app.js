@@ -14,8 +14,8 @@ const TokenManager = {
         
         try {
             const claims = this.decodeJWT(token);
-            localStorage.setItem('username', claims.name);
-            console.log('✅ Token saved, username:', claims.name);
+            localStorage.setItem('username', claims.username);
+            console.log('✅ Token saved, username:', claims.username);
             this.startRefreshTimer();
         } catch (e) {
             console.error('❌ Failed to decode token:', e);
@@ -260,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             
             const data = {
-                name: document.getElementById('reg_name').value,
+                username: document.getElementById('reg_username').value,
                 email: document.getElementById('reg_email').value,
                 password: document.getElementById('reg_password').value,
                 password_confirm: document.getElementById('reg_password_confirm').value
@@ -687,12 +687,12 @@ async function loadChatCount() {
 let chatCountInterval = null;
 
 function startChatCountUpdater() {
-    // Обновляем счетчик каждые 30 секунд
+    // Обновляем счетчик каждые 5 минут
     chatCountInterval = setInterval(() => {
         if (TokenManager.isAuthenticated()) {
             loadChatCount();
         }
-    }, 30000); // 30 секунд
+    }, 300000); // 300 секунд
 }
 
 function stopChatCountUpdater() {
@@ -746,7 +746,7 @@ async function loadUserInfo() {
         infoDiv.innerHTML = `
             <div class="user-info-card">
                 <p><strong>ID:</strong> <span>${user.id}</span></p>
-                <p><strong>Имя:</strong> <span>${user.name}</span></p>
+                <p><strong>Имя:</strong> <span>${user.username}</span></p>
                 <p><strong>Email:</strong> <span>${user.email}</span></p>
                 <p><strong>Роль:</strong> <span>${user.role || 'Пользователь'}</span></p>
                 <p><strong>Создан:</strong> <span>${new Date(user.created_at).toLocaleString('ru-RU')}</span></p>

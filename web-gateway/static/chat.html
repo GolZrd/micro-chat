@@ -487,14 +487,14 @@
                 if (typeof member === 'string') {
                     memberName = member;
                     memberData = {
-                        name: memberName,
+                        username: memberName,
                         status: 'offline',
                         original: member
                     };
                 } else if (typeof member === 'object' && member !== null) {
                     memberName = member.username || member.name || member.user || 'Участник ' + (index + 1);
                     memberData = {
-                        name: memberName,
+                        username: memberName,
                         status: member.status || 'offline',
                         lastSeen: member.last_seen || null,
                         original: member
@@ -502,7 +502,7 @@
                 } else {
                     memberName = 'Участник ' + (index + 1);
                     memberData = {
-                        name: memberName,
+                        username: memberName,
                         status: 'offline',
                         original: member
                     };
@@ -542,7 +542,7 @@
                 }
                 
                 // Если статусы одинаковые, сортируем по имени
-                return a.name.localeCompare(b.name, 'ru');
+                return a.username.localeCompare(b.username, 'ru');
             });
             
             // ✅ ОТОБРАЖАЕМ ОТСОРТИРОВАННЫХ УЧАСТНИКОВ
@@ -573,8 +573,8 @@
                 }
                 
                 // Генерируем цвет аватара
-                const avatarColor = generateAvatarColor(member.name);
-                const initials = generateAvatarInitials(member.name);
+                const avatarColor = generateAvatarColor(member.username);
+                const initials = generateAvatarInitials(member.username);
                 
                 // Определяем класс для статуса
                 const statusClass = member.isCurrentUser ? 'online' : member.status;
@@ -586,7 +586,7 @@
                             <span class="online-indicator ${statusClass}"></span>
                         </div>
                         <div class="member-info">
-                            <strong>${escapeHtml(member.name)}</strong>
+                            <strong>${escapeHtml(member.username)}</strong>
                             <small>${getStatusText(member.status, member.lastSeen, member.isCurrentUser)}</small>
                         </div>
                         ${member.isCurrentUser ? '<span class="you-badge">Вы</span>' : ''}
@@ -601,7 +601,7 @@
         // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
 
         // Генерация цвета аватара на основе имени
-        function generateAvatarColor(name) {
+        function generateAvatarColor(username) {
             const colors = [
                 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
@@ -615,22 +615,22 @@
             
             // Простой хеш на основе имени
             let hash = 0;
-            for (let i = 0; i < name.length; i++) {
-                hash = name.charCodeAt(i) + ((hash << 5) - hash);
+            for (let i = 0; i < username.length; i++) {
+                hash = username.charCodeAt(i) + ((hash << 5) - hash);
             }
             
             return colors[Math.abs(hash) % colors.length];
         }
 
         // Генерация инициалов для аватара
-        function generateAvatarInitials(name) {
-            if (!name) return '?';
+        function generateAvatarInitials(username) {
+            if (!username) return '?';
             
-            const parts = name.trim().split(' ');
+            const parts = username.trim().split(' ');
             if (parts.length >= 2) {
                 return parts[0][0].toUpperCase() + parts[1][0].toUpperCase();
             }
-            return name.substring(0, 2).toUpperCase();
+            return username.substring(0, 2).toUpperCase();
         }
 
         // Получение текста статуса

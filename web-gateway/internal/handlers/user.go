@@ -37,7 +37,7 @@ func GetUser(client *clients.AuthClient) gin.HandlerFunc {
 
 		c.JSON(http.StatusOK, gin.H{
 			"id":         resp.User.Id,
-			"name":       resp.User.Info.Name,
+			"username":   resp.User.Info.Username,
 			"email":      resp.User.Info.Email,
 			"role":       resp.User.Info.Role.String(),
 			"created_at": resp.User.CreatedAt.AsTime(),
@@ -57,8 +57,8 @@ func UpdateUser(client *clients.AuthClient) gin.HandlerFunc {
 		}
 
 		var req struct {
-			Name  *string `json:"name"`
-			Email *string `json:"email"`
+			Username *string `json:"username"`
+			Email    *string `json:"email"`
 		}
 
 		if err := c.BindJSON(&req); err != nil {
@@ -68,8 +68,8 @@ func UpdateUser(client *clients.AuthClient) gin.HandlerFunc {
 		}
 
 		updateInfo := user_v1.UpdateUserInfo{}
-		if req.Name != nil {
-			updateInfo.Name = wrapperspb.String(*req.Name)
+		if req.Username != nil {
+			updateInfo.Username = wrapperspb.String(*req.Username)
 		}
 		if req.Email != nil {
 			updateInfo.Email = wrapperspb.String(*req.Email)

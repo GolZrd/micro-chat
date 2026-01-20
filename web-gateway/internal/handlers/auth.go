@@ -15,7 +15,7 @@ import (
 func Register(client *clients.AuthClient) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req struct {
-			Name            string `json:"name"`
+			Username        string `json:"username"`
 			Email           string `json:"email"`
 			Password        string `json:"password"`
 			PasswordConfirm string `json:"password_confirm"`
@@ -29,12 +29,12 @@ func Register(client *clients.AuthClient) gin.HandlerFunc {
 
 		logger.Info("registration attempt",
 			zap.String("email", req.Email),
-			zap.String("name", req.Name),
+			zap.String("name", req.Username),
 		)
 
 		resp, err := client.UserClient.Create(context.Background(), &user_v1.CreateRequest{
 			Info: &user_v1.UserInfo{
-				Name:            req.Name,
+				Username:        req.Username,
 				Email:           req.Email,
 				Password:        req.Password,
 				PasswordConfirm: req.PasswordConfirm,
