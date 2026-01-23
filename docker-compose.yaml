@@ -36,6 +36,9 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    extra_hosts:                    
+      - "production.cloudflare.docker.com:1.1.1.1"
+      - "docker-images-prod.6aa30f8b08e16409b46e0173d6de2f56.r2.cloudflarestorage.com:1.1.1.1"
     networks:
       - app-network
   
@@ -57,6 +60,9 @@ services:
     depends_on:
       - postgres
       - auth
+    extra_hosts:                    
+      - "production.cloudflare.docker.com:1.1.1.1"
+      - "docker-images-prod.6aa30f8b08e16409b46e0173d6de2f56.r2.cloudflarestorage.com:1.1.1.1"
     networks:
       - app-network
   
@@ -152,6 +158,9 @@ services:
     depends_on:
       - auth
       - chat-server
+    extra_hosts:                    
+      - "production.cloudflare.docker.com:1.1.1.1"
+      - "docker-images-prod.6aa30f8b08e16409b46e0173d6de2f56.r2.cloudflarestorage.com:1.1.1.1"
     networks:
       - app-network
   prometheus:

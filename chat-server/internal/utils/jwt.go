@@ -13,9 +13,9 @@ import (
 
 type TokenClaims struct {
 	jwt.RegisteredClaims
-	UID  int64  `json:"uid"`
-	Name string `json:"name"`
-	Role string `json:"role"`
+	UID      int64  `json:"uid"`
+	Username string `json:"username"`
+	Role     string `json:"role"`
 }
 
 // GetUsernameFromContext извлекает username из JWT токена переданного в контексте
@@ -43,7 +43,7 @@ func GetUsernameFromContext(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("invalid token claims")
 	}
 
-	return claims.Name, nil
+	return claims.Username, nil
 }
 
 func GetUIDFromContext(ctx context.Context) (int64, error) {
