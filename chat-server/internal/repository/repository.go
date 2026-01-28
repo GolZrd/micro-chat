@@ -81,7 +81,7 @@ func (r *repo) Delete(ctx context.Context, chat_id int64) error {
 func (r *repo) SendMessage(ctx context.Context, msg MessageCreateDTO) error {
 	// Добавим валидацию, что пользователь есть в чате, делаю запрос без использования squirrel
 	var isMember bool
-	err := r.db.QueryRow(ctx, "SELECT EXISTS (SELECT 1 FROM chat_members WHERE chat_id = $1 AND username = $2)", msg.Chat_id, msg.From_username).Scan(&isMember)
+	err := r.db.QueryRow(ctx, "SELECT EXISTS (SELECT 1 FROM chat_members WHERE chat_id = $1 AND username = $2)", msg.ChatId, msg.FromUsername).Scan(&isMember)
 	if err != nil {
 		return fmt.Errorf("check chat membership: %w", err)
 	}
@@ -94,7 +94,7 @@ func (r *repo) SendMessage(ctx context.Context, msg MessageCreateDTO) error {
 	builder := squirrel.Insert("messages").
 		PlaceholderFormat(squirrel.Dollar).
 		Columns("chat_Id", "from_username", "text").
-		Values(msg.Chat_id, msg.From_username, msg.Text)
+		Values(msg.ChatId, msg.FromUsername, msg.Text)
 	query, args, err := builder.ToSql()
 	if err != nil {
 		return fmt.Errorf("build send message query: %w", err)

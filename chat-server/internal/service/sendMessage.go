@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/GolZrd/micro-chat/chat-server/internal/logger"
 	"github.com/GolZrd/micro-chat/chat-server/internal/repository"
@@ -12,49 +13,87 @@ import (
 // SendMessage сохраняет сообщение и рассылает подписчикам
 func (s *service) SendMessage(ctx context.Context, msg SendMessageDTO) error {
 	input := repository.MessageCreateDTO{
-		Chat_id:       msg.Chat_id,
-		From_username: msg.From_username,
-		Text:          msg.Text,
-		Created_at:    msg.Created_at,
+		ChatId:       msg.ChatId,
+		FromUsername: msg.FromUsername,
+		Text:         msg.Text,
+		CreatedAt:    msg.CreatedAt,
 	}
 
-	logger.Info("sending message", zap.Int64("chat_id", msg.Chat_id), zap.String("sent by", msg.From_username))
+	logger.Info("sending message", zap.Int64("chat_id", msg.ChatId), zap.String("sent by", msg.FromUsername))
 
 	// Сохраняем сообщение в БД
 	err := s.ChatRepository.SendMessage(ctx, input)
 	if err != nil {
-		logger.Error("failed to save message", zap.Int64("chat_id", msg.Chat_id), zap.String("sent by", msg.From_username), zap.Error(err))
+		logger.Error("failed to save message", zap.Int64("chat_id", msg.ChatId), zap.String("sent by", msg.FromUsername), zap.Error(err))
 		return fmt.Errorf("database: failed to save message: %w", err)
 	}
 
 	// Создаем DTO для рассылки
 	msgDTO := MessageDTO{
-		From:      msg.From_username,
+		Type:      MessageTypeText,
+		From:      msg.FromUsername,
 		Text:      msg.Text,
-		CreatedAt: msg.Created_at,
+		CreatedAt: msg.CreatedAt,
 	}
 
-	// Рассылаем сообщение подписчикам
-	s.broadcastMessage(msg.Chat_id, msgDTO)
+	// Отправляем всем подписчикам сообщение если комната существует
+	room := s.getRoom(msg.ChatId)
+	if room != nil {
+		room.BroadcastMessage(msgDTO)
+	}
 
 	return nil
 }
 
-// broadcastMessage рассылает сообщение всем подписчикам
-func (s *service) broadcastMessage(chatID int64, msg MessageDTO) {
-	s.subMutex.RLock()
-	defer s.subMutex.RUnlock()
+// Функция для отправки последних сообщений
+func (s *service) sendRecentMessages(ctx context.Context, chatID int64, msgChan chan<- MessageDTO) {
+	// Если вдруг канал будет закрыт, то нужно обработать панику
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Error("panic in sendRecentMessages", zap.Int64("chat_id", chatID), zap.Any("panic", r))
+		}
+	}()
 
-	if chatSubs, exists := s.subscribers[chatID]; exists {
-		for _, ch := range chatSubs {
-			select {
-			case ch <- msg:
-				// Отправлено успешно
-			default:
-				logger.Debug("failed to deliver message - channel full", zap.String("sent by", msg.From), zap.Int64("chat_id", chatID))
-				// Канал переполнен, пропускаем
-			}
+	logger.Debug("loading chat history", zap.Int64("chat_id", chatID))
 
+	// Получаем последние 50 сообщений
+	messages, err := s.ChatRepository.RecentMessages(ctx, chatID, 50)
+	if err != nil {
+		logger.Error("failed to load chat history", zap.Int64("chat_id", chatID), zap.Error(err))
+
+		// Отправляем сообщение об ошибке
+		select {
+		case msgChan <- MessageDTO{
+			From:      "system",
+			Text:      "Failed to load chat history",
+			CreatedAt: time.Now(),
+		}:
+		case <-ctx.Done():
+			return
+		}
+		return
+	}
+
+	// Если сообщений нет, то просто логируем
+	if len(messages) == 0 {
+		logger.Debug("no messages in chat history", zap.Int64("chat_id", chatID))
+		return
+	}
+
+	// Отправляем сообщения
+	for _, msg := range messages {
+		select {
+		case msgChan <- MessageDTO{
+			Type:      MessageTypeText,
+			From:      msg.From,
+			Text:      msg.Text,
+			CreatedAt: msg.CreatedAt,
+		}:
+		case <-ctx.Done():
+			logger.Debug("history sending interrupted", zap.Int64("chat_id", chatID))
+			return
 		}
 	}
+
+	logger.Debug("history sent successfully", zap.Int64("chat_id", chatID), zap.Int("message_count", len(messages)))
 }
