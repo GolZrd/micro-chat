@@ -10,96 +10,53 @@ import (
 )
 
 // ConnectToChat подписывает на получение сообщений из чата
-func (s *service) ConnectToChat(ctx context.Context, userId int64, chatID int64) (<-chan MessageDTO, error) {
+func (s *service) ConnectToChat(ctx context.Context, userId int64, username string, chatId int64) (<-chan MessageDTO, error) {
 
-	logger.Info("Connecting to chat", zap.Int64("user_id", userId), zap.Int64("chat_id", chatID))
+	logger.Info("Connecting to chat", zap.Int64("user_id", userId), zap.String("username", username), zap.Int64("chat_id", chatId))
 
 	// Проверяем что чат существует
-	exists, err := s.ChatRepository.ChatExists(ctx, chatID)
+	exists, err := s.ChatRepository.ChatExists(ctx, chatId)
 	if err != nil {
-		logger.Error("Failed to check chat exists", zap.Int64("chat_id", chatID), zap.Error(err))
+		logger.Error("Failed to check chat exists", zap.Int64("chat_id", chatId), zap.Error(err))
 		return nil, fmt.Errorf("check chat exists: %w", err)
 	}
 	if !exists {
-		logger.Warn("chat not found", zap.Int64("chat_id", chatID))
-		return nil, fmt.Errorf("chat %d not found", chatID)
+		logger.Warn("chat not found", zap.Int64("chat_id", chatId))
+		return nil, fmt.Errorf("chat %d not found", chatId)
 	}
 
-	// Создаем канал для подписчика
+	// Получаем или создаем комнату
+	room := s.getOrCreateRoom(chatId)
+
+	// Создаем самого подписчика
 	msgChan := make(chan MessageDTO, 100)
-
-	// Генерируем уникальный ID подписчика
-	s.subMutex.Lock()
-	s.subIDCounter++
-	subscriberId := fmt.Sprintf("sub_%d_%d", chatID, userId) // используем просто ID чата и ID пользователя
-
-	if s.subscribers[chatID] == nil {
-		s.subscribers[chatID] = make(map[string]chan MessageDTO)
+	sub := &Subscriber{
+		Channel:  msgChan,
+		UserId:   userId,
+		Username: username,
+		JoinedAt: time.Now(),
 	}
 
-	s.subscribers[chatID][subscriberId] = msgChan
-	s.subMutex.Unlock()
+	oldChannel := room.AddSubscriber(sub)
+
+	// Закрываем старое соединение если было
+	if oldChannel != nil {
+		close(oldChannel)
+		logger.Info("closed old connection", zap.Int64("chat_id", chatId), zap.Int64("user_id", userId))
+	}
 
 	logger.Info("subscriber connected",
-		zap.Int64("chat_id", chatID),
-		zap.String("subscriber_id", subscriberId),
-		zap.Int64("total_subscribers", s.subIDCounter),
+		zap.Int64("chat_id", chatId),
+		zap.Int64("user_id", userId),
+		zap.String("username", username),
+		zap.Int("online_count", room.GetOnlineUsersCount()),
 	)
 
-	// Отправляем последние сообщения
-	go s.sendRecentMessages(ctx, chatID, subscriberId, msgChan)
+	// Отправляем историю сообщений
+	go s.sendRecentMessages(ctx, chatId, msgChan)
+
+	// Уведомляем всех об обновлении онлайн пользователей
+	go room.BroadcastOnlineUsers()
 
 	return msgChan, nil
-}
-
-// Функция для отправки последних сообщений
-func (s *service) sendRecentMessages(ctx context.Context, chatID int64, subscriberId string, msgChan chan<- MessageDTO) {
-	// Если вдруг канал будет закрыт, то нужно обработать панику
-	defer func() {
-		if r := recover(); r != nil {
-			logger.Error("panic in sendRecentMessages", zap.Int64("chat_id", chatID), zap.String("subscriber_id", subscriberId), zap.Any("panic", r))
-		}
-	}()
-
-	logger.Debug("loading chat history", zap.Int64("chat_id", chatID), zap.String("subscriber_id", subscriberId))
-
-	// Получаем последние 50 сообщений
-	messages, err := s.ChatRepository.RecentMessages(ctx, chatID, 50)
-	if err != nil {
-		logger.Error("failed to load chat history", zap.Int64("chat_id", chatID), zap.String("subscriber_id", subscriberId), zap.Error(err))
-
-		// Отправляем сообщение об ошибке
-		select {
-		case msgChan <- MessageDTO{
-			From:      "system",
-			Text:      "Failed to load chat history",
-			CreatedAt: time.Now(),
-		}:
-		case <-ctx.Done():
-			return
-		}
-		return
-	}
-
-	// Если сообщений нет, то просто логируем
-	if len(messages) == 0 {
-		logger.Debug("no messages in chat history", zap.Int64("chat_id", chatID))
-		return
-	}
-
-	// Отправляем сообщения
-	for _, msg := range messages {
-		select {
-		case msgChan <- MessageDTO{
-			From:      msg.From,
-			Text:      msg.Text,
-			CreatedAt: msg.CreatedAt,
-		}:
-		case <-ctx.Done():
-			logger.Debug("history sending interrupted", zap.Int64("chat_id", chatID), zap.String("subscriber_id", subscriberId))
-			return
-		}
-	}
-
-	logger.Debug("history sent successfully", zap.Int64("chat_id", chatID), zap.String("subscriber_id", subscriberId))
 }

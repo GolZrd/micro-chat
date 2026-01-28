@@ -27,10 +27,10 @@ func (s *Implementation) SendMessage(ctx context.Context, req *desc.SendMessageR
 	}
 	// proto → service DTO
 	msg := service.SendMessageDTO{
-		Chat_id:       req.ChatId,
-		From_username: username,
-		Text:          req.Text,
-		Created_at:    req.CreatedAt.AsTime(),
+		ChatId:       req.ChatId,
+		FromUsername: username,
+		Text:         req.Text,
+		CreatedAt:    req.CreatedAt.AsTime(),
 	}
 
 	err = s.chatService.SendMessage(ctx, msg)
