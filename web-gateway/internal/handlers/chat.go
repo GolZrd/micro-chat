@@ -7,17 +7,16 @@ import (
 	"strconv"
 	"strings"
 
+	chat_v1 "github.com/GolZrd/micro-chat/chat-server/pkg/chat_v1"
+	"github.com/GolZrd/micro-chat/web-gateway/internal/clients"
+	"github.com/GolZrd/micro-chat/web-gateway/internal/logger"
+	"github.com/GolZrd/micro-chat/web-gateway/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
-
-	chat_v1 "github.com/GolZrd/micro-chat/chat-server/pkg/chat_v1"
-	"github.com/GolZrd/micro-chat/web-gateway/internal/clients"
-	"github.com/GolZrd/micro-chat/web-gateway/internal/logger"
-	"github.com/GolZrd/micro-chat/web-gateway/internal/utils"
 )
 
 var upgrader = websocket.Upgrader{
@@ -173,12 +172,10 @@ func ConnectChat(client *clients.ChatClient) gin.HandlerFunc {
 				break
 			}
 
+			wsMsg := convertToWebSocketMessage(msg)
+
 			// Отправляем сообщение в webSocket
-			err = ws.WriteJSON(map[string]interface{}{
-				"from":      msg.From,
-				"text":      msg.Text,
-				"createdAt": msg.CreatedAt.AsTime(),
-			})
+			err = ws.WriteJSON(wsMsg)
 			if err != nil {
 				logger.Error("WebSocket write error", zap.Error(err))
 				break
@@ -268,4 +265,31 @@ func handleChatError(c *gin.Context, err error) {
 			"code":  "INTERNAL_ERROR",
 		})
 	}
+}
+
+func convertToWebSocketMessage(msg *chat_v1.Message) map[string]interface{} {
+	switch msg.Type {
+	case chat_v1.MessageType_MESSAGE_TYPE_ONLINE_USERS:
+		onlineUsers := make([]map[string]interface{}, 0, len(msg.OnlineUsers))
+		for _, user := range msg.OnlineUsers {
+			onlineUsers = append(onlineUsers, map[string]interface{}{
+				"userId":   user.UserId,
+				"username": user.Username,
+			})
+		}
+
+		return map[string]interface{}{
+			"type":        "online_users",
+			"onlineUsers": onlineUsers,
+			"onlineCount": len(msg.OnlineUsers),
+		}
+	default:
+		return map[string]interface{}{
+			"type":      "message",
+			"from":      msg.From,
+			"text":      msg.Text,
+			"createdAt": msg.CreatedAt.AsTime(),
+		}
+	}
+
 }

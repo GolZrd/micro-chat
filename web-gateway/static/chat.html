@@ -235,6 +235,8 @@
         const currentUsername = TokenManager.getUsername() || 'Пользователь';
         let messageCount = 0;
 
+        let onlineUsersSet = new Set(); // Храним имена онлайн пользователей
+
         // Устанавливаем ID сразу
         document.getElementById('currentChatId').textContent = chatId;
         document.getElementById('chatIdDisplay').textContent = chatId;
@@ -265,7 +267,19 @@
                         return;
                     }
                     
-                    displayMessage(msg);
+                    // Проверяем тип сообщения
+                    if (msg.type === 'online_users') {
+                        console.log('👥 Online users update:', msg);
+                        updateOnlineStatus(msg.onlineUsers || [], msg.onlineCount || 0);
+                        return;
+                    }
+                    
+                    // Обычное сообщение (type === 'message' или старый формат)
+                    if (msg.from !== undefined && msg.text !== undefined) {
+                        displayMessage(msg);
+                    } else {
+                        console.warn('⚠️ Unknown message format:', msg);
+                    }
                 } catch (error) {
                     console.error('❌ Parse error:', error);
                 }
@@ -479,105 +493,55 @@
                 return;
             }
             
-            // ✅ ПРЕОБРАЗУЕМ И СОРТИРУЕМ УЧАСТНИКОВ
+            // ✅ ИСПОЛЬЗУЕМ onlineUsersSet для определения статуса
             const processedMembers = members.map((member, index) => {
                 let memberName = '';
-                let memberData = {};
                 
                 if (typeof member === 'string') {
                     memberName = member;
-                    memberData = {
-                        username: memberName,
-                        status: 'offline',
-                        original: member
-                    };
                 } else if (typeof member === 'object' && member !== null) {
                     memberName = member.username || member.name || member.user || 'Участник ' + (index + 1);
-                    memberData = {
-                        username: memberName,
-                        status: member.status || 'offline',
-                        lastSeen: member.last_seen || null,
-                        original: member
-                    };
                 } else {
                     memberName = 'Участник ' + (index + 1);
-                    memberData = {
-                        username: memberName,
-                        status: 'offline',
-                        original: member
-                    };
                 }
                 
-                // Проверяем, это текущий пользователь или нет
-                const isCurrentUser = memberName === currentUsername || 
-                                    memberName.toLowerCase() === currentUsername.toLowerCase();
+                const isCurrentUser = memberName.toLowerCase() === currentUsername.toLowerCase();
                 
-                memberData.isCurrentUser = isCurrentUser;
-                if (isCurrentUser) {
-                    memberData.status = 'online'; // Текущий пользователь всегда онлайн
-                }
+                // ✅ Проверяем онлайн статус из глобальной переменной
+                const isOnline = onlineUsersSet.has(memberName.toLowerCase()) || isCurrentUser;
                 
-                return memberData;
+                return {
+                    username: memberName,
+                    status: isOnline ? 'online' : 'offline',
+                    isCurrentUser: isCurrentUser,
+                    isOnline: isOnline
+                };
             });
             
-            // ✅ СОРТИРУЕМ: сначала текущий пользователь, потом онлайн, потом остальные
+            // Сортируем: текущий пользователь → онлайн → офлайн → по алфавиту
             processedMembers.sort((a, b) => {
-                // Текущий пользователь всегда первый
                 if (a.isCurrentUser) return -1;
                 if (b.isCurrentUser) return 1;
-                
-                // Затем сортируем по статусу (онлайн первые)
-                const statusOrder = {
-                    'online': 0,
-                    'away': 1,
-                    'busy': 2,
-                    'offline': 3
-                };
-                
-                const aOrder = statusOrder[a.status] || 3;
-                const bOrder = statusOrder[b.status] || 3;
-                
-                if (aOrder !== bOrder) {
-                    return aOrder - bOrder;
-                }
-                
-                // Если статусы одинаковые, сортируем по имени
+                if (a.isOnline && !b.isOnline) return -1;
+                if (!a.isOnline && b.isOnline) return 1;
                 return a.username.localeCompare(b.username, 'ru');
             });
             
-            // ✅ ОТОБРАЖАЕМ ОТСОРТИРОВАННЫХ УЧАСТНИКОВ
+            // ОТОБРАЖАЕМ ОТСОРТИРОВАННЫХ УЧАСТНИКОВ
             let html = '';
             
-            // Опционально: добавляем разделители
-            let lastSection = '';
             
             processedMembers.forEach((member) => {
-                // Определяем секцию
-                let currentSection = '';
-                if (member.isCurrentUser) {
-                    currentSection = 'you';
-                } else if (member.status === 'online') {
-                    currentSection = 'online';
-                } else {
-                    currentSection = 'offline';
-                }
-                
-                // Добавляем разделитель секции (опционально)
-                if (currentSection !== lastSection && processedMembers.length > 3) {
-                    if (currentSection === 'online' && !processedMembers.some(m => m.isCurrentUser)) {
-                        html += '<div class="members-section-title">В сети</div>';
-                    } else if (currentSection === 'offline') {
-                        html += '<div class="members-section-title">Не в сети</div>';
-                    }
-                    lastSection = currentSection;
-                }
-                
-                // Генерируем цвет аватара
                 const avatarColor = generateAvatarColor(member.username);
                 const initials = generateAvatarInitials(member.username);
+                const statusClass = member.isOnline ? 'online' : 'offline';
                 
-                // Определяем класс для статуса
-                const statusClass = member.isCurrentUser ? 'online' : member.status;
+                let statusText = 'Не в сети';
+                if (member.isCurrentUser) {
+                    statusText = 'В сети';
+                } else if (member.isOnline) {
+                    statusText = 'В сети';
+                }
                 
                 html += `
                     <div class="member-item ${member.isCurrentUser ? 'current-user' : ''}">
@@ -587,7 +551,7 @@
                         </div>
                         <div class="member-info">
                             <strong>${escapeHtml(member.username)}</strong>
-                            <small>${getStatusText(member.status, member.lastSeen, member.isCurrentUser)}</small>
+                            <small>${statusText}</small>
                         </div>
                         ${member.isCurrentUser ? '<span class="you-badge">Вы</span>' : ''}
                     </div>
@@ -595,7 +559,131 @@
             });
             
             membersListEl.innerHTML = html;
-            console.log('✅ Members displayed and sorted successfully');
+            
+            // Обновляем счётчик участников
+            const totalMembersEl = document.getElementById('totalMembers');
+            if (totalMembersEl) {
+                totalMembersEl.textContent = processedMembers.length;
+            }
+
+            // ✅ Обновляем счётчик онлайн на основе реальных данных
+            const onlineCount = processedMembers.filter(m => m.isOnline).length;
+            const onlineCountEl = document.getElementById('onlineCount');
+            if (onlineCountEl) {
+                onlineCountEl.textContent = `${onlineCount} онлайн`;
+            }
+            
+            console.log('✅ Members displayed:', processedMembers.length, 'online:', onlineCount);
+        }
+
+        // ==================== ОБНОВЛЕНИЕ ОНЛАЙН СТАТУСА ====================
+        function updateOnlineStatus(users, count) {
+            console.log('👥 Updating online status:', users, count);
+            
+            // Обновляем счётчик в шапке
+            const onlineCountEl = document.getElementById('onlineCount');
+            if (onlineCountEl) {
+                onlineCountEl.textContent = `${count} онлайн`;
+            }
+
+            // Сохраняем в глобальную переменную
+            onlineUsersSet = new Set(
+                (users || []).map(u => {
+                    // Обрабатываем оба формата: объект {username: "name"} и строку "name"
+                    if (typeof u === 'object' && u !== null) {
+                        return (u.username || '').toLowerCase();
+                    }
+                    return (u || '').toLowerCase();
+                })
+            );
+            
+            console.log('👥 Online usernames set:', [...onlineUsersSet]);
+
+            // Находим все элементы участников
+            const memberItems = document.querySelectorAll('.member-item');
+            console.log('👥 Found member items:', memberItems.length);
+            
+            if (memberItems.length === 0) {
+                console.log('⚠️ No member items found, skipping DOM update');
+                return;
+            }
+
+            // Обновляем каждого участника
+            memberItems.forEach(item => {
+                const nameEl = item.querySelector('.member-info strong');
+                if (!nameEl) {
+                    console.log('⚠️ No name element found in item');
+                    return;
+                }
+
+                const memberName = nameEl.textContent.trim();
+                const memberNameLower = memberName.toLowerCase();
+                const isCurrentUser = memberNameLower === currentUsername.toLowerCase();
+                const isOnline = onlineUsersSet.has(memberNameLower);
+                
+                console.log(`👤 Checking ${memberName}: isOnline=${isOnline}, isCurrentUser=${isCurrentUser}`);
+
+                // Обновляем индикатор
+                const indicator = item.querySelector('.online-indicator');
+                if (indicator) {
+                    // Убираем все классы статуса
+                    indicator.className = 'online-indicator';
+                    // Добавляем нужный класс
+                    if (isOnline || isCurrentUser) {
+                        indicator.classList.add('online');
+                    } else {
+                        indicator.classList.add('offline');
+                    }
+                    console.log(`  → Indicator class: ${indicator.className}`);
+                }
+
+                // Обновляем текст статуса
+                const statusEl = item.querySelector('.member-info small');
+                if (statusEl) {
+                    const newStatus = (isOnline || isCurrentUser) ? 'В сети' : 'Не в сети';
+                    statusEl.textContent = newStatus;
+                    console.log(`  → Status text: ${newStatus}`);
+                }
+            });
+            
+            // Пересортировываем список
+            resortMembersList(onlineUsersSet);
+            
+            console.log('✅ Online status update complete');
+        }
+
+        // Пересортировка списка участников
+        function resortMembersList(onlineUsernames) {
+            const membersListEl = document.getElementById('membersList');
+            if (!membersListEl) return;
+            
+            const items = Array.from(membersListEl.querySelectorAll('.member-item'));
+            if (items.length <= 1) return;
+            
+            items.sort((a, b) => {
+                const aName = a.querySelector('.member-info strong')?.textContent.trim().toLowerCase() || '';
+                const bName = b.querySelector('.member-info strong')?.textContent.trim().toLowerCase() || '';
+                
+                const aIsCurrentUser = aName === currentUsername.toLowerCase();
+                const bIsCurrentUser = bName === currentUsername.toLowerCase();
+                
+                // Текущий пользователь всегда первый
+                if (aIsCurrentUser) return -1;
+                if (bIsCurrentUser) return 1;
+                
+                const aIsOnline = onlineUsernames.has(aName);
+                const bIsOnline = onlineUsernames.has(bName);
+                
+                // Онлайн пользователи выше офлайн
+                if (aIsOnline && !bIsOnline) return -1;
+                if (!aIsOnline && bIsOnline) return 1;
+                
+                // Алфавитная сортировка
+                return aName.localeCompare(bName, 'ru');
+            });
+            
+            // Перемещаем элементы в новом порядке
+            items.forEach(item => membersListEl.appendChild(item));
         }
 
         // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
