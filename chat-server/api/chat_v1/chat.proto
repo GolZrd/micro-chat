@@ -17,7 +17,8 @@ service Chat {
 }
 
 message CreateRequest {
-    repeated string usernames = 1;
+    string name = 1;
+    repeated string usernames = 2;
 }
 
 message CreateResponse {
@@ -66,8 +67,9 @@ message MyChatsRequest {
 
 message ChatInfo {
     int64 id = 1;
-    repeated string usernames = 2;
-    google.protobuf.Timestamp created_at = 3;
+    string name = 2;
+    repeated string usernames = 3;
+    google.protobuf.Timestamp created_at = 4;
 }
 
 message MyChatsResponse {

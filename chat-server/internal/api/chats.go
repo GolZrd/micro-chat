@@ -36,6 +36,7 @@ func (s *Implementation) MyChats(ctx context.Context, req *desc.MyChatsRequest) 
 	for _, chat := range chats {
 		chatsInfo := &desc.ChatInfo{
 			Id:        chat.ID,
+			Name:      chat.Name,
 			Usernames: chat.Usernames,
 			CreatedAt: timestamppb.New(chat.CreatedAt),
 		}

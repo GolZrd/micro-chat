@@ -11,7 +11,7 @@ import (
 )
 
 type ChatRepository interface {
-	Create(ctx context.Context, usernames []string) (int64, error)
+	Create(ctx context.Context, name string, usernames []string) (int64, error)
 	Delete(ctx context.Context, id int64) error
 	SendMessage(ctx context.Context, msg MessageCreateDTO) error
 	ChatExists(ctx context.Context, id int64) (bool, error)
@@ -29,11 +29,11 @@ func NewRepository(db *pgxpool.Pool) ChatRepository {
 	}
 }
 
-func (r *repo) Create(ctx context.Context, usernames []string) (int64, error) {
+func (r *repo) Create(ctx context.Context, name string, usernames []string) (int64, error) {
 	var chatId int64
-	// Здесь используем простой запрос, потому что у нас для chats по умолчанию дефолтные значения, поэтому не нужно дополнительно что то вставлять
-	sql := "INSERT INTO chats DEFAULT VALUES RETURNING id"
-	err := r.db.QueryRow(ctx, sql).Scan(&chatId)
+	// Здесь используем простой запрос
+	sql := "INSERT INTO chats (name) VALUES $1 RETURNING id"
+	err := r.db.QueryRow(ctx, sql, name).Scan(&chatId)
 	if err != nil {
 		return 0, fmt.Errorf("insert chat: %w", err)
 	}
@@ -151,7 +151,7 @@ func (r *repo) ChatExists(ctx context.Context, id int64) (bool, error) {
 }
 
 func (r *repo) UserChats(ctx context.Context, username string) ([]ChatInfoDTO, error) {
-	builder := squirrel.Select("id", "created_at").
+	builder := squirrel.Select("id", "name", "created_at").
 		PlaceholderFormat(squirrel.Dollar).
 		From("chats").
 		Join("chat_members ON chats.ID = chat_members.chat_id ").
@@ -171,7 +171,7 @@ func (r *repo) UserChats(ctx context.Context, username string) ([]ChatInfoDTO, e
 	var chats []ChatInfoDTO
 	for rows.Next() {
 		var chat ChatInfoDTO
-		err := rows.Scan(&chat.ID, &chat.CreatedAt)
+		err := rows.Scan(&chat.ID, &chat.Name, &chat.CreatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("scan chat: %w", err)
 		}

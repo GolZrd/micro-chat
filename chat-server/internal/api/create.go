@@ -39,7 +39,7 @@ func (s *Implementation) Create(ctx context.Context, req *desc.CreateRequest) (*
 	}
 
 	// Передаем создателя отдельно от приглашенных
-	id, err := s.chatService.Create(ctx, creatorUsername, participants)
+	id, err := s.chatService.Create(ctx, req.Name, creatorUsername, participants)
 	if err != nil {
 		// Проверяем типизированную ошибку
 		var usersNotFound *service.ErrUserNotFound

@@ -21,6 +21,7 @@ func (s *service) MyChats(ctx context.Context, username string) ([]ChatInfoDTO, 
 	for _, chat := range chats {
 		allChats = append(allChats, ChatInfoDTO{
 			ID:        chat.ID,
+			Name:      chat.Name,
 			Usernames: chat.Usernames,
 			CreatedAt: chat.CreatedAt,
 		})

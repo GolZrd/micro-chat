@@ -26,6 +26,7 @@ type MessageDTO struct {
 
 type ChatInfoDTO struct {
 	ID        int64
+	Name      string
 	Usernames []string
 	CreatedAt time.Time
 }
