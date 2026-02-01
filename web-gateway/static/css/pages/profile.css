@@ -1,7 +1,7 @@
 /* ==================== PROFILE PAGE ==================== */
 
 .user-info-card {
-    background: rgba(37, 37, 51, 0.9); /* ИЗМЕНЕНО */
+    background: rgba(37, 37, 51, 0.3); /* ИЗМЕНЕНО */
     backdrop-filter: blur(15px); /* ДОБАВЛЕНО */
     border-radius: var(--radius-sm);
     padding: 1.5rem;
@@ -15,7 +15,7 @@
     gap: 1rem;
     padding: 1rem;
     margin: 0.75rem 0;
-    background: rgba(15, 15, 21, 0.6); /* ИЗМЕНЕНО */
+    background: rgba(15, 15, 21, 0.4); /* ИЗМЕНЕНО */
     backdrop-filter: blur(10px); /* ДОБАВЛЕНО */
     border-radius: var(--radius-sm);
     color: var(--text-secondary);

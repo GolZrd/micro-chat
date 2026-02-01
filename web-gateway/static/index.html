@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="app-container">
+    <div class="app-container" id="appContainer">
         <!-- Боковая панель -->
         <aside class="sidebar">
             <!-- Логотип приложения -->
@@ -68,9 +68,9 @@
                 <div class="section-header">
                     <h1>
                         <i class="fas fa-rocket"></i>
-                        Добро пожаловать в Micro Chat
+                        <span id="welcomeTitle">Добро пожаловать в Micro Chat</span>
                     </h1>
-                    <p class="subtitle">Современный мессенджер для вашего общения</p>
+                    <p class="subtitle" id="welcomeSubtitle">Современный мессенджер для вашего общения</p>
                 </div>
                 
                 <!-- НОВАЯ ПЕРЕКЛЮЧАЕМАЯ ФОРМА для неавторизованных -->
@@ -143,8 +143,6 @@
                     </div>
                 </div>
             </section>
-            
-            <!-- УДАЛЕНА СЕКЦИЯ "АВТОРИЗАЦИЯ" -->
             
             <!-- Секция: Чаты -->
             <section id="chatsSection" class="content-section">
@@ -235,6 +233,16 @@
                     document.getElementById('homeSection').classList.add('active');
                     const homeNav = document.querySelector('.nav-item[onclick*="home"]');
                     if (homeNav) homeNav.classList.add('active');
+                    
+                    // Обновляем заголовок в зависимости от авторизации
+                    if (TokenManager.isAuthenticated()) {
+                        const username = TokenManager.getUsername();
+                        document.getElementById('welcomeTitle').textContent = `Добро пожаловать, ${username}!`;
+                        document.getElementById('welcomeSubtitle').textContent = 'Рады видеть вас снова';
+                    } else {
+                        document.getElementById('welcomeTitle').textContent = 'Добро пожаловать в Micro Chat';
+                        document.getElementById('welcomeSubtitle').textContent = 'Современный мессенджер для вашего общения';
+                    }
                     break;
                 case 'chats':
                     document.getElementById('chatsSection').classList.add('active');
@@ -279,6 +287,7 @@
         // Обновление статуса в sidebar
         function updateAuthStatus() {
             const isAuth = TokenManager.isAuthenticated();
+            const appContainer = document.getElementById('appContainer');
             const statusIndicator = document.getElementById('statusIndicator');
             const statusText = document.getElementById('statusText');
             const userNameEl = document.getElementById('userName');
@@ -286,10 +295,12 @@
             const protectedContent = document.querySelectorAll('.protected-content');
             const protectedNav = document.querySelectorAll('.protected-nav');
             const guestOnly = document.querySelectorAll('.guest-only');
-            const guestNav = document.querySelectorAll('.guest-nav');
             
             if (isAuth) {
                 const username = TokenManager.getUsername();
+                
+                // Показываем sidebar (убираем guest-mode)
+                appContainer.classList.remove('guest-mode');
                 
                 // Обновляем статус
                 statusIndicator.className = 'status-indicator online';
@@ -301,8 +312,14 @@
                 protectedContent.forEach(el => el.style.display = '');
                 protectedNav.forEach(el => el.style.display = 'flex');
                 guestOnly.forEach(el => el.style.display = 'none');
-                guestNav.forEach(el => el.style.display = 'none');
+                
+                // Обновляем заголовок
+                document.getElementById('welcomeTitle').textContent = `Добро пожаловать, ${username}!`;
+                document.getElementById('welcomeSubtitle').textContent = 'Рады видеть вас снова';
             } else {
+                // Скрываем sidebar (добавляем guest-mode)
+                appContainer.classList.add('guest-mode');
+                
                 // Обновляем статус
                 statusIndicator.className = 'status-indicator offline';
                 statusText.textContent = 'Не в сети';
@@ -313,15 +330,35 @@
                 protectedContent.forEach(el => el.style.display = 'none');
                 protectedNav.forEach(el => el.style.display = 'none');
                 guestOnly.forEach(el => el.style.display = '');
-                guestNav.forEach(el => el.style.display = 'none'); // Убрали показ гостевой навигации
+                
+                // Обновляем заголовок
+                document.getElementById('welcomeTitle').textContent = 'Добро пожаловать в Micro Chat';
+                document.getElementById('welcomeSubtitle').textContent = 'Современный мессенджер для вашего общения';
+                
+                // Показываем форму входа
+                switchAuthTab('login');
             }
         }
         
         // Вызываем при загрузке страницы
         document.addEventListener('DOMContentLoaded', function() {
             updateAuthStatus();
+            
+            // Добавляем обработчики для форм
+            document.getElementById('loginForm')?.addEventListener('submit', function(e) {
+                e.preventDefault();
+                // Здесь будет вызов функции входа из app.js
+                console.log('Логин:', document.getElementById('login_email').value);
+            });
+            
+            document.getElementById('registerForm')?.addEventListener('submit', function(e) {
+                e.preventDefault();
+                // Здесь будет вызов функции регистрации из app.js
+                console.log('Регистрация:', document.getElementById('reg_username').value);
+            });
         });
     </script>
+    
     <!-- Контейнер для уведомлений -->
     <div id="toast-container"></div>
 </body>
