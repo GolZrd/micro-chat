@@ -28,6 +28,7 @@ var upgrader = websocket.Upgrader{
 func CreateChat(client *clients.ChatClient) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req struct {
+			Name      string   `json:"name"`
 			Usernames []string `json:"usernames"`
 		}
 
@@ -46,6 +47,7 @@ func CreateChat(client *clients.ChatClient) gin.HandlerFunc {
 
 		// Вызываем gRPC - токен автоматически проверится интерцептором chat-server
 		resp, err := client.Client.Create(ctx, &chat_v1.CreateRequest{
+			Name:      req.Name,
 			Usernames: req.Usernames,
 		})
 		if err != nil {

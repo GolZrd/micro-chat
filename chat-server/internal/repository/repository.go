@@ -32,7 +32,7 @@ func NewRepository(db *pgxpool.Pool) ChatRepository {
 func (r *repo) Create(ctx context.Context, name string, usernames []string) (int64, error) {
 	var chatId int64
 	// Здесь используем простой запрос
-	sql := "INSERT INTO chats (name) VALUES $1 RETURNING id"
+	sql := "INSERT INTO chats (name) VALUES ($1) RETURNING id"
 	err := r.db.QueryRow(ctx, sql, name).Scan(&chatId)
 	if err != nil {
 		return 0, fmt.Errorf("insert chat: %w", err)

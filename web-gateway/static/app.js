@@ -348,8 +348,12 @@ document.addEventListener('DOMContentLoaded', () => {
         createChatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            const nameInput = document.getElementById('chat_name');
+            const name = nameInput ? nameInput.value.trim() : '';
+
             const inputEl = document.getElementById('chat_usernames');
             const usernames = inputEl.value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+
             const resultEl = document.getElementById('chatResult');
 
             // Валидация на клиенте
@@ -365,7 +369,10 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const response = await apiRequest('/api/chat/create', {
                     method: 'POST',
-                    body: JSON.stringify({ usernames })
+                    body: JSON.stringify({ 
+                        name: name, 
+                        usernames: usernames 
+                    })
                 });
                 
                 const result = await response.json();
@@ -385,6 +392,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         resultEl.style.color = '#155724';
                     }
                     
+                    nameInput.value = '';
                     inputEl.value = '';
 
                     // Обновляем список чатов и счетчик
@@ -597,6 +605,8 @@ async function loadMyChats() {
         chats.forEach(chat => {
             const chatId = chat.id;
             const users = chat.usernames || [];
+
+            const chatName = chat.name || `Чат #${chatId}`;
             
             let createdDate = 'N/A';
             if (chat.created_at && chat.created_at.seconds) {
@@ -615,7 +625,7 @@ async function loadMyChats() {
             html += `
                 <div class="chat-card">
                     <div class="chat-card-header">
-                        <h3>💬 Чат #${chatId}</h3>
+                        <h3>💬 ${escapeHtml(chatName)}</h3>
                         <button 
                             onclick="event.stopPropagation(); deleteChat(${chatId})" 
                             class="btn-delete"
@@ -643,6 +653,12 @@ async function loadMyChats() {
         // Обновляем счетчик на 0 при ошибке
         updateChatCount(0);
     }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // ==================== ОБНОВЛЕНИЕ СЧЕТЧИКА ЧАТОВ ====================

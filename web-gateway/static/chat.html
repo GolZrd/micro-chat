@@ -239,7 +239,7 @@
 
         // Устанавливаем ID сразу
         document.getElementById('currentChatId').textContent = chatId;
-        document.getElementById('chatIdDisplay').textContent = chatId;
+        document.getElementById('chatIdDisplay').textContent = `#${chatId}`;
         document.getElementById('currentUser').textContent = currentUsername;
 
         // ==================== WEBSOCKET ====================
@@ -379,13 +379,14 @@
                 let html = '';
                 chats.forEach(chat => {
                     const users = chat.usernames || [];
+                    const chatItemName = chat.name || `Чат #${chat.id}`;
                     html += `
                         <a href="/chat?id=${chat.id}" class="chat-item">
                             <div class="chat-icon">
                                 <i class="fas fa-comments"></i>
                             </div>
                             <div class="chat-info">
-                                <strong>Чат #${chat.id}</strong>
+                                <strong>${escapeHtml(chatItemName)}</strong>
                                 <small>${users.slice(0, 2).join(', ')}${users.length > 2 ? '...' : ''}</small>
                             </div>
                         </a>
@@ -428,7 +429,10 @@
                     showMembersError('Чат не найден');
                     return;
                 }
-                
+                // Отображаем название чата
+                const chatName = currentChat.name || `Чат #${chatId}`;
+                document.getElementById('chatIdDisplay').textContent = chatName;
+
                 // Получаем список участников из текущего чата
                 const members = currentChat.usernames || currentChat.members || [];
                 console.log('👥 Members found:', members);
