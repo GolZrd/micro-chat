@@ -15,6 +15,8 @@ generate:
 	make generate-access-api
 	make generate-auth-api
 	make generate-user-api
+	make generate-friends-api
+
 
 generate-access-api:
 	mkdir pkg\access_v1
@@ -36,6 +38,13 @@ generate-user-api:
 	--go_out=pkg/user_v1 --go_opt=paths=source_relative \
 	--go-grpc_out=pkg/user_v1 --go-grpc_opt=paths=source_relative \
 	api\user_v1\user.proto
+
+generate-friends-api:
+	mkdir pkg\friends_v1
+	protoc --proto_path api/friends_v1 \
+	--go_out=pkg/friends_v1 --go_opt=paths=source_relative \
+	--go-grpc_out=pkg/friends_v1 --go-grpc_opt=paths=source_relative \
+	api\friends_v1\friends.proto
 
 test-coverage:
 	go clean -testcache

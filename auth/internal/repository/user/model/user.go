@@ -35,3 +35,10 @@ type UserAuthData struct {
 	Password string `db:"password"`
 	Role     string `db:"role"`
 }
+
+// Для метода SearchUser
+type UserSearchResult struct {
+	Id               int64
+	Username         string
+	FriendshipStatus string
+}
