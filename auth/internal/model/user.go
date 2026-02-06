@@ -34,3 +34,10 @@ type UserAuthData struct {
 	Password string
 	Role     string
 }
+
+// Модель для поиска пользователей
+type UserSearchResult struct {
+	Id               int64
+	Username         string
+	FriendshipStatus string
+}

@@ -36,6 +36,8 @@ type UserRepository interface {
 	Delete(ctx context.Context, id int64) error
 	GetByEmail(ctx context.Context, email string) (*model.UserAuthData, error)
 	GetByUsernames(ctx context.Context, usernames []string) ([]string, error)
+	GetByUsername(ctx context.Context, username string) (*model.User, error)
+	SearchUser(ctx context.Context, searchQuery string, currentUserId int64, limit int) ([]model.UserSearchResult, error)
 }
 
 type repo struct {
@@ -183,4 +185,69 @@ func (r *repo) GetByUsernames(ctx context.Context, usernames []string) ([]string
 	}
 	// Возвращаются только те пользователи, которые есть в БД
 	return existingUsers, nil
+}
+
+func (r *repo) GetByUsername(ctx context.Context, username string) (*model.User, error) {
+	query := "SELECT id, username, email, created_at FROM users WHERE username = $1"
+
+	var user modelRepo.User
+	err := r.db.QueryRow(ctx, query, username).Scan(&user.Id, &user.Info.Username, &user.Info.Email, &user.CreatedAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrUserNotFound
+		}
+		return nil, fmt.Errorf("failed to query row: %w", err)
+	}
+
+	return converter.ToUserFromRepo(&user), nil
+}
+
+// SearchUser метод для поиска пользователей, передаем query и id текущего пользователя, чтобы не показывать его в результате
+// Запрос будет строиться с JOIN, будем присоединять таблицу с друзьями к таблице с пользователями
+func (r *repo) SearchUser(ctx context.Context, searchQuery string, currentUserId int64, limit int) ([]model.UserSearchResult, error) {
+	// Проверяем лимиты
+	if limit <= 0 || limit > 50 {
+		limit = 20
+	}
+
+	// Собираем паттерн для поиска
+	searchPattern := "%" + searchQuery + "%"
+
+	// Строим запрос с JOIN, будем присоединять таблицу с друзьями к таблице с пользователями
+	builder := squirrel.Select(
+		"u.id",
+		"u.username",
+		"COALESCE(f.status, 'none') as friendship_status"). // COALESCE - возвращает первое не NULL значение, то есть, если связи нет, вернет "none"
+		PlaceholderFormat(squirrel.Dollar).
+		From("users u").
+		LeftJoin("friends f ON f.friend_id = u.id AND f.user_id = ?", currentUserId). // f.user_id - текущий пользователь, f.friend_id - пользователь, которого мы ищем
+		Where(squirrel.And{
+			squirrel.NotEq{"u.id": currentUserId}, // Исключаем текущего пользователя
+			squirrel.ILike{"u.username": searchPattern},
+		}).
+		OrderBy("u.username").
+		Limit(uint64(limit))
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build query: %w", err)
+	}
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query: %w", err)
+	}
+	defer rows.Close()
+
+	users := make([]model.UserSearchResult, 0)
+
+	for rows.Next() {
+		var user model.UserSearchResult
+		if err := rows.Scan(&user.Id, &user.Username, &user.FriendshipStatus); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
+		}
+		users = append(users, user)
+	}
+
+	return users, nil
 }
