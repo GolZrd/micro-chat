@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package friends_v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/GolZrd/micro-chat/auth/pkg/friends_v1;friends_v1";
+
+service FriendsAPI {
+    // Отправить запрос в друзья
+    rpc SendFriendRequest (SendFriendRequestRequest) returns (google.protobuf.Empty);
+    // Принять запрос в друзья
+    rpc AcceptFriendRequest (AcceptFriendRequestRequest) returns (google.protobuf.Empty);
+    // Отклонить запрос в друзья
+    rpc RejectFriendRequest (RejectFriendRequestRequest) returns (google.protobuf.Empty);
+    // Получить список друзей 
+    rpc GetFriends(google.protobuf.Empty) returns (GetFriendsResponse);
+    // Удалить из друзей
+    rpc RemoveFriend(RemoveFriendRequest) returns (google.protobuf.Empty);
+    // Получить список запросов в друзья
+    rpc GetFriendRequests(google.protobuf.Empty) returns (GetFriendRequestsResponse);
+    // Найти пользователя
+    rpc SearchUser(SearchUserRequest) returns (SearchUserResponse);
+}
+
+message Friend {
+    int64 id = 1;
+    int64 user_id = 2;
+    string username = 3;
+}
+
+message FriendRequest {
+    int64 id = 1;
+    int64 from_user_id = 2;
+    string from_username = 3;
+    google.protobuf.Timestamp created_at = 4;
+}
+
+message UserSearchResult {
+    int64 id = 1;
+    string username = 2;
+    string friendship_status = 3;
+}
+
+// Отправить запрос в друзья, поиск по никнейму или user Id
+message SendFriendRequestRequest {
+    string username = 1;
+    int64 user_id = 2;
+}
+
+// Принять запрос в друзья, для этого нужно указать id запроса
+message AcceptFriendRequestRequest {
+    int64 request_id = 1;
+}
+
+// Отклонить запрос в друзья, для этого нужно указать id запроса
+message RejectFriendRequestRequest {
+    int64 request_id = 1;
+}
+
+message GetFriendsResponse {
+    repeated Friend friends = 1;
+}
+
+// Удаление из друзей по friend_id
+message RemoveFriendRequest {
+    int64 friend_id = 1;
+}
+
+message GetFriendRequestsResponse {
+    repeated FriendRequest requests = 1;
+}
+
+// Поиск пользователя 
+message SearchUserRequest {
+    string query = 1;// Поиск по username или email
+}
+
+message SearchUserResponse {
+    repeated UserSearchResult users = 1;
+}
