@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/GolZrd/micro-chat/auth/internal/api/user"
+	"github.com/GolZrd/micro-chat/auth/internal/config"
 	userService "github.com/GolZrd/micro-chat/auth/internal/service/user"
 	serviceMocks "github.com/GolZrd/micro-chat/auth/internal/service/user/mocks"
 	desc "github.com/GolZrd/micro-chat/auth/pkg/user_v1"
@@ -144,7 +145,7 @@ func TestUpdate(t *testing.T) {
 
 			tt.InitMock(serviceMock, ctx, tt.req.Id, dto)
 
-			api := user.NewImplementation(serviceMock, nil, nil) // jwtManager, cfg
+			api := user.NewImplementation(serviceMock, nil, &config.Config{}) // jwtManager, cfg
 
 			resp, err := api.Update(ctx, tt.req)
 

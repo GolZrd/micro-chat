@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/GolZrd/micro-chat/auth/internal/api/user"
+	"github.com/GolZrd/micro-chat/auth/internal/config"
 	serviceMocks "github.com/GolZrd/micro-chat/auth/internal/service/user/mocks"
 	desc "github.com/GolZrd/micro-chat/auth/pkg/user_v1"
 	"github.com/gojuno/minimock/v3"
@@ -61,7 +62,7 @@ func TestDelete(t *testing.T) {
 
 			tt.InitMock(serviceMock, ctx, tt.userId)
 
-			api := user.NewImplementation(serviceMock, nil, nil) // jwtManager, cfg
+			api := user.NewImplementation(serviceMock, nil, &config.Config{}) // jwtManager, cfg
 
 			resp, err := api.Delete(ctx, &desc.DeleteRequest{Id: tt.userId})
 

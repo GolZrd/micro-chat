@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/GolZrd/micro-chat/auth/internal/api/user"
+	"github.com/GolZrd/micro-chat/auth/internal/config"
 	"github.com/GolZrd/micro-chat/auth/internal/model"
 	serviceMocks "github.com/GolZrd/micro-chat/auth/internal/service/user/mocks"
 	desc "github.com/GolZrd/micro-chat/auth/pkg/user_v1"
@@ -74,7 +75,7 @@ func TestGet(t *testing.T) {
 
 			tt.InitMock(serviceMock, ctx, tt.userId)
 
-			api := user.NewImplementation(serviceMock, nil, nil) // jwtManager, cfg
+			api := user.NewImplementation(serviceMock, nil, &config.Config{}) // jwtManager, cfg
 
 			resp, err := api.Get(ctx, &desc.GetRequest{Id: tt.userId})
 
