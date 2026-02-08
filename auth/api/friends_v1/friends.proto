@@ -15,11 +15,11 @@ service FriendsAPI {
     // Отклонить запрос в друзья
     rpc RejectFriendRequest (RejectFriendRequestRequest) returns (google.protobuf.Empty);
     // Получить список друзей 
-    rpc GetFriends(google.protobuf.Empty) returns (GetFriendsResponse);
+    rpc GetFriends(GetFriendsRequest) returns (GetFriendsResponse);
     // Удалить из друзей
     rpc RemoveFriend(RemoveFriendRequest) returns (google.protobuf.Empty);
     // Получить список запросов в друзья
-    rpc GetFriendRequests(google.protobuf.Empty) returns (GetFriendRequestsResponse);
+    rpc GetFriendRequests(GetFriendRequestsRequest) returns (GetFriendRequestsResponse);
     // Найти пользователя
     rpc SearchUser(SearchUserRequest) returns (SearchUserResponse);
 }
@@ -59,6 +59,10 @@ message RejectFriendRequestRequest {
     int64 request_id = 1;
 }
 
+// Оставляем пустым, чтобы получить список друзей, если в будущем нужно дополнить, то это будет сделать легче
+message GetFriendsRequest {
+}
+
 message GetFriendsResponse {
     repeated Friend friends = 1;
 }
@@ -66,6 +70,11 @@ message GetFriendsResponse {
 // Удаление из друзей по friend_id
 message RemoveFriendRequest {
     int64 friend_id = 1;
+}
+
+// Получить список запросов в друзья, оставляем пустым, если понадобится что то добавить это будет сделать легче
+message GetFriendRequestsRequest{
+
 }
 
 message GetFriendRequestsResponse {

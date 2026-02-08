@@ -144,7 +144,7 @@ func TestUpdate(t *testing.T) {
 
 			tt.InitMock(serviceMock, ctx, tt.req.Id, dto)
 
-			api := user.NewImplementation(serviceMock)
+			api := user.NewImplementation(serviceMock, nil, nil) // jwtManager, cfg
 
 			resp, err := api.Update(ctx, tt.req)
 

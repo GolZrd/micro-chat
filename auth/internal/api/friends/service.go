@@ -1,28 +1,28 @@
-package user
+package friends
 
 import (
 	"context"
 	"strings"
 
 	"github.com/GolZrd/micro-chat/auth/internal/config"
-	userService "github.com/GolZrd/micro-chat/auth/internal/service/user"
+	friendsService "github.com/GolZrd/micro-chat/auth/internal/service/friends"
 	"github.com/GolZrd/micro-chat/auth/internal/utils/jwt"
-	descUser "github.com/GolZrd/micro-chat/auth/pkg/user_v1"
+	descFriends "github.com/GolZrd/micro-chat/auth/pkg/friends_v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
 type Implementation struct {
-	descUser.UnimplementedUserAPIServer
-	userService userService.UserService
+	descFriends.UnimplementedFriendsAPIServer
+	friendsService friendsService.FriendsService
 
 	jwtManager jwt.JWTManager
 	secretKey  string
 }
 
-func NewImplementation(userService userService.UserService, jwtManager jwt.JWTManager, cfg *config.Config) *Implementation {
-	return &Implementation{userService: userService, jwtManager: jwtManager, secretKey: cfg.AccessSecretKey}
+func NewImplementation(friendsService friendsService.FriendsService, jwtManager jwt.JWTManager, cfg *config.Config) *Implementation {
+	return &Implementation{friendsService: friendsService, jwtManager: jwtManager, secretKey: cfg.AccessSecretKey}
 }
 
 // Вспомогательный метод для получения UID из контекста

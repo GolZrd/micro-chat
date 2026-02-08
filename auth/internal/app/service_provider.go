@@ -6,15 +6,18 @@ import (
 
 	accessAPI "github.com/GolZrd/micro-chat/auth/internal/api/access"
 	authAPI "github.com/GolZrd/micro-chat/auth/internal/api/auth"
+	friendsAPI "github.com/GolZrd/micro-chat/auth/internal/api/friends"
 	userAPI "github.com/GolZrd/micro-chat/auth/internal/api/user"
 	"github.com/GolZrd/micro-chat/auth/internal/cache"
 	"github.com/GolZrd/micro-chat/auth/internal/closer"
 	"github.com/GolZrd/micro-chat/auth/internal/config"
 	accessRepository "github.com/GolZrd/micro-chat/auth/internal/repository/access"
 	authRepository "github.com/GolZrd/micro-chat/auth/internal/repository/auth"
+	friendsRepository "github.com/GolZrd/micro-chat/auth/internal/repository/friends"
 	userRepository "github.com/GolZrd/micro-chat/auth/internal/repository/user"
 	accessService "github.com/GolZrd/micro-chat/auth/internal/service/access"
 	authService "github.com/GolZrd/micro-chat/auth/internal/service/auth"
+	friendsService "github.com/GolZrd/micro-chat/auth/internal/service/friends"
 	userService "github.com/GolZrd/micro-chat/auth/internal/service/user"
 	"github.com/GolZrd/micro-chat/auth/internal/utils/jwt"
 
@@ -29,15 +32,18 @@ type serviceProvider struct {
 
 	jwtManager jwt.JWTManager
 
-	userRepository   userRepository.UserRepository
-	authRepository   authRepository.AuthRepository
-	accessRepository accessRepository.AccessRepository
-	userService      userService.UserService
-	authService      authService.AuthService
-	accessService    accessService.AccessService
-	userImpl         *userAPI.Implementation
-	authImpl         *authAPI.Implementation
-	accessImpl       *accessAPI.Implementation
+	userRepository    userRepository.UserRepository
+	authRepository    authRepository.AuthRepository
+	accessRepository  accessRepository.AccessRepository
+	friendsRepository friendsRepository.FriendsRepository
+	userService       userService.UserService
+	authService       authService.AuthService
+	accessService     accessService.AccessService
+	friendsService    friendsService.FriendsService
+	userImpl          *userAPI.Implementation
+	authImpl          *authAPI.Implementation
+	accessImpl        *accessAPI.Implementation
+	friendsImpl       *friendsAPI.Implementation
 }
 
 func newServiceProvider() *serviceProvider {
@@ -125,7 +131,7 @@ func (s *serviceProvider) UserService(ctx context.Context) userService.UserServi
 
 func (s *serviceProvider) UserImpl(ctx context.Context) *userAPI.Implementation {
 	if s.userImpl == nil {
-		s.userImpl = userAPI.NewImplementation(s.UserService(ctx))
+		s.userImpl = userAPI.NewImplementation(s.UserService(ctx), s.JWTManager(), s.Config())
 	}
 
 	return s.userImpl
@@ -177,4 +183,28 @@ func (s *serviceProvider) AccessImpl(ctx context.Context) *accessAPI.Implementat
 	}
 
 	return s.accessImpl
+}
+
+func (s *serviceProvider) FriendsRepository(ctx context.Context) friendsRepository.FriendsRepository {
+	if s.friendsRepository == nil {
+		s.friendsRepository = friendsRepository.NewRepository(s.PgPool(ctx))
+	}
+
+	return s.friendsRepository
+}
+
+func (s *serviceProvider) FriendsService(ctx context.Context) friendsService.FriendsService {
+	if s.friendsService == nil {
+		s.friendsService = friendsService.NewService(s.FriendsRepository(ctx), s.UserRepository(ctx))
+	}
+
+	return s.friendsService
+}
+
+func (s *serviceProvider) FriendsImpl(ctx context.Context) *friendsAPI.Implementation {
+	if s.friendsImpl == nil {
+		s.friendsImpl = friendsAPI.NewImplementation(s.FriendsService(ctx), s.JWTManager(), s.Config())
+	}
+
+	return s.friendsImpl
 }

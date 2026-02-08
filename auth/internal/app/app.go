@@ -14,6 +14,7 @@ import (
 	"github.com/GolZrd/micro-chat/auth/internal/metric"
 	descAccess "github.com/GolZrd/micro-chat/auth/pkg/access_v1"
 	descAuth "github.com/GolZrd/micro-chat/auth/pkg/auth_v1"
+	descFriends "github.com/GolZrd/micro-chat/auth/pkg/friends_v1"
 	descUser "github.com/GolZrd/micro-chat/auth/pkg/user_v1"
 	"github.com/natefinch/lumberjack"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -136,6 +137,7 @@ func (a *App) InitGRPCServer(ctx context.Context) error {
 	descUser.RegisterUserAPIServer(a.grpcServer, a.serviceProvider.UserImpl(ctx))
 	descAuth.RegisterAuthAPIServer(a.grpcServer, a.serviceProvider.AuthImpl(ctx))
 	descAccess.RegisterAccessAPIServer(a.grpcServer, a.serviceProvider.AccessImpl(ctx))
+	descFriends.RegisterFriendsAPIServer(a.grpcServer, a.serviceProvider.FriendsImpl(ctx))
 	return nil
 }
 

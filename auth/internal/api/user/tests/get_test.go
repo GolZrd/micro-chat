@@ -74,7 +74,7 @@ func TestGet(t *testing.T) {
 
 			tt.InitMock(serviceMock, ctx, tt.userId)
 
-			api := user.NewImplementation(serviceMock)
+			api := user.NewImplementation(serviceMock, nil, nil) // jwtManager, cfg
 
 			resp, err := api.Get(ctx, &desc.GetRequest{Id: tt.userId})
 

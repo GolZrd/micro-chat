@@ -61,7 +61,7 @@ func TestDelete(t *testing.T) {
 
 			tt.InitMock(serviceMock, ctx, tt.userId)
 
-			api := user.NewImplementation(serviceMock)
+			api := user.NewImplementation(serviceMock, nil, nil) // jwtManager, cfg
 
 			resp, err := api.Delete(ctx, &desc.DeleteRequest{Id: tt.userId})
 

@@ -153,7 +153,7 @@ func TestCreate(t *testing.T) {
 					Role:            tt.req.Info.Role.String(),
 				})
 
-				api := user.NewImplementation(serviceMock)
+				api := user.NewImplementation(serviceMock, nil, nil) // jwtManager, cfg
 
 				resp, err := api.Create(ctx, tt.req)
 

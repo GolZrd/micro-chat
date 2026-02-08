@@ -13,6 +13,7 @@ type UserService interface {
 	Update(ctx context.Context, id int64, info UpdateUserDTO) error
 	Delete(ctx context.Context, id int64) error
 	CheckUsersExists(ctx context.Context, usernames []string) (notFoundUsers []string, err error)
+	SearchUser(ctx context.Context, searchQuery string, currentUserId int64, limit int) ([]model.UserSearchResult, error)
 }
 
 type service struct {

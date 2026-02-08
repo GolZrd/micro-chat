@@ -2,9 +2,9 @@ package converter
 
 import (
 	"github.com/GolZrd/micro-chat/auth/internal/model"
-	descUser "github.com/GolZrd/micro-chat/auth/pkg/user_v1"
-
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	descUser "github.com/GolZrd/micro-chat/auth/pkg/user_v1"
 )
 
 // Map для конвертации string -> Role enum

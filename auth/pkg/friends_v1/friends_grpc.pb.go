@@ -40,11 +40,11 @@ type FriendsAPIClient interface {
 	// Отклонить запрос в друзья
 	RejectFriendRequest(ctx context.Context, in *RejectFriendRequestRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Получить список друзей
-	GetFriends(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetFriendsResponse, error)
+	GetFriends(ctx context.Context, in *GetFriendsRequest, opts ...grpc.CallOption) (*GetFriendsResponse, error)
 	// Удалить из друзей
 	RemoveFriend(ctx context.Context, in *RemoveFriendRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Получить список запросов в друзья
-	GetFriendRequests(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetFriendRequestsResponse, error)
+	GetFriendRequests(ctx context.Context, in *GetFriendRequestsRequest, opts ...grpc.CallOption) (*GetFriendRequestsResponse, error)
 	// Найти пользователя
 	SearchUser(ctx context.Context, in *SearchUserRequest, opts ...grpc.CallOption) (*SearchUserResponse, error)
 }
@@ -87,7 +87,7 @@ func (c *friendsAPIClient) RejectFriendRequest(ctx context.Context, in *RejectFr
 	return out, nil
 }
 
-func (c *friendsAPIClient) GetFriends(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetFriendsResponse, error) {
+func (c *friendsAPIClient) GetFriends(ctx context.Context, in *GetFriendsRequest, opts ...grpc.CallOption) (*GetFriendsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetFriendsResponse)
 	err := c.cc.Invoke(ctx, FriendsAPI_GetFriends_FullMethodName, in, out, cOpts...)
@@ -107,7 +107,7 @@ func (c *friendsAPIClient) RemoveFriend(ctx context.Context, in *RemoveFriendReq
 	return out, nil
 }
 
-func (c *friendsAPIClient) GetFriendRequests(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetFriendRequestsResponse, error) {
+func (c *friendsAPIClient) GetFriendRequests(ctx context.Context, in *GetFriendRequestsRequest, opts ...grpc.CallOption) (*GetFriendRequestsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetFriendRequestsResponse)
 	err := c.cc.Invoke(ctx, FriendsAPI_GetFriendRequests_FullMethodName, in, out, cOpts...)
@@ -138,11 +138,11 @@ type FriendsAPIServer interface {
 	// Отклонить запрос в друзья
 	RejectFriendRequest(context.Context, *RejectFriendRequestRequest) (*emptypb.Empty, error)
 	// Получить список друзей
-	GetFriends(context.Context, *emptypb.Empty) (*GetFriendsResponse, error)
+	GetFriends(context.Context, *GetFriendsRequest) (*GetFriendsResponse, error)
 	// Удалить из друзей
 	RemoveFriend(context.Context, *RemoveFriendRequest) (*emptypb.Empty, error)
 	// Получить список запросов в друзья
-	GetFriendRequests(context.Context, *emptypb.Empty) (*GetFriendRequestsResponse, error)
+	GetFriendRequests(context.Context, *GetFriendRequestsRequest) (*GetFriendRequestsResponse, error)
 	// Найти пользователя
 	SearchUser(context.Context, *SearchUserRequest) (*SearchUserResponse, error)
 	mustEmbedUnimplementedFriendsAPIServer()
@@ -164,13 +164,13 @@ func (UnimplementedFriendsAPIServer) AcceptFriendRequest(context.Context, *Accep
 func (UnimplementedFriendsAPIServer) RejectFriendRequest(context.Context, *RejectFriendRequestRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RejectFriendRequest not implemented")
 }
-func (UnimplementedFriendsAPIServer) GetFriends(context.Context, *emptypb.Empty) (*GetFriendsResponse, error) {
+func (UnimplementedFriendsAPIServer) GetFriends(context.Context, *GetFriendsRequest) (*GetFriendsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFriends not implemented")
 }
 func (UnimplementedFriendsAPIServer) RemoveFriend(context.Context, *RemoveFriendRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveFriend not implemented")
 }
-func (UnimplementedFriendsAPIServer) GetFriendRequests(context.Context, *emptypb.Empty) (*GetFriendRequestsResponse, error) {
+func (UnimplementedFriendsAPIServer) GetFriendRequests(context.Context, *GetFriendRequestsRequest) (*GetFriendRequestsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFriendRequests not implemented")
 }
 func (UnimplementedFriendsAPIServer) SearchUser(context.Context, *SearchUserRequest) (*SearchUserResponse, error) {
@@ -252,7 +252,7 @@ func _FriendsAPI_RejectFriendRequest_Handler(srv interface{}, ctx context.Contex
 }
 
 func _FriendsAPI_GetFriends_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
+	in := new(GetFriendsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -264,7 +264,7 @@ func _FriendsAPI_GetFriends_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: FriendsAPI_GetFriends_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FriendsAPIServer).GetFriends(ctx, req.(*emptypb.Empty))
+		return srv.(FriendsAPIServer).GetFriends(ctx, req.(*GetFriendsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -288,7 +288,7 @@ func _FriendsAPI_RemoveFriend_Handler(srv interface{}, ctx context.Context, dec 
 }
 
 func _FriendsAPI_GetFriendRequests_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
+	in := new(GetFriendRequestsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -300,7 +300,7 @@ func _FriendsAPI_GetFriendRequests_Handler(srv interface{}, ctx context.Context,
 		FullMethod: FriendsAPI_GetFriendRequests_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FriendsAPIServer).GetFriendRequests(ctx, req.(*emptypb.Empty))
+		return srv.(FriendsAPIServer).GetFriendRequests(ctx, req.(*GetFriendRequestsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

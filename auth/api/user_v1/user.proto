@@ -14,6 +14,7 @@ service UserAPI {
     rpc Update(UpdateRequest) returns (google.protobuf.Empty); // Update - ручка обновления информации о пользователе по его идентификатору
     rpc Delete(DeleteRequest) returns (google.protobuf.Empty); // Delete - удаление пользователя из системы по его идентификатору. 
     rpc CheckUsersExists(CheckUsersExistsRequest) returns (CheckUsersExistsResponse); // CheckUsersExists - ручка проверки существования пользователей
+    rpc SearchUser(SearchUserRequest) returns (SearchUserResponse); // SearchUser - ручка поиска пользователей по никнейму
 }
 
 
@@ -77,4 +78,20 @@ message CheckUsersExistsRequest {
 
 message CheckUsersExistsResponse {
     repeated string notFoundUsers = 1; // Имена пользователей, которые не найдены
+}
+
+message UserSearchResult {
+    int64 id = 1;
+    string username = 2;
+    string friendship_status = 3; // Статусы могут быть "none", "pending", "accepted" и т.д.
+}
+
+message SearchUserRequest {
+    string query = 1; // Текст поиска
+    int64 limit = 2;  // Лимит (например, 20)
+}
+
+// Ответ (список пользователей)
+message SearchUserResponse {
+    repeated UserSearchResult users = 1; // Список пользователей
 }

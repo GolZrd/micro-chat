@@ -25,6 +25,7 @@ const (
 	UserAPI_Update_FullMethodName           = "/user_v1.UserAPI/Update"
 	UserAPI_Delete_FullMethodName           = "/user_v1.UserAPI/Delete"
 	UserAPI_CheckUsersExists_FullMethodName = "/user_v1.UserAPI/CheckUsersExists"
+	UserAPI_SearchUser_FullMethodName       = "/user_v1.UserAPI/SearchUser"
 )
 
 // UserAPIClient is the client API for UserAPI service.
@@ -36,6 +37,7 @@ type UserAPIClient interface {
 	Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	CheckUsersExists(ctx context.Context, in *CheckUsersExistsRequest, opts ...grpc.CallOption) (*CheckUsersExistsResponse, error)
+	SearchUser(ctx context.Context, in *SearchUserRequest, opts ...grpc.CallOption) (*SearchUserResponse, error)
 }
 
 type userAPIClient struct {
@@ -96,6 +98,16 @@ func (c *userAPIClient) CheckUsersExists(ctx context.Context, in *CheckUsersExis
 	return out, nil
 }
 
+func (c *userAPIClient) SearchUser(ctx context.Context, in *SearchUserRequest, opts ...grpc.CallOption) (*SearchUserResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SearchUserResponse)
+	err := c.cc.Invoke(ctx, UserAPI_SearchUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserAPIServer is the server API for UserAPI service.
 // All implementations must embed UnimplementedUserAPIServer
 // for forward compatibility.
@@ -105,6 +117,7 @@ type UserAPIServer interface {
 	Update(context.Context, *UpdateRequest) (*emptypb.Empty, error)
 	Delete(context.Context, *DeleteRequest) (*emptypb.Empty, error)
 	CheckUsersExists(context.Context, *CheckUsersExistsRequest) (*CheckUsersExistsResponse, error)
+	SearchUser(context.Context, *SearchUserRequest) (*SearchUserResponse, error)
 	mustEmbedUnimplementedUserAPIServer()
 }
 
@@ -129,6 +142,9 @@ func (UnimplementedUserAPIServer) Delete(context.Context, *DeleteRequest) (*empt
 }
 func (UnimplementedUserAPIServer) CheckUsersExists(context.Context, *CheckUsersExistsRequest) (*CheckUsersExistsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CheckUsersExists not implemented")
+}
+func (UnimplementedUserAPIServer) SearchUser(context.Context, *SearchUserRequest) (*SearchUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchUser not implemented")
 }
 func (UnimplementedUserAPIServer) mustEmbedUnimplementedUserAPIServer() {}
 func (UnimplementedUserAPIServer) testEmbeddedByValue()                 {}
@@ -241,6 +257,24 @@ func _UserAPI_CheckUsersExists_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserAPI_SearchUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SearchUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserAPIServer).SearchUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserAPI_SearchUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserAPIServer).SearchUser(ctx, req.(*SearchUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserAPI_ServiceDesc is the grpc.ServiceDesc for UserAPI service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -267,6 +301,10 @@ var UserAPI_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CheckUsersExists",
 			Handler:    _UserAPI_CheckUsersExists_Handler,
+		},
+		{
+			MethodName: "SearchUser",
+			Handler:    _UserAPI_SearchUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

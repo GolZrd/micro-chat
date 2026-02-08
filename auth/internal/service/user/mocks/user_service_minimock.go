@@ -48,6 +48,13 @@ type UserServiceMock struct {
 	beforeGetCounter uint64
 	GetMock          mUserServiceMockGet
 
+	funcSearchUser          func(ctx context.Context, searchQuery string, currentUserId int64, limit int) (ua1 []model.UserSearchResult, err error)
+	funcSearchUserOrigin    string
+	inspectFuncSearchUser   func(ctx context.Context, searchQuery string, currentUserId int64, limit int)
+	afterSearchUserCounter  uint64
+	beforeSearchUserCounter uint64
+	SearchUserMock          mUserServiceMockSearchUser
+
 	funcUpdate          func(ctx context.Context, id int64, info mm_user.UpdateUserDTO) (err error)
 	funcUpdateOrigin    string
 	inspectFuncUpdate   func(ctx context.Context, id int64, info mm_user.UpdateUserDTO)
@@ -75,6 +82,9 @@ func NewUserServiceMock(t minimock.Tester) *UserServiceMock {
 
 	m.GetMock = mUserServiceMockGet{mock: m}
 	m.GetMock.callArgs = []*UserServiceMockGetParams{}
+
+	m.SearchUserMock = mUserServiceMockSearchUser{mock: m}
+	m.SearchUserMock.callArgs = []*UserServiceMockSearchUserParams{}
 
 	m.UpdateMock = mUserServiceMockUpdate{mock: m}
 	m.UpdateMock.callArgs = []*UserServiceMockUpdateParams{}
@@ -1455,6 +1465,411 @@ func (m *UserServiceMock) MinimockGetInspect() {
 	}
 }
 
+type mUserServiceMockSearchUser struct {
+	optional           bool
+	mock               *UserServiceMock
+	defaultExpectation *UserServiceMockSearchUserExpectation
+	expectations       []*UserServiceMockSearchUserExpectation
+
+	callArgs []*UserServiceMockSearchUserParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// UserServiceMockSearchUserExpectation specifies expectation struct of the UserService.SearchUser
+type UserServiceMockSearchUserExpectation struct {
+	mock               *UserServiceMock
+	params             *UserServiceMockSearchUserParams
+	paramPtrs          *UserServiceMockSearchUserParamPtrs
+	expectationOrigins UserServiceMockSearchUserExpectationOrigins
+	results            *UserServiceMockSearchUserResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// UserServiceMockSearchUserParams contains parameters of the UserService.SearchUser
+type UserServiceMockSearchUserParams struct {
+	ctx           context.Context
+	searchQuery   string
+	currentUserId int64
+	limit         int
+}
+
+// UserServiceMockSearchUserParamPtrs contains pointers to parameters of the UserService.SearchUser
+type UserServiceMockSearchUserParamPtrs struct {
+	ctx           *context.Context
+	searchQuery   *string
+	currentUserId *int64
+	limit         *int
+}
+
+// UserServiceMockSearchUserResults contains results of the UserService.SearchUser
+type UserServiceMockSearchUserResults struct {
+	ua1 []model.UserSearchResult
+	err error
+}
+
+// UserServiceMockSearchUserOrigins contains origins of expectations of the UserService.SearchUser
+type UserServiceMockSearchUserExpectationOrigins struct {
+	origin              string
+	originCtx           string
+	originSearchQuery   string
+	originCurrentUserId string
+	originLimit         string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmSearchUser *mUserServiceMockSearchUser) Optional() *mUserServiceMockSearchUser {
+	mmSearchUser.optional = true
+	return mmSearchUser
+}
+
+// Expect sets up expected params for UserService.SearchUser
+func (mmSearchUser *mUserServiceMockSearchUser) Expect(ctx context.Context, searchQuery string, currentUserId int64, limit int) *mUserServiceMockSearchUser {
+	if mmSearchUser.mock.funcSearchUser != nil {
+		mmSearchUser.mock.t.Fatalf("UserServiceMock.SearchUser mock is already set by Set")
+	}
+
+	if mmSearchUser.defaultExpectation == nil {
+		mmSearchUser.defaultExpectation = &UserServiceMockSearchUserExpectation{}
+	}
+
+	if mmSearchUser.defaultExpectation.paramPtrs != nil {
+		mmSearchUser.mock.t.Fatalf("UserServiceMock.SearchUser mock is already set by ExpectParams functions")
+	}
+
+	mmSearchUser.defaultExpectation.params = &UserServiceMockSearchUserParams{ctx, searchQuery, currentUserId, limit}
+	mmSearchUser.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmSearchUser.expectations {
+		if minimock.Equal(e.params, mmSearchUser.defaultExpectation.params) {
+			mmSearchUser.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmSearchUser.defaultExpectation.params)
+		}
+	}
+
+	return mmSearchUser
+}
+
+// ExpectCtxParam1 sets up expected param ctx for UserService.SearchUser
+func (mmSearchUser *mUserServiceMockSearchUser) ExpectCtxParam1(ctx context.Context) *mUserServiceMockSearchUser {
+	if mmSearchUser.mock.funcSearchUser != nil {
+		mmSearchUser.mock.t.Fatalf("UserServiceMock.SearchUser mock is already set by Set")
+	}
+
+	if mmSearchUser.defaultExpectation == nil {
+		mmSearchUser.defaultExpectation = &UserServiceMockSearchUserExpectation{}
+	}
+
+	if mmSearchUser.defaultExpectation.params != nil {
+		mmSearchUser.mock.t.Fatalf("UserServiceMock.SearchUser mock is already set by Expect")
+	}
+
+	if mmSearchUser.defaultExpectation.paramPtrs == nil {
+		mmSearchUser.defaultExpectation.paramPtrs = &UserServiceMockSearchUserParamPtrs{}
+	}
+	mmSearchUser.defaultExpectation.paramPtrs.ctx = &ctx
+	mmSearchUser.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmSearchUser
+}
+
+// ExpectSearchQueryParam2 sets up expected param searchQuery for UserService.SearchUser
+func (mmSearchUser *mUserServiceMockSearchUser) ExpectSearchQueryParam2(searchQuery string) *mUserServiceMockSearchUser {
+	if mmSearchUser.mock.funcSearchUser != nil {
+		mmSearchUser.mock.t.Fatalf("UserServiceMock.SearchUser mock is already set by Set")
+	}
+
+	if mmSearchUser.defaultExpectation == nil {
+		mmSearchUser.defaultExpectation = &UserServiceMockSearchUserExpectation{}
+	}
+
+	if mmSearchUser.defaultExpectation.params != nil {
+		mmSearchUser.mock.t.Fatalf("UserServiceMock.SearchUser mock is already set by Expect")
+	}
+
+	if mmSearchUser.defaultExpectation.paramPtrs == nil {
+		mmSearchUser.defaultExpectation.paramPtrs = &UserServiceMockSearchUserParamPtrs{}
+	}
+	mmSearchUser.defaultExpectation.paramPtrs.searchQuery = &searchQuery
+	mmSearchUser.defaultExpectation.expectationOrigins.originSearchQuery = minimock.CallerInfo(1)
+
+	return mmSearchUser
+}
+
+// ExpectCurrentUserIdParam3 sets up expected param currentUserId for UserService.SearchUser
+func (mmSearchUser *mUserServiceMockSearchUser) ExpectCurrentUserIdParam3(currentUserId int64) *mUserServiceMockSearchUser {
+	if mmSearchUser.mock.funcSearchUser != nil {
+		mmSearchUser.mock.t.Fatalf("UserServiceMock.SearchUser mock is already set by Set")
+	}
+
+	if mmSearchUser.defaultExpectation == nil {
+		mmSearchUser.defaultExpectation = &UserServiceMockSearchUserExpectation{}
+	}
+
+	if mmSearchUser.defaultExpectation.params != nil {
+		mmSearchUser.mock.t.Fatalf("UserServiceMock.SearchUser mock is already set by Expect")
+	}
+
+	if mmSearchUser.defaultExpectation.paramPtrs == nil {
+		mmSearchUser.defaultExpectation.paramPtrs = &UserServiceMockSearchUserParamPtrs{}
+	}
+	mmSearchUser.defaultExpectation.paramPtrs.currentUserId = &currentUserId
+	mmSearchUser.defaultExpectation.expectationOrigins.originCurrentUserId = minimock.CallerInfo(1)
+
+	return mmSearchUser
+}
+
+// ExpectLimitParam4 sets up expected param limit for UserService.SearchUser
+func (mmSearchUser *mUserServiceMockSearchUser) ExpectLimitParam4(limit int) *mUserServiceMockSearchUser {
+	if mmSearchUser.mock.funcSearchUser != nil {
+		mmSearchUser.mock.t.Fatalf("UserServiceMock.SearchUser mock is already set by Set")
+	}
+
+	if mmSearchUser.defaultExpectation == nil {
+		mmSearchUser.defaultExpectation = &UserServiceMockSearchUserExpectation{}
+	}
+
+	if mmSearchUser.defaultExpectation.params != nil {
+		mmSearchUser.mock.t.Fatalf("UserServiceMock.SearchUser mock is already set by Expect")
+	}
+
+	if mmSearchUser.defaultExpectation.paramPtrs == nil {
+		mmSearchUser.defaultExpectation.paramPtrs = &UserServiceMockSearchUserParamPtrs{}
+	}
+	mmSearchUser.defaultExpectation.paramPtrs.limit = &limit
+	mmSearchUser.defaultExpectation.expectationOrigins.originLimit = minimock.CallerInfo(1)
+
+	return mmSearchUser
+}
+
+// Inspect accepts an inspector function that has same arguments as the UserService.SearchUser
+func (mmSearchUser *mUserServiceMockSearchUser) Inspect(f func(ctx context.Context, searchQuery string, currentUserId int64, limit int)) *mUserServiceMockSearchUser {
+	if mmSearchUser.mock.inspectFuncSearchUser != nil {
+		mmSearchUser.mock.t.Fatalf("Inspect function is already set for UserServiceMock.SearchUser")
+	}
+
+	mmSearchUser.mock.inspectFuncSearchUser = f
+
+	return mmSearchUser
+}
+
+// Return sets up results that will be returned by UserService.SearchUser
+func (mmSearchUser *mUserServiceMockSearchUser) Return(ua1 []model.UserSearchResult, err error) *UserServiceMock {
+	if mmSearchUser.mock.funcSearchUser != nil {
+		mmSearchUser.mock.t.Fatalf("UserServiceMock.SearchUser mock is already set by Set")
+	}
+
+	if mmSearchUser.defaultExpectation == nil {
+		mmSearchUser.defaultExpectation = &UserServiceMockSearchUserExpectation{mock: mmSearchUser.mock}
+	}
+	mmSearchUser.defaultExpectation.results = &UserServiceMockSearchUserResults{ua1, err}
+	mmSearchUser.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmSearchUser.mock
+}
+
+// Set uses given function f to mock the UserService.SearchUser method
+func (mmSearchUser *mUserServiceMockSearchUser) Set(f func(ctx context.Context, searchQuery string, currentUserId int64, limit int) (ua1 []model.UserSearchResult, err error)) *UserServiceMock {
+	if mmSearchUser.defaultExpectation != nil {
+		mmSearchUser.mock.t.Fatalf("Default expectation is already set for the UserService.SearchUser method")
+	}
+
+	if len(mmSearchUser.expectations) > 0 {
+		mmSearchUser.mock.t.Fatalf("Some expectations are already set for the UserService.SearchUser method")
+	}
+
+	mmSearchUser.mock.funcSearchUser = f
+	mmSearchUser.mock.funcSearchUserOrigin = minimock.CallerInfo(1)
+	return mmSearchUser.mock
+}
+
+// When sets expectation for the UserService.SearchUser which will trigger the result defined by the following
+// Then helper
+func (mmSearchUser *mUserServiceMockSearchUser) When(ctx context.Context, searchQuery string, currentUserId int64, limit int) *UserServiceMockSearchUserExpectation {
+	if mmSearchUser.mock.funcSearchUser != nil {
+		mmSearchUser.mock.t.Fatalf("UserServiceMock.SearchUser mock is already set by Set")
+	}
+
+	expectation := &UserServiceMockSearchUserExpectation{
+		mock:               mmSearchUser.mock,
+		params:             &UserServiceMockSearchUserParams{ctx, searchQuery, currentUserId, limit},
+		expectationOrigins: UserServiceMockSearchUserExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmSearchUser.expectations = append(mmSearchUser.expectations, expectation)
+	return expectation
+}
+
+// Then sets up UserService.SearchUser return parameters for the expectation previously defined by the When method
+func (e *UserServiceMockSearchUserExpectation) Then(ua1 []model.UserSearchResult, err error) *UserServiceMock {
+	e.results = &UserServiceMockSearchUserResults{ua1, err}
+	return e.mock
+}
+
+// Times sets number of times UserService.SearchUser should be invoked
+func (mmSearchUser *mUserServiceMockSearchUser) Times(n uint64) *mUserServiceMockSearchUser {
+	if n == 0 {
+		mmSearchUser.mock.t.Fatalf("Times of UserServiceMock.SearchUser mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmSearchUser.expectedInvocations, n)
+	mmSearchUser.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmSearchUser
+}
+
+func (mmSearchUser *mUserServiceMockSearchUser) invocationsDone() bool {
+	if len(mmSearchUser.expectations) == 0 && mmSearchUser.defaultExpectation == nil && mmSearchUser.mock.funcSearchUser == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmSearchUser.mock.afterSearchUserCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmSearchUser.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// SearchUser implements mm_user.UserService
+func (mmSearchUser *UserServiceMock) SearchUser(ctx context.Context, searchQuery string, currentUserId int64, limit int) (ua1 []model.UserSearchResult, err error) {
+	mm_atomic.AddUint64(&mmSearchUser.beforeSearchUserCounter, 1)
+	defer mm_atomic.AddUint64(&mmSearchUser.afterSearchUserCounter, 1)
+
+	mmSearchUser.t.Helper()
+
+	if mmSearchUser.inspectFuncSearchUser != nil {
+		mmSearchUser.inspectFuncSearchUser(ctx, searchQuery, currentUserId, limit)
+	}
+
+	mm_params := UserServiceMockSearchUserParams{ctx, searchQuery, currentUserId, limit}
+
+	// Record call args
+	mmSearchUser.SearchUserMock.mutex.Lock()
+	mmSearchUser.SearchUserMock.callArgs = append(mmSearchUser.SearchUserMock.callArgs, &mm_params)
+	mmSearchUser.SearchUserMock.mutex.Unlock()
+
+	for _, e := range mmSearchUser.SearchUserMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.ua1, e.results.err
+		}
+	}
+
+	if mmSearchUser.SearchUserMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmSearchUser.SearchUserMock.defaultExpectation.Counter, 1)
+		mm_want := mmSearchUser.SearchUserMock.defaultExpectation.params
+		mm_want_ptrs := mmSearchUser.SearchUserMock.defaultExpectation.paramPtrs
+
+		mm_got := UserServiceMockSearchUserParams{ctx, searchQuery, currentUserId, limit}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmSearchUser.t.Errorf("UserServiceMock.SearchUser got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmSearchUser.SearchUserMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.searchQuery != nil && !minimock.Equal(*mm_want_ptrs.searchQuery, mm_got.searchQuery) {
+				mmSearchUser.t.Errorf("UserServiceMock.SearchUser got unexpected parameter searchQuery, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmSearchUser.SearchUserMock.defaultExpectation.expectationOrigins.originSearchQuery, *mm_want_ptrs.searchQuery, mm_got.searchQuery, minimock.Diff(*mm_want_ptrs.searchQuery, mm_got.searchQuery))
+			}
+
+			if mm_want_ptrs.currentUserId != nil && !minimock.Equal(*mm_want_ptrs.currentUserId, mm_got.currentUserId) {
+				mmSearchUser.t.Errorf("UserServiceMock.SearchUser got unexpected parameter currentUserId, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmSearchUser.SearchUserMock.defaultExpectation.expectationOrigins.originCurrentUserId, *mm_want_ptrs.currentUserId, mm_got.currentUserId, minimock.Diff(*mm_want_ptrs.currentUserId, mm_got.currentUserId))
+			}
+
+			if mm_want_ptrs.limit != nil && !minimock.Equal(*mm_want_ptrs.limit, mm_got.limit) {
+				mmSearchUser.t.Errorf("UserServiceMock.SearchUser got unexpected parameter limit, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmSearchUser.SearchUserMock.defaultExpectation.expectationOrigins.originLimit, *mm_want_ptrs.limit, mm_got.limit, minimock.Diff(*mm_want_ptrs.limit, mm_got.limit))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmSearchUser.t.Errorf("UserServiceMock.SearchUser got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmSearchUser.SearchUserMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmSearchUser.SearchUserMock.defaultExpectation.results
+		if mm_results == nil {
+			mmSearchUser.t.Fatal("No results are set for the UserServiceMock.SearchUser")
+		}
+		return (*mm_results).ua1, (*mm_results).err
+	}
+	if mmSearchUser.funcSearchUser != nil {
+		return mmSearchUser.funcSearchUser(ctx, searchQuery, currentUserId, limit)
+	}
+	mmSearchUser.t.Fatalf("Unexpected call to UserServiceMock.SearchUser. %v %v %v %v", ctx, searchQuery, currentUserId, limit)
+	return
+}
+
+// SearchUserAfterCounter returns a count of finished UserServiceMock.SearchUser invocations
+func (mmSearchUser *UserServiceMock) SearchUserAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmSearchUser.afterSearchUserCounter)
+}
+
+// SearchUserBeforeCounter returns a count of UserServiceMock.SearchUser invocations
+func (mmSearchUser *UserServiceMock) SearchUserBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmSearchUser.beforeSearchUserCounter)
+}
+
+// Calls returns a list of arguments used in each call to UserServiceMock.SearchUser.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmSearchUser *mUserServiceMockSearchUser) Calls() []*UserServiceMockSearchUserParams {
+	mmSearchUser.mutex.RLock()
+
+	argCopy := make([]*UserServiceMockSearchUserParams, len(mmSearchUser.callArgs))
+	copy(argCopy, mmSearchUser.callArgs)
+
+	mmSearchUser.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockSearchUserDone returns true if the count of the SearchUser invocations corresponds
+// the number of defined expectations
+func (m *UserServiceMock) MinimockSearchUserDone() bool {
+	if m.SearchUserMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.SearchUserMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.SearchUserMock.invocationsDone()
+}
+
+// MinimockSearchUserInspect logs each unmet expectation
+func (m *UserServiceMock) MinimockSearchUserInspect() {
+	for _, e := range m.SearchUserMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to UserServiceMock.SearchUser at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterSearchUserCounter := mm_atomic.LoadUint64(&m.afterSearchUserCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.SearchUserMock.defaultExpectation != nil && afterSearchUserCounter < 1 {
+		if m.SearchUserMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to UserServiceMock.SearchUser at\n%s", m.SearchUserMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to UserServiceMock.SearchUser at\n%s with params: %#v", m.SearchUserMock.defaultExpectation.expectationOrigins.origin, *m.SearchUserMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcSearchUser != nil && afterSearchUserCounter < 1 {
+		m.t.Errorf("Expected call to UserServiceMock.SearchUser at\n%s", m.funcSearchUserOrigin)
+	}
+
+	if !m.SearchUserMock.invocationsDone() && afterSearchUserCounter > 0 {
+		m.t.Errorf("Expected %d calls to UserServiceMock.SearchUser at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.SearchUserMock.expectedInvocations), m.SearchUserMock.expectedInvocationsOrigin, afterSearchUserCounter)
+	}
+}
+
 type mUserServiceMockUpdate struct {
 	optional           bool
 	mock               *UserServiceMock
@@ -1840,6 +2255,8 @@ func (m *UserServiceMock) MinimockFinish() {
 
 			m.MinimockGetInspect()
 
+			m.MinimockSearchUserInspect()
+
 			m.MinimockUpdateInspect()
 		}
 	})
@@ -1868,5 +2285,6 @@ func (m *UserServiceMock) minimockDone() bool {
 		m.MinimockCreateDone() &&
 		m.MinimockDeleteDone() &&
 		m.MinimockGetDone() &&
+		m.MinimockSearchUserDone() &&
 		m.MinimockUpdateDone()
 }
