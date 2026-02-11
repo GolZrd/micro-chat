@@ -13,6 +13,7 @@
 @import url('./pages/profile.css');
 
 /* 3. Layouts */
+@import url('./layout/right-sidebar.css');
 @import url('./layout/sidebar.css');
 @import url('./layout/main-content.css');
 @import url('./layout/chat-layout.css');

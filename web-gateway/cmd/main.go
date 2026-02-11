@@ -76,6 +76,17 @@ func main() {
 
 		// User
 		api.GET("/user/:id", handlers.GetUser(authClient))
+
+		// Search
+		api.GET("/users/search", handlers.SearchUsers(authClient))
+
+		// Friends
+		api.GET("/friends", handlers.GetFriends(authClient))
+		api.GET("/friends/requests", handlers.GetFriendRequests(authClient))
+		api.POST("/friends/request", handlers.SendFriendRequest(authClient))
+		api.POST("/friends/accept/:id", handlers.AcceptFriendRequest(authClient))
+		api.POST("/friends/reject/:id", handlers.RejectFriendRequest(authClient))
+		api.DELETE("/friends/:id", handlers.RemoveFriend(authClient))
 		// Chat
 		api.POST("/chat/create", handlers.CreateChat(chatClient))
 		api.GET("/chat/my", handlers.MyChats(chatClient))

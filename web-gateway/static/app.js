@@ -233,6 +233,9 @@ function updateAuthStatus() {
 
         // ✅ ЗАГРУЖАЕМ КОЛИЧЕСТВО ЧАТОВ ПРИ АВТОРИЗАЦИИ
         loadChatCount();
+        // Загружаем друзей
+        loadFriends();
+        loadFriendRequests();
     } else {
         if (statusEl) {
             statusEl.textContent = '❌ Не авторизован';
@@ -779,6 +782,458 @@ document.addEventListener('visibilitychange', async () => {
             console.log('⚠️ Token expired while away, refreshing...');
             await refreshAccessToken();
         }
+    }
+});
+
+// ==================== FRIENDS ====================
+
+let friendsList = [];
+let friendRequests = [];
+let searchTimeout = null;
+let currentDropdownFriend = null; // Хранит данные друга для dropdown
+
+// Инициализация dropdown
+function initFriendDropdown() {
+    const dropdown = document.getElementById('friendDropdown');
+    if (!dropdown) return;
+
+    // Обработчики для пунктов меню
+    dropdown.querySelectorAll('.dropdown-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const action = item.dataset.action;
+            
+            if (currentDropdownFriend) {
+                switch (action) {
+                    case 'chat':
+                        startChatWithFriend(currentDropdownFriend.user_id, currentDropdownFriend.username);
+                        break;
+                    case 'remove':
+                        removeFriend(currentDropdownFriend.user_id, currentDropdownFriend.username);
+                        break;
+                }
+            }
+            
+            closeFriendDropdown();
+        });
+    });
+
+    // Закрытие при клике вне
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.friend-dropdown') && !e.target.closest('.btn-more')) {
+            closeFriendDropdown();
+        }
+    });
+
+    // Закрытие при скролле
+    document.querySelector('.right-sidebar .sidebar-content')?.addEventListener('scroll', () => {
+        closeFriendDropdown();
+    });
+
+    // Закрытие при нажатии Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeFriendDropdown();
+        }
+    });
+}
+
+function openFriendDropdown(button, friend) {
+    const dropdown = document.getElementById('friendDropdown');
+    if (!dropdown) return;
+
+    currentDropdownFriend = friend;
+
+    // Убираем active с других кнопок
+    document.querySelectorAll('.btn-more.active').forEach(btn => {
+        btn.classList.remove('active');
+    });
+
+    // Добавляем active к текущей кнопке
+    button.classList.add('active');
+
+    // Позиционируем dropdown
+    const rect = button.getBoundingClientRect();
+    const dropdownHeight = 120; // Примерная высота
+    
+    // Проверяем, помещается ли снизу
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const showAbove = spaceBelow < dropdownHeight;
+
+    dropdown.style.left = `${rect.left - 150 + rect.width}px`; // Выравниваем по правому краю кнопки
+    
+    if (showAbove) {
+        dropdown.style.top = `${rect.top - dropdownHeight - 5}px`;
+    } else {
+        dropdown.style.top = `${rect.bottom + 5}px`;
+    }
+
+    dropdown.classList.add('open');
+}
+
+function closeFriendDropdown() {
+    const dropdown = document.getElementById('friendDropdown');
+    if (dropdown) {
+        dropdown.classList.remove('open');
+    }
+    
+    document.querySelectorAll('.btn-more.active').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    currentDropdownFriend = null;
+}
+
+// Загрузка друзей
+async function loadFriends() {
+    try {
+        const response = await apiRequest('/api/friends');
+        const data = await response.json();
+
+        if (!response.ok) {
+            console.error('Failed to load friends:', data.error);
+            return;
+        }
+
+        friendsList = data.friends || [];
+        renderFriends();
+    } catch (error) {
+        console.error('Error loading friends:', error);
+    }
+}
+
+function renderFriends() {
+    const container = document.getElementById('friendsList');
+    const totalCount = document.getElementById('totalFriendsCount');
+
+    if (!container) return;
+
+    // Обновляем счётчик
+    if (totalCount) {
+        totalCount.textContent = friendsList.length;
+    }
+
+    if (friendsList.length === 0) {
+        container.innerHTML = '<p class="empty-text">Список друзей пуст</p>';
+        return;
+    }
+
+    // Сортируем: онлайн сначала, потом по имени
+    const sorted = [...friendsList].sort((a, b) => {
+        if (a.is_online && !b.is_online) return -1;
+        if (!a.is_online && b.is_online) return 1;
+        return a.username.localeCompare(b.username);
+    });
+
+    container.innerHTML = '';
+
+    sorted.forEach(friend => {
+        const item = createFriendItem(friend);
+        container.appendChild(item);
+    });
+}
+
+function createFriendItem(friend) {
+    const template = document.getElementById('friendItemTemplate');
+    const item = template.content.cloneNode(true);
+    const container = item.querySelector('.friend-item');
+
+    const initials = friend.username.substring(0, 2).toUpperCase();
+
+    item.querySelector('.avatar-initials').textContent = initials;
+    item.querySelector('.friend-name').textContent = friend.username;
+
+    const indicator = item.querySelector('.online-indicator');
+    const status = item.querySelector('.friend-status');
+
+    if (friend.is_online) {
+        indicator.classList.remove('offline');
+        indicator.classList.add('online');
+        status.textContent = 'В сети';
+        status.classList.add('online');
+    } else {
+        status.textContent = 'Не в сети';
+    }
+
+    // Клик по элементу — открыть чат
+    container.addEventListener('click', (e) => {
+        if (!e.target.closest('.btn-more')) {
+            startChatWithFriend(friend.user_id, friend.username);
+        }
+    });
+
+    // Кнопка "ещё" (3 точки)
+    const moreBtn = item.querySelector('.btn-more');
+    moreBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        
+        // Если уже открыто для этого друга — закрываем
+        if (moreBtn.classList.contains('active')) {
+            closeFriendDropdown();
+        } else {
+            openFriendDropdown(moreBtn, friend);
+        }
+    });
+
+    return item;
+}
+
+// Загрузка заявок
+async function loadFriendRequests() {
+    try {
+        const response = await apiRequest('/api/friends/requests');
+        const data = await response.json();
+
+        if (!response.ok) {
+            console.error('Failed to load requests:', data.error);
+            return;
+        }
+
+        friendRequests = data.requests || [];
+        renderFriendRequests();
+    } catch (error) {
+        console.error('Error loading friend requests:', error);
+    }
+}
+
+function renderFriendRequests() {
+    const section = document.getElementById('friendRequestsSection');
+    const container = document.getElementById('friendRequests');
+    const badge = document.getElementById('requestsBadge');
+    const navBadge = document.getElementById('friendRequestsCount');
+
+    // Обновляем бейджи
+    if (badge) badge.textContent = friendRequests.length;
+    if (navBadge) {
+        navBadge.textContent = friendRequests.length;
+        navBadge.style.display = friendRequests.length > 0 ? 'inline-flex' : 'none';
+    }
+
+    // Показываем/скрываем секцию
+    if (section) {
+        section.style.display = friendRequests.length > 0 ? 'block' : 'none';
+    }
+
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    friendRequests.forEach(request => {
+        const item = createRequestItem(request);
+        container.appendChild(item);
+    });
+}
+
+function createRequestItem(request) {
+    const template = document.getElementById('friendRequestItemTemplate');
+    const item = template.content.cloneNode(true);
+
+    const initials = request.from_username.substring(0, 2).toUpperCase();
+    const date = new Date(request.created_at).toLocaleDateString('ru-RU');
+
+    item.querySelector('.avatar-initials').textContent = initials;
+    item.querySelector('.request-name').textContent = request.from_username;
+    item.querySelector('.request-date').textContent = date;
+
+    item.querySelector('.btn-accept').addEventListener('click', (e) => {
+        e.stopPropagation();
+        acceptFriendRequest(request.id);
+    });
+
+    item.querySelector('.btn-reject').addEventListener('click', (e) => {
+        e.stopPropagation();
+        rejectFriendRequest(request.id);
+    });
+
+    return item;
+}
+
+// Поиск пользователей
+async function searchUsers(query) {
+    const resultsDiv = document.getElementById('searchResults');
+    if (!resultsDiv) return;
+
+    if (query.length < 2) {
+        resultsDiv.innerHTML = '';
+        return;
+    }
+
+    resultsDiv.innerHTML = '<p class="empty-text">Поиск...</p>';
+
+    try {
+        const response = await apiRequest(`/api/users/search?q=${encodeURIComponent(query)}&limit=10`);
+        const data = await response.json();
+
+        if (!response.ok) {
+            resultsDiv.innerHTML = `<p class="empty-text">${data.error}</p>`;
+            return;
+        }
+
+        const users = data.users || [];
+
+        if (users.length === 0) {
+            resultsDiv.innerHTML = '<p class="empty-text">Никого не найдено</p>';
+            return;
+        }
+
+        resultsDiv.innerHTML = '';
+        users.forEach(user => {
+            resultsDiv.appendChild(createSearchResultItem(user));
+        });
+    } catch (error) {
+        console.error('Search error:', error);
+        resultsDiv.innerHTML = '<p class="empty-text">Ошибка поиска</p>';
+    }
+}
+
+function createSearchResultItem(user) {
+    const template = document.getElementById('searchResultItemTemplate');
+    const item = template.content.cloneNode(true);
+
+    const initials = user.username.substring(0, 2).toUpperCase();
+
+    item.querySelector('.avatar-initials').textContent = initials;
+    item.querySelector('.result-name').textContent = user.username;
+
+    const statusText = item.querySelector('.result-status');
+    const addBtn = item.querySelector('.btn-add-friend');
+
+    switch (user.friendship_status) {
+        case 'friends':
+            statusText.textContent = 'В друзьях';
+            addBtn.innerHTML = '<i class="fas fa-check"></i>';
+            addBtn.disabled = true;
+            break;
+        case 'pending_sent':
+            statusText.textContent = 'Заявка отправлена';
+            addBtn.innerHTML = '<i class="fas fa-clock"></i>';
+            addBtn.disabled = true;
+            break;
+        case 'pending_received':
+            statusText.textContent = 'Принять заявку';
+            addBtn.innerHTML = '<i class="fas fa-user-check"></i>';
+            break;
+        default:
+            statusText.textContent = '';
+            addBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                sendFriendRequest(user.id, user.username);
+            });
+    }
+
+    return item;
+}
+
+// Действия
+async function sendFriendRequest(userId, username) {
+    try {
+        const response = await apiRequest('/api/friends/request', {
+            method: 'POST',
+            body: JSON.stringify({ user_id: userId })
+        });
+
+        if (response.ok) {
+            showToast({
+                type: 'success',
+                title: 'Заявка отправлена',
+                message: `Заявка отправлена ${username}`
+            });
+            const input = document.getElementById('friendSearchInput');
+            if (input && input.value) searchUsers(input.value);
+        } else {
+            const data = await response.json();
+            showToast({
+                type: 'error',
+                title: 'Ошибка',
+                message: data.error
+            });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+async function acceptFriendRequest(requestId) {
+    try {
+        const response = await apiRequest(`/api/friends/accept/${requestId}`, {
+            method: 'POST'
+        });
+
+        if (response.ok) {
+            showToast({
+                type: 'success',
+                title: 'Принято',
+                message: 'Теперь вы друзья!'
+            });
+            loadFriendRequests();
+            loadFriends();
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+async function rejectFriendRequest(requestId) {
+    try {
+        await apiRequest(`/api/friends/reject/${requestId}`, {
+            method: 'POST'
+        });
+        loadFriendRequests();
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+async function removeFriend(friendId, friendName) {
+    if (!confirm(`Удалить ${friendName} из друзей?`)) return;
+
+    try {
+        const response = await apiRequest(`/api/friends/${friendId}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            showToast({
+                type: 'success',
+                title: 'Удалено',
+                message: `${friendName} удалён из друзей`
+            });
+            loadFriends();
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+function startChatWithFriend(userId, username) {
+    // TODO: Реализовать создание/открытие чата
+    showToast({
+        type: 'info',
+        title: 'Открываем чат',
+        message: `Чат с ${username}`
+    });
+}
+
+// Инициализация
+document.addEventListener('DOMContentLoaded', () => {
+    // Инициализируем dropdown
+    initFriendDropdown();
+
+    // Поиск с debounce
+    const searchInput = document.getElementById('friendSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                searchUsers(e.target.value.trim());
+            }, 300);
+        });
+    }
+
+    // Загружаем данные если авторизован
+    if (typeof TokenManager !== 'undefined' && TokenManager.isAuthenticated()) {
+        loadFriends();
+        loadFriendRequests();
     }
 });
 

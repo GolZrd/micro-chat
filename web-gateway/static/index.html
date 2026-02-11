@@ -60,7 +60,6 @@
                 </div>
             </div>
         </aside>
-        
         <!-- Основной контент -->
         <main class="main-content">
             <!-- Секция: Главная -->
@@ -181,6 +180,48 @@
                 </div>
             </section>
         </main>
+
+        <aside class="right-sidebar right-sidebar--friends protected-sidebar">
+            <div class="sidebar-header">
+                <h3><i class="fas fa-user-friends"></i> Друзья</h3>
+                <button onclick="loadFriends()" class="refresh-btn" title="Обновить">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+
+            <!-- Поиск -->
+            <div class="friend-search">
+                <div class="search-input-wrapper">
+                    <i class="fas fa-search"></i>
+                    <input 
+                        type="text" 
+                        id="friendSearchInput" 
+                        class="friend-search-input"
+                        placeholder="Найти пользователя..."
+                        autocomplete="off"
+                    >
+                </div>
+                <div id="searchResults" class="search-results"></div>
+            </div>
+
+            <div class="sidebar-content">
+                <!-- Заявки -->
+                <div id="friendRequestsSection" style="display: none;">
+                    <div class="section-title">
+                        <span>Заявки</span>
+                        <span class="badge" id="requestsBadge">0</span>
+                    </div>
+                    <div id="friendRequests"></div>
+                </div>
+
+                <!-- Все друзья (единый список) -->
+                <div class="section-title">
+                    <span>Друзья</span>
+                    <span class="count" id="totalFriendsCount">0</span>
+                </div>
+                <div id="friendsList"></div>
+            </div>
+        </aside>
     </div>
     
     <!-- Модальное окно создания чата -->
@@ -212,6 +253,71 @@
             <div id="chatResult"></div>
         </div>
     </div>
+
+    <!-- Templates -->
+    <template id="friendItemTemplate">
+        <div class="friend-item">
+            <div class="friend-avatar">
+                <span class="avatar-initials"></span>
+                <span class="online-indicator offline"></span>
+            </div>
+            <div class="friend-info">
+                <span class="friend-name"></span>
+                <span class="friend-status">Не в сети</span>
+            </div>
+            <button class="btn-more" title="Действия">
+                <i class="fas fa-ellipsis-v"></i>
+            </button>
+        </div>
+    </template>
+
+    <!-- Dropdown меню (одно на всех, перемещается к нужному элементу) -->
+    <div id="friendDropdown" class="friend-dropdown">
+        <button class="dropdown-item" data-action="chat">
+            <i class="fas fa-comment"></i>
+            <span>Написать сообщение</span>
+        </button>
+        <div class="dropdown-divider"></div>
+        <button class="dropdown-item danger" data-action="remove">
+            <i class="fas fa-user-minus"></i>
+            <span>Удалить из друзей</span>
+        </button>
+    </div>
+
+    <template id="friendRequestItemTemplate">
+        <div class="request-item">
+            <div class="request-avatar">
+                <span class="avatar-initials"></span>
+            </div>
+            <div class="request-info">
+                <span class="request-name"></span>
+                <span class="request-date"></span>
+            </div>
+            <div class="request-actions">
+                <button class="btn-icon btn-accept" title="Принять">
+                    <i class="fas fa-check"></i>
+                </button>
+                <button class="btn-icon btn-reject" title="Отклонить">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    </template>
+
+    <template id="searchResultItemTemplate">
+        <div class="search-result-item">
+            <div class="result-avatar">
+                <span class="avatar-initials"></span>
+            </div>
+            <div class="result-info">
+                <span class="result-name"></span>
+                <span class="result-status"></span>
+            </div>
+            <button class="btn-add-friend">
+                <i class="fas fa-user-plus"></i>
+            </button>
+        </div>
+    </template>
 
     <script src="/static/app.js"></script>
     <!-- <script src="/static/js/animated-background.js"></script> -->
@@ -298,11 +404,15 @@
             const logoutBtn = document.getElementById('logoutBtn');
             const protectedContent = document.querySelectorAll('.protected-content');
             const protectedNav = document.querySelectorAll('.protected-nav');
+            const protectedSidebar = document.querySelectorAll('.protected-sidebar');
             const guestOnly = document.querySelectorAll('.guest-only');
             
             if (isAuth) {
                 const username = TokenManager.getUsername();
-                
+
+                // Добавляем класс к body
+                document.body.classList.add('authenticated');
+
                 // Показываем sidebar (убираем guest-mode)
                 appContainer.classList.remove('guest-mode');
                 
@@ -315,12 +425,20 @@
                 // Показываем защищенный контент
                 protectedContent.forEach(el => el.style.display = '');
                 protectedNav.forEach(el => el.style.display = 'flex');
+                protectedSidebar.forEach(el => el.style.display = 'flex'); // Показываем sidebar
                 guestOnly.forEach(el => el.style.display = 'none');
                 
                 // Обновляем заголовок
                 document.getElementById('welcomeTitle').textContent = `Добро пожаловать, ${username}!`;
                 document.getElementById('welcomeSubtitle').textContent = 'Рады видеть вас снова';
+
+                // Загружаем друзей
+                loadFriends();
+                loadFriendRequests();
             } else {
+                // Убираем класс с body
+                document.body.classList.remove('authenticated');
+
                 // Скрываем sidebar (добавляем guest-mode)
                 appContainer.classList.add('guest-mode');
                 
@@ -333,6 +451,7 @@
                 // Скрываем защищенный контент
                 protectedContent.forEach(el => el.style.display = 'none');
                 protectedNav.forEach(el => el.style.display = 'none');
+                protectedSidebar.forEach(el => el.style.display = 'none'); // Скрываем sidebar
                 guestOnly.forEach(el => el.style.display = '');
                 
                 // Обновляем заголовок

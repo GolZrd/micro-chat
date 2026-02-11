@@ -14,7 +14,7 @@ label {
     font-weight: 500;
 }
 
-input:not(.emoji-search),
+input:not(.emoji-search):not(.friend-search-input),
 textarea:not(#messageInput),
 select {
     background: var(--bg-tertiary);

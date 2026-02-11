@@ -120,3 +120,52 @@ func DeleteUser(client *clients.AuthClient) gin.HandlerFunc {
 	}
 
 }
+
+// GET /api/users/search?q=query&limit=20
+func SearchUsers(client *clients.AuthClient) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		query := c.Query("q")
+		if len(query) < 2 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "query too short"})
+			return
+		}
+
+		limitStr := c.DefaultQuery("limit", "20")
+		limit, err := strconv.ParseInt(limitStr, 10, 64)
+		if err != nil || limit <= 0 {
+			logger.Debug("invalid limit", zap.Error(err))
+			limit = 20
+		}
+
+		if limit > 50 {
+			limit = 50
+		}
+
+		// Создаем контекст с токеном из HTTP заголовка
+		ctx := utils.ContextWithToken(c)
+
+		resp, err := client.UserClient.SearchUser(ctx, &user_v1.SearchUserRequest{
+			Query: query,
+			Limit: limit,
+		})
+		if err != nil {
+			logger.Error("Failed to search users", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		users := make([]gin.H, 0, len(resp.Users))
+		for _, u := range resp.Users {
+			users = append(users, gin.H{
+				"id":                u.Id,
+				"username":          u.Username,
+				"friendship_status": u.FriendshipStatus,
+			})
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"users": users,
+		})
+
+	}
+}
