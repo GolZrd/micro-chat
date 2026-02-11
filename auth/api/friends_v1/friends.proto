@@ -20,8 +20,6 @@ service FriendsAPI {
     rpc RemoveFriend(RemoveFriendRequest) returns (google.protobuf.Empty);
     // Получить список запросов в друзья
     rpc GetFriendRequests(GetFriendRequestsRequest) returns (GetFriendRequestsResponse);
-    // Найти пользователя
-    rpc SearchUser(SearchUserRequest) returns (SearchUserResponse);
 }
 
 message Friend {

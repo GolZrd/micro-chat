@@ -9,7 +9,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func (s *Implementation) FriendRequests(ctx context.Context, req *desc.GetFriendRequestsRequest) (*desc.GetFriendRequestsResponse, error) {
+func (s *Implementation) GetFriendRequests(ctx context.Context, req *desc.GetFriendRequestsRequest) (*desc.GetFriendRequestsResponse, error) {
 	// Получаем id пользователя
 	userId, err := s.getUIDFromContext(ctx)
 	if err != nil {

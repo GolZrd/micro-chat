@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *Implementation) Friends(ctx context.Context, req *desc.GetFriendsRequest) (*desc.GetFriendsResponse, error) {
+func (s *Implementation) GetFriends(ctx context.Context, req *desc.GetFriendsRequest) (*desc.GetFriendsResponse, error) {
 	// Получаем id пользователя
 	userId, err := s.getUIDFromContext(ctx)
 	if err != nil {

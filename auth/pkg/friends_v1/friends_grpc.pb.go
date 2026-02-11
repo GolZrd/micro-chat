@@ -26,7 +26,6 @@ const (
 	FriendsAPI_GetFriends_FullMethodName          = "/friends_v1.FriendsAPI/GetFriends"
 	FriendsAPI_RemoveFriend_FullMethodName        = "/friends_v1.FriendsAPI/RemoveFriend"
 	FriendsAPI_GetFriendRequests_FullMethodName   = "/friends_v1.FriendsAPI/GetFriendRequests"
-	FriendsAPI_SearchUser_FullMethodName          = "/friends_v1.FriendsAPI/SearchUser"
 )
 
 // FriendsAPIClient is the client API for FriendsAPI service.
@@ -45,8 +44,6 @@ type FriendsAPIClient interface {
 	RemoveFriend(ctx context.Context, in *RemoveFriendRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Получить список запросов в друзья
 	GetFriendRequests(ctx context.Context, in *GetFriendRequestsRequest, opts ...grpc.CallOption) (*GetFriendRequestsResponse, error)
-	// Найти пользователя
-	SearchUser(ctx context.Context, in *SearchUserRequest, opts ...grpc.CallOption) (*SearchUserResponse, error)
 }
 
 type friendsAPIClient struct {
@@ -117,16 +114,6 @@ func (c *friendsAPIClient) GetFriendRequests(ctx context.Context, in *GetFriendR
 	return out, nil
 }
 
-func (c *friendsAPIClient) SearchUser(ctx context.Context, in *SearchUserRequest, opts ...grpc.CallOption) (*SearchUserResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SearchUserResponse)
-	err := c.cc.Invoke(ctx, FriendsAPI_SearchUser_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // FriendsAPIServer is the server API for FriendsAPI service.
 // All implementations must embed UnimplementedFriendsAPIServer
 // for forward compatibility.
@@ -143,8 +130,6 @@ type FriendsAPIServer interface {
 	RemoveFriend(context.Context, *RemoveFriendRequest) (*emptypb.Empty, error)
 	// Получить список запросов в друзья
 	GetFriendRequests(context.Context, *GetFriendRequestsRequest) (*GetFriendRequestsResponse, error)
-	// Найти пользователя
-	SearchUser(context.Context, *SearchUserRequest) (*SearchUserResponse, error)
 	mustEmbedUnimplementedFriendsAPIServer()
 }
 
@@ -172,9 +157,6 @@ func (UnimplementedFriendsAPIServer) RemoveFriend(context.Context, *RemoveFriend
 }
 func (UnimplementedFriendsAPIServer) GetFriendRequests(context.Context, *GetFriendRequestsRequest) (*GetFriendRequestsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFriendRequests not implemented")
-}
-func (UnimplementedFriendsAPIServer) SearchUser(context.Context, *SearchUserRequest) (*SearchUserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SearchUser not implemented")
 }
 func (UnimplementedFriendsAPIServer) mustEmbedUnimplementedFriendsAPIServer() {}
 func (UnimplementedFriendsAPIServer) testEmbeddedByValue()                    {}
@@ -305,24 +287,6 @@ func _FriendsAPI_GetFriendRequests_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
-func _FriendsAPI_SearchUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SearchUserRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(FriendsAPIServer).SearchUser(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: FriendsAPI_SearchUser_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FriendsAPIServer).SearchUser(ctx, req.(*SearchUserRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // FriendsAPI_ServiceDesc is the grpc.ServiceDesc for FriendsAPI service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -353,10 +317,6 @@ var FriendsAPI_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetFriendRequests",
 			Handler:    _FriendsAPI_GetFriendRequests_Handler,
-		},
-		{
-			MethodName: "SearchUser",
-			Handler:    _FriendsAPI_SearchUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
