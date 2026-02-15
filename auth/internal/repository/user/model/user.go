@@ -36,6 +36,12 @@ type UserAuthData struct {
 	Role     string `db:"role"`
 }
 
+// Для метода CheckUsersExists
+type UserShort struct {
+	Id       int64  `db:"id"`
+	Username string `db:"username"`
+}
+
 // Для метода SearchUser
 type UserSearchResult struct {
 	Id               int64

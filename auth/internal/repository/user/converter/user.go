@@ -36,3 +36,10 @@ func ToUserAuthDataFromRepo(user *modelRepo.UserAuthData) *model.UserAuthData {
 		Role:     user.Role,
 	}
 }
+
+func ToUserShortFromRepo(user *modelRepo.UserShort) *model.UserShort {
+	return &model.UserShort{
+		Id:       user.Id,
+		Username: user.Username,
+	}
+}

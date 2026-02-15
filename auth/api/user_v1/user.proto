@@ -40,6 +40,11 @@ message User {
     google.protobuf.Timestamp updated_at = 4;
 }
 
+message UserInfoShort {
+    int64 id = 1;
+    string username = 2;
+}
+
 message CreateRequest {
     UserInfo info = 1;
 }
@@ -78,6 +83,7 @@ message CheckUsersExistsRequest {
 
 message CheckUsersExistsResponse {
     repeated string notFoundUsers = 1; // Имена пользователей, которые не найдены
+    repeated UserInfoShort foundUsers = 2; // Найденые пользователи с их Id
 }
 
 message UserSearchResult {

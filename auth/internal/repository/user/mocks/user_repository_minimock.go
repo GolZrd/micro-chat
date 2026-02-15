@@ -55,7 +55,7 @@ type UserRepositoryMock struct {
 	beforeGetByUsernameCounter uint64
 	GetByUsernameMock          mUserRepositoryMockGetByUsername
 
-	funcGetByUsernames          func(ctx context.Context, usernames []string) (sa1 []string, err error)
+	funcGetByUsernames          func(ctx context.Context, usernames []string) (ua1 []model.UserShort, err error)
 	funcGetByUsernamesOrigin    string
 	inspectFuncGetByUsernames   func(ctx context.Context, usernames []string)
 	afterGetByUsernamesCounter  uint64
@@ -1866,7 +1866,7 @@ type UserRepositoryMockGetByUsernamesParamPtrs struct {
 
 // UserRepositoryMockGetByUsernamesResults contains results of the UserRepository.GetByUsernames
 type UserRepositoryMockGetByUsernamesResults struct {
-	sa1 []string
+	ua1 []model.UserShort
 	err error
 }
 
@@ -1970,7 +1970,7 @@ func (mmGetByUsernames *mUserRepositoryMockGetByUsernames) Inspect(f func(ctx co
 }
 
 // Return sets up results that will be returned by UserRepository.GetByUsernames
-func (mmGetByUsernames *mUserRepositoryMockGetByUsernames) Return(sa1 []string, err error) *UserRepositoryMock {
+func (mmGetByUsernames *mUserRepositoryMockGetByUsernames) Return(ua1 []model.UserShort, err error) *UserRepositoryMock {
 	if mmGetByUsernames.mock.funcGetByUsernames != nil {
 		mmGetByUsernames.mock.t.Fatalf("UserRepositoryMock.GetByUsernames mock is already set by Set")
 	}
@@ -1978,13 +1978,13 @@ func (mmGetByUsernames *mUserRepositoryMockGetByUsernames) Return(sa1 []string, 
 	if mmGetByUsernames.defaultExpectation == nil {
 		mmGetByUsernames.defaultExpectation = &UserRepositoryMockGetByUsernamesExpectation{mock: mmGetByUsernames.mock}
 	}
-	mmGetByUsernames.defaultExpectation.results = &UserRepositoryMockGetByUsernamesResults{sa1, err}
+	mmGetByUsernames.defaultExpectation.results = &UserRepositoryMockGetByUsernamesResults{ua1, err}
 	mmGetByUsernames.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
 	return mmGetByUsernames.mock
 }
 
 // Set uses given function f to mock the UserRepository.GetByUsernames method
-func (mmGetByUsernames *mUserRepositoryMockGetByUsernames) Set(f func(ctx context.Context, usernames []string) (sa1 []string, err error)) *UserRepositoryMock {
+func (mmGetByUsernames *mUserRepositoryMockGetByUsernames) Set(f func(ctx context.Context, usernames []string) (ua1 []model.UserShort, err error)) *UserRepositoryMock {
 	if mmGetByUsernames.defaultExpectation != nil {
 		mmGetByUsernames.mock.t.Fatalf("Default expectation is already set for the UserRepository.GetByUsernames method")
 	}
@@ -2015,8 +2015,8 @@ func (mmGetByUsernames *mUserRepositoryMockGetByUsernames) When(ctx context.Cont
 }
 
 // Then sets up UserRepository.GetByUsernames return parameters for the expectation previously defined by the When method
-func (e *UserRepositoryMockGetByUsernamesExpectation) Then(sa1 []string, err error) *UserRepositoryMock {
-	e.results = &UserRepositoryMockGetByUsernamesResults{sa1, err}
+func (e *UserRepositoryMockGetByUsernamesExpectation) Then(ua1 []model.UserShort, err error) *UserRepositoryMock {
+	e.results = &UserRepositoryMockGetByUsernamesResults{ua1, err}
 	return e.mock
 }
 
@@ -2042,7 +2042,7 @@ func (mmGetByUsernames *mUserRepositoryMockGetByUsernames) invocationsDone() boo
 }
 
 // GetByUsernames implements mm_user.UserRepository
-func (mmGetByUsernames *UserRepositoryMock) GetByUsernames(ctx context.Context, usernames []string) (sa1 []string, err error) {
+func (mmGetByUsernames *UserRepositoryMock) GetByUsernames(ctx context.Context, usernames []string) (ua1 []model.UserShort, err error) {
 	mm_atomic.AddUint64(&mmGetByUsernames.beforeGetByUsernamesCounter, 1)
 	defer mm_atomic.AddUint64(&mmGetByUsernames.afterGetByUsernamesCounter, 1)
 
@@ -2062,7 +2062,7 @@ func (mmGetByUsernames *UserRepositoryMock) GetByUsernames(ctx context.Context, 
 	for _, e := range mmGetByUsernames.GetByUsernamesMock.expectations {
 		if minimock.Equal(*e.params, mm_params) {
 			mm_atomic.AddUint64(&e.Counter, 1)
-			return e.results.sa1, e.results.err
+			return e.results.ua1, e.results.err
 		}
 	}
 
@@ -2094,7 +2094,7 @@ func (mmGetByUsernames *UserRepositoryMock) GetByUsernames(ctx context.Context, 
 		if mm_results == nil {
 			mmGetByUsernames.t.Fatal("No results are set for the UserRepositoryMock.GetByUsernames")
 		}
-		return (*mm_results).sa1, (*mm_results).err
+		return (*mm_results).ua1, (*mm_results).err
 	}
 	if mmGetByUsernames.funcGetByUsernames != nil {
 		return mmGetByUsernames.funcGetByUsernames(ctx, usernames)

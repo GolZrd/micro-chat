@@ -13,10 +13,18 @@ func (s *Implementation) CheckUsersExists(ctx context.Context, req *descUser.Che
 		return nil, status.Error(codes.InvalidArgument, "usernames is required")
 	}
 
-	notFoundUsers, err := s.userService.CheckUsersExists(ctx, req.Usernames)
+	foundUsers, notFoundUsers, err := s.userService.CheckUsersExists(ctx, req.Usernames)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return &descUser.CheckUsersExistsResponse{NotFoundUsers: notFoundUsers}, nil
+	var foundProto []*descUser.UserInfoShort
+	for _, user := range foundUsers {
+		foundProto = append(foundProto, &descUser.UserInfoShort{
+			Id:       user.Id,
+			Username: user.Username,
+		})
+	}
+
+	return &descUser.CheckUsersExistsResponse{NotFoundUsers: notFoundUsers, FoundUsers: foundProto}, nil
 }

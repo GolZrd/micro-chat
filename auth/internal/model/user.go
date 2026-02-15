@@ -35,6 +35,12 @@ type UserAuthData struct {
 	Role     string
 }
 
+// Модель для проверки существования пользователя
+type UserShort struct {
+	Id       int64
+	Username string
+}
+
 // Модель для поиска пользователей
 type UserSearchResult struct {
 	Id               int64

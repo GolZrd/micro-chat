@@ -35,7 +35,7 @@ type UserRepository interface {
 	Update(ctx context.Context, id int64, info UpdateUserDTO) error
 	Delete(ctx context.Context, id int64) error
 	GetByEmail(ctx context.Context, email string) (*model.UserAuthData, error)
-	GetByUsernames(ctx context.Context, usernames []string) ([]string, error)
+	GetByUsernames(ctx context.Context, usernames []string) ([]model.UserShort, error)
 	GetByUsername(ctx context.Context, username string) (*model.User, error)
 	SearchUser(ctx context.Context, searchQuery string, currentUserId int64, limit int) ([]model.UserSearchResult, error)
 }
@@ -165,23 +165,24 @@ func (r *repo) GetByEmail(ctx context.Context, email string) (*model.UserAuthDat
 }
 
 // GetByUsernames возвращает имена существующих пользователей
-func (r *repo) GetByUsernames(ctx context.Context, usernames []string) ([]string, error) {
+func (r *repo) GetByUsernames(ctx context.Context, usernames []string) ([]model.UserShort, error) {
 	// Простой запрос, потому что проверяем только имя, squirrel builder избыточен
-	query := "SELECT username FROM users WHERE username = ANY($1)"
+	query := "SELECT id, username FROM users WHERE username = ANY($1)"
 
 	rows, err := r.db.Query(ctx, query, usernames)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query: %w", err)
 	}
+	defer rows.Close()
 
-	var existingUsers []string
+	var existingUsers []model.UserShort
 	for rows.Next() {
-		var username string
-		if err := rows.Scan(&username); err != nil {
+		var user modelRepo.UserShort
+		if err := rows.Scan(&user.Id, &user.Username); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
 
-		existingUsers = append(existingUsers, username)
+		existingUsers = append(existingUsers, *converter.ToUserShortFromRepo(&user))
 	}
 	// Возвращаются только те пользователи, которые есть в БД
 	return existingUsers, nil

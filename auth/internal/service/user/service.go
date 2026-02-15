@@ -12,7 +12,7 @@ type UserService interface {
 	Get(ctx context.Context, id int64) (*model.User, error)
 	Update(ctx context.Context, id int64, info UpdateUserDTO) error
 	Delete(ctx context.Context, id int64) error
-	CheckUsersExists(ctx context.Context, usernames []string) (notFoundUsers []string, err error)
+	CheckUsersExists(ctx context.Context, usernames []string) (foundUsers []model.UserShort, notFoundUsers []string, err error)
 	SearchUser(ctx context.Context, searchQuery string, currentUserId int64, limit int) ([]model.UserSearchResult, error)
 }
 
