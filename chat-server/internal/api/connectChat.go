@@ -19,26 +19,20 @@ func (s *Implementation) ConnectChat(req *desc.ConnectChatRequest, stream desc.C
 		return status.Error(codes.InvalidArgument, "chat id is required")
 	}
 
-	// Извлекаем userId из контекста
-	userId, err := utils.GetUIDFromContext(stream.Context())
+	// Достаем из токена username и uid пользователя
+	user, err := utils.GetUserClaimsFromContext(stream.Context())
 	if err != nil {
-		return status.Error(codes.Unauthenticated, "authentication is required")
-	}
-
-	// Извлекаем username из контекста
-	username, err := utils.GetUsernameFromContext(stream.Context())
-	if err != nil {
-		return status.Error(codes.Unauthenticated, "authentication is required")
+		return status.Errorf(codes.Unauthenticated, "failed to get user claims from token: %v", err)
 	}
 
 	// Подписываемся на сообщения чата
-	msgChan, err := s.chatService.ConnectToChat(stream.Context(), userId, username, req.ChatId)
+	msgChan, err := s.chatService.ConnectToChat(stream.Context(), user.UID, user.Username, req.ChatId)
 	if err != nil {
 		return status.Errorf(codes.NotFound, "failed to connect to chat: %v", err)
 	}
 
 	// При отключении от чата отписываемся
-	defer s.chatService.DisconnectFromChat(req.ChatId, userId)
+	defer s.chatService.DisconnectFromChat(req.ChatId, user.UID)
 
 	// Слушаем канал и отправляем сообщения клиенту
 	for {

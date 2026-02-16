@@ -14,6 +14,7 @@ service Chat {
     rpc SendMessage(SendMessageRequest) returns (google.protobuf.Empty);   // SendMessage - ручка отправки сообщения на сервер. Обновление: так как у нас есть токен, то нам не нужно передавать имя пользователя, мы будем брать его из токена.
     rpc ConnectChat(ConnectChatRequest) returns (stream Message);          // ConnectChat - стриминговая ручка подключения к чату.
     rpc MyChats(MyChatsRequest) returns (MyChatsResponse);         // MyChats - ручка получения списка чатов пользователя. Не будем передавать имя пользователя. А будем его брать из токена
+    rpc GetOrCreateDirectChat(GetOrCreateDirectChatRequest) returns (GetOrCreateDirectChatResponse); // GetOrCreateDirectChat - ручка получения или создания прямого чата с пользователем, где только 2 участника
 }
 
 message CreateRequest {
@@ -69,9 +70,21 @@ message ChatInfo {
     int64 id = 1;
     string name = 2;
     repeated string usernames = 3;
-    google.protobuf.Timestamp created_at = 4;
+    bool is_direct = 4;
+    google.protobuf.Timestamp created_at = 5;
 }
 
 message MyChatsResponse {
     repeated ChatInfo chats = 1;
+}
+
+// Ручка получения или создания прямого чата по username или user_id
+message GetOrCreateDirectChatRequest {
+    string username = 1;
+    int64 user_id = 2;
+}
+
+message GetOrCreateDirectChatResponse {
+    int64 chat_id = 1;
+    bool created = 2; // Если создан новый чат то возвращает true, если уже существует то false
 }

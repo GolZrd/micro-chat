@@ -25,6 +25,17 @@ func (s *service) ConnectToChat(ctx context.Context, userId int64, username stri
 		return nil, fmt.Errorf("chat %d not found", chatId)
 	}
 
+	// Проверяем что пользователь в чате
+	inChat, err := s.ChatRepository.IsUserInChat(ctx, chatId, userId)
+	if err != nil {
+		logger.Error("Failed to check user in chat", zap.Int64("chat_id", chatId), zap.Int64("user_id", userId), zap.Error(err))
+		return nil, fmt.Errorf("check user in chat: %w", err)
+	}
+	if !inChat {
+		logger.Warn("user not in chat", zap.Int64("chat_id", chatId), zap.Int64("user_id", userId))
+		return nil, fmt.Errorf("user %d not in chat %d", userId, chatId)
+	}
+
 	// Получаем или создаем комнату
 	room := s.getOrCreateRoom(chatId)
 

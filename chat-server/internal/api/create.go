@@ -15,31 +15,19 @@ import (
 )
 
 func (s *Implementation) Create(ctx context.Context, req *desc.CreateRequest) (*desc.CreateResponse, error) {
-	if req.Usernames == nil {
+	if len(req.Usernames) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "usernames is required")
 	}
 
-	// Достаем из токена username пользователя
-	creatorUsername, err := utils.GetUsernameFromContext(ctx)
+	// Достаем из токена username и uid пользователя
+	user, err := utils.GetUserClaimsFromContext(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "failed to get username from token: %v", err)
+		return nil, status.Errorf(codes.Unauthenticated, "failed to get user claims from token: %v", err)
 	}
-	logger.Debug("attempt to create chat", zap.String("creator", creatorUsername), zap.Strings("inviting", req.Usernames))
-
-	// Создаем срез участников
-	participants := make([]string, 0, len(req.Usernames))
-
-	// Добавляем остальных участников чата, и проверяем чтобы не было создателя
-	for _, username := range req.Usernames {
-		if username == "" || username == creatorUsername {
-			continue
-		}
-
-		participants = append(participants, username)
-	}
+	logger.Debug("attempt to create chat", zap.String("creator", user.Username), zap.Strings("inviting", req.Usernames))
 
 	// Передаем создателя отдельно от приглашенных
-	id, err := s.chatService.Create(ctx, req.Name, creatorUsername, participants)
+	id, err := s.chatService.Create(ctx, req.Name, user.UID, user.Username, req.Usernames)
 	if err != nil {
 		// Проверяем типизированную ошибку
 		var usersNotFound *service.ErrUserNotFound
@@ -49,7 +37,7 @@ func (s *Implementation) Create(ctx context.Context, req *desc.CreateRequest) (*
 		return nil, status.Errorf(codes.Internal, "failed to create chat: %v", err)
 	}
 
-	logger.Debug("Created chat", zap.Int64("chat_id", id), zap.Strings("participants", participants))
+	logger.Debug("Created chat", zap.Int64("chat_id", id), zap.Strings("participants", req.Usernames))
 
 	return &desc.CreateResponse{
 		ChatId: id,

@@ -11,9 +11,9 @@ const (
 
 type SendMessageDTO struct {
 	ChatId       int64
+	UserId       int64
 	FromUsername string
 	Text         string
-	CreatedAt    time.Time
 }
 
 type MessageDTO struct {
@@ -27,6 +27,7 @@ type MessageDTO struct {
 type ChatInfoDTO struct {
 	ID        int64
 	Name      string
+	IsDirect  bool
 	Usernames []string
 	CreatedAt time.Time
 }

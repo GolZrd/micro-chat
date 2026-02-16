@@ -12,6 +12,16 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+type UserInfo struct {
+	Id       int64
+	Username string
+}
+
+type CheckUsersResult struct {
+	FoundUsers    []UserInfo
+	NotFoundUsers []string
+}
+
 type Client struct {
 	conn         *grpc.ClientConn
 	accessClient access_v1.AccessAPIClient
@@ -41,7 +51,7 @@ func (c *Client) CheckAccess(ctx context.Context, endpoint string) error {
 	return err
 }
 
-func (c *Client) CheckUsersExists(ctx context.Context, usernames []string) ([]string, error) {
+func (c *Client) CheckUsersExists(ctx context.Context, usernames []string) (*CheckUsersResult, error) {
 	// Для отладки
 	logger.Debug("Check users exists", zap.Strings("usernames", usernames))
 
@@ -52,7 +62,18 @@ func (c *Client) CheckUsersExists(ctx context.Context, usernames []string) ([]st
 		return nil, fmt.Errorf("auth service error: %w", err)
 	}
 
-	return res.NotFoundUsers, nil
+	result := &CheckUsersResult{
+		NotFoundUsers: res.NotFoundUsers,
+	}
+
+	for _, user := range res.FoundUsers {
+		result.FoundUsers = append(result.FoundUsers, UserInfo{
+			Id:       user.Id,
+			Username: user.Username,
+		})
+	}
+
+	return result, nil
 }
 
 // Close закрывает соединение с auth service

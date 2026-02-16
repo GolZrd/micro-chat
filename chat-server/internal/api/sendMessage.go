@@ -20,17 +20,17 @@ func (s *Implementation) SendMessage(ctx context.Context, req *desc.SendMessageR
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	// Извлекаем username из токена
-	username, err := utils.GetUsernameFromContext(ctx)
+	// Достаем из токена username и uid пользователя
+	user, err := utils.GetUserClaimsFromContext(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "failed to get username from token: %v", err)
+		return nil, status.Errorf(codes.Unauthenticated, "failed to get user claims from token: %v", err)
 	}
 	// proto → service DTO
 	msg := service.SendMessageDTO{
 		ChatId:       req.ChatId,
-		FromUsername: username,
+		UserId:       user.UID,
+		FromUsername: user.Username,
 		Text:         req.Text,
-		CreatedAt:    req.CreatedAt.AsTime(),
 	}
 
 	err = s.chatService.SendMessage(ctx, msg)

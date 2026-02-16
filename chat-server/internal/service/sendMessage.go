@@ -14,9 +14,9 @@ import (
 func (s *service) SendMessage(ctx context.Context, msg SendMessageDTO) error {
 	input := repository.MessageCreateDTO{
 		ChatId:       msg.ChatId,
+		UserId:       msg.UserId,
 		FromUsername: msg.FromUsername,
 		Text:         msg.Text,
-		CreatedAt:    msg.CreatedAt,
 	}
 
 	logger.Info("sending message", zap.Int64("chat_id", msg.ChatId), zap.String("sent by", msg.FromUsername))
@@ -33,7 +33,7 @@ func (s *service) SendMessage(ctx context.Context, msg SendMessageDTO) error {
 		Type:      MessageTypeText,
 		From:      msg.FromUsername,
 		Text:      msg.Text,
-		CreatedAt: msg.CreatedAt,
+		CreatedAt: time.Now(),
 	}
 
 	// Отправляем всем подписчикам сообщение если комната существует

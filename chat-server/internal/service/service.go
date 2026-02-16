@@ -12,9 +12,10 @@ import (
 
 type ChatService interface {
 	// Управление чатами
-	Create(ctx context.Context, name string, creatorUsername string, usernames []string) (int64, error)
+	Create(ctx context.Context, name string, creatorId int64, creatorUsername string, usernames []string) (int64, error)
 	Delete(ctx context.Context, id int64) error
-	MyChats(ctx context.Context, username string) ([]ChatInfoDTO, error)
+	MyChats(ctx context.Context, userId int64) ([]ChatInfoDTO, error)
+	GetOrCreateDirectChat(ctx context.Context, currentUserId int64, currentUsername string, targetUserId int64, targetUsername string) (int64, bool, error)
 
 	// Сообщения
 	SendMessage(ctx context.Context, msg SendMessageDTO) error

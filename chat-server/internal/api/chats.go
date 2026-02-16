@@ -12,19 +12,14 @@ import (
 
 // MyChats возвращает список чатов пользователя
 func (s *Implementation) MyChats(ctx context.Context, req *desc.MyChatsRequest) (*desc.MyChatsResponse, error) {
-	// Извлекаем username из токена
-	username, err := utils.GetUsernameFromContext(ctx)
+	// Извлекаем userId из токена
+	userId, err := utils.GetUIDFromContext(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, "authentication is required")
 	}
 
-	if username == "" {
-		return nil, status.Error(codes.InvalidArgument, "username is required")
-	}
-
-	chats, err := s.chatService.MyChats(ctx, username)
+	chats, err := s.chatService.MyChats(ctx, userId)
 	if err != nil {
-		// Обработать ошибку
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
@@ -37,6 +32,7 @@ func (s *Implementation) MyChats(ctx context.Context, req *desc.MyChatsRequest) 
 		chatsInfo := &desc.ChatInfo{
 			Id:        chat.ID,
 			Name:      chat.Name,
+			IsDirect:  chat.IsDirect,
 			Usernames: chat.Usernames,
 			CreatedAt: timestamppb.New(chat.CreatedAt),
 		}

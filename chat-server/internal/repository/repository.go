@@ -2,21 +2,24 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type ChatRepository interface {
-	Create(ctx context.Context, name string, usernames []string) (int64, error)
+	Create(ctx context.Context, dto CreateChatDTO) (int64, error)
 	Delete(ctx context.Context, id int64) error
 	SendMessage(ctx context.Context, msg MessageCreateDTO) error
 	ChatExists(ctx context.Context, id int64) (bool, error)
-	RecentMessages(ctx context.Context, chatID int64, limit int) ([]MessageDTO, error)
-	UserChats(ctx context.Context, username string) ([]ChatInfoDTO, error)
+	IsUserInChat(ctx context.Context, chatId, userId int64) (bool, error)
+	RecentMessages(ctx context.Context, chatId int64, limit int) ([]MessageDTO, error)
+	UserChats(ctx context.Context, userId int64) ([]ChatInfoDTO, error)
+	FindDirectChat(ctx context.Context, userId1 int64, userId2 int64) (int64, error)
+	CreateDirectChat(ctx context.Context, userId1 int64, userId2 int64, username1 string, username2 string) (int64, error)
 }
 
 type repo struct {
@@ -29,23 +32,36 @@ func NewRepository(db *pgxpool.Pool) ChatRepository {
 	}
 }
 
-func (r *repo) Create(ctx context.Context, name string, usernames []string) (int64, error) {
+func (r *repo) Create(ctx context.Context, dto CreateChatDTO) (int64, error) {
 	var chatId int64
 	// Здесь используем простой запрос
-	sql := "INSERT INTO chats (name) VALUES ($1) RETURNING id"
-	err := r.db.QueryRow(ctx, sql, name).Scan(&chatId)
+	chatBuilder := squirrel.Insert("chats").
+		PlaceholderFormat(squirrel.Dollar).
+		Columns("name", "is_direct").
+		Values(dto.Name, !dto.IsGroup).
+		Suffix("RETURNING id")
+
+	chatQuery, args, err := chatBuilder.ToSql()
+	if err != nil {
+		return 0, fmt.Errorf("build chat insert query: %w", err)
+	}
+
+	err = r.db.QueryRow(ctx, chatQuery, args...).Scan(&chatId)
 	if err != nil {
 		return 0, fmt.Errorf("insert chat: %w", err)
 	}
 
 	// Теперь нужно создать записи в таблице chat_members, в которых будем указывать id только что созданного чата
-	for _, username := range usernames {
-		inserMembers := squirrel.Insert("chat_members").
-			PlaceholderFormat(squirrel.Dollar).
-			Columns("chat_id", "username", "joined_at").
-			Values(chatId, username, time.Now())
+	insertMembers := squirrel.Insert("chat_members").Columns("chat_id", "user_id", "username", "role")
+	for i, member := range dto.Members {
+		role := "member"
+		if i == 0 && dto.IsGroup {
+			role = "owner" // Первый пользователь в группе будет владельцем
+		}
 
-		query, args, err := inserMembers.ToSql()
+		insertMembers = insertMembers.Values(chatId, member.UserId, member.Username, role)
+
+		query, args, err := insertMembers.ToSql()
 		if err != nil {
 			return 0, fmt.Errorf("build members insert query: %w", err)
 		}
@@ -57,7 +73,6 @@ func (r *repo) Create(ctx context.Context, name string, usernames []string) (int
 	}
 
 	return chatId, nil
-
 }
 
 func (r *repo) Delete(ctx context.Context, chat_id int64) error {
@@ -70,31 +85,24 @@ func (r *repo) Delete(ctx context.Context, chat_id int64) error {
 		return fmt.Errorf("build delete query: %w", err)
 	}
 
-	_, err = r.db.Exec(ctx, query, args...)
+	res, err := r.db.Exec(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("delete chat: %w", err)
+	}
+
+	if res.RowsAffected() == 0 {
+		return fmt.Errorf("chat not found")
 	}
 
 	return nil
 }
 
 func (r *repo) SendMessage(ctx context.Context, msg MessageCreateDTO) error {
-	// Добавим валидацию, что пользователь есть в чате, делаю запрос без использования squirrel
-	var isMember bool
-	err := r.db.QueryRow(ctx, "SELECT EXISTS (SELECT 1 FROM chat_members WHERE chat_id = $1 AND username = $2)", msg.ChatId, msg.FromUsername).Scan(&isMember)
-	if err != nil {
-		return fmt.Errorf("check chat membership: %w", err)
-	}
-
-	if !isMember {
-		return errors.New("user is not a member of the chat")
-	}
-
 	// Выполняем основной запрос, добавляем в таблицу messages
 	builder := squirrel.Insert("messages").
 		PlaceholderFormat(squirrel.Dollar).
-		Columns("chat_Id", "from_username", "text").
-		Values(msg.ChatId, msg.FromUsername, msg.Text)
+		Columns("chat_Id", "user_id", "from_username", "text").
+		Values(msg.ChatId, msg.UserId, msg.FromUsername, msg.Text)
 	query, args, err := builder.ToSql()
 	if err != nil {
 		return fmt.Errorf("build send message query: %w", err)
@@ -105,11 +113,23 @@ func (r *repo) SendMessage(ctx context.Context, msg MessageCreateDTO) error {
 		return fmt.Errorf("insert message: %w", err)
 	}
 
+	// Обновляем updated_at в чате после отправки сообщения
+	updateBuilder := squirrel.Update("chats").Set("updated_at", squirrel.Expr("NOW()")).Where(squirrel.Eq{"ID": msg.ChatId})
+	updateQuery, updateArgs, err := updateBuilder.ToSql()
+	if err != nil {
+		return fmt.Errorf("build update chat query: %w", err)
+	}
+
+	_, err = r.db.Exec(ctx, updateQuery, updateArgs...)
+	if err != nil {
+		return fmt.Errorf("update chat: %w", err)
+	}
+
 	return nil
 }
 
 func (r *repo) RecentMessages(ctx context.Context, chatID int64, limit int) ([]MessageDTO, error) {
-	builder := squirrel.Select("id", "chat_id", "from_username", "text", "created_at").
+	builder := squirrel.Select("id", "chat_id", "user_id", "from_username", "text", "created_at").
 		PlaceholderFormat(squirrel.Dollar).
 		From("messages").
 		Where(squirrel.Eq{"chat_id": chatID}).
@@ -128,7 +148,7 @@ func (r *repo) RecentMessages(ctx context.Context, chatID int64, limit int) ([]M
 
 	for rows.Next() {
 		var message MessageDTO
-		err := rows.Scan(&message.Id, &message.ChatId, &message.From, &message.Text, &message.CreatedAt)
+		err := rows.Scan(&message.Id, &message.ChatId, &message.UserId, &message.From, &message.Text, &message.CreatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("scan message: %w", err)
 		}
@@ -150,13 +170,38 @@ func (r *repo) ChatExists(ctx context.Context, id int64) (bool, error) {
 	return exists, nil
 }
 
-func (r *repo) UserChats(ctx context.Context, username string) ([]ChatInfoDTO, error) {
-	builder := squirrel.Select("id", "name", "created_at").
+// Проверяем, что пользователь является участником чата
+func (r *repo) IsUserInChat(ctx context.Context, chatId, userId int64) (bool, error) {
+	builder := squirrel.Select("1").
 		PlaceholderFormat(squirrel.Dollar).
-		From("chats").
-		Join("chat_members ON chats.ID = chat_members.chat_id ").
-		Where(squirrel.Eq{"username": username}).
-		OrderBy("created_at DESC")
+		From("chat_members").
+		Where(squirrel.Eq{"chat_id": chatId, "user_id": userId}).
+		Limit(1)
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return false, fmt.Errorf("build query: %w", err)
+	}
+
+	var isMember bool
+	err = r.db.QueryRow(ctx, query, args...).Scan(&isMember)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, nil
+		}
+		return false, fmt.Errorf("check chat membership: %w", err)
+	}
+
+	return true, nil
+}
+
+func (r *repo) UserChats(ctx context.Context, userId int64) ([]ChatInfoDTO, error) {
+	builder := squirrel.Select("c.ID", "c.name", "c.is_direct", "c.created_at", "c.updated_at").
+		PlaceholderFormat(squirrel.Dollar).
+		From("chats c").
+		Join("chat_members ON c.ID = chat_members.chat_id ").
+		Where(squirrel.Eq{"chat_members.user_id": userId}).
+		OrderBy("c.updated_at DESC")
 
 	query, args, err := builder.ToSql()
 	if err != nil {
@@ -171,50 +216,124 @@ func (r *repo) UserChats(ctx context.Context, username string) ([]ChatInfoDTO, e
 	var chats []ChatInfoDTO
 	for rows.Next() {
 		var chat ChatInfoDTO
-		err := rows.Scan(&chat.ID, &chat.Name, &chat.CreatedAt)
+		err := rows.Scan(&chat.ID, &chat.Name, &chat.IsDirect, &chat.CreatedAt, &chat.UpdatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("scan chat: %w", err)
 		}
 
-		// Получаем участников чата
-		members, err := r.chatMembers(ctx, chat.ID)
-		if err != nil {
-			return nil, fmt.Errorf("get members for chat %d: %w", chat.ID, err)
-		}
-
-		chat.Usernames = members
 		chats = append(chats, chat)
+	}
+
+	for i := range chats {
+		members, err := r.chatMembers(ctx, chats[i].ID)
+		if err != nil {
+			return nil, fmt.Errorf("get chat members: %w", err)
+		}
+		chats[i].Members = members
 	}
 
 	return chats, nil
 }
 
 // Получаем участников чата
-func (r *repo) chatMembers(ctx context.Context, chatID int64) ([]string, error) {
-	builder := squirrel.Select("username").
+func (r *repo) chatMembers(ctx context.Context, chatID int64) ([]MemberDTO, error) {
+	builder := squirrel.Select("user_id", "username").
 		PlaceholderFormat(squirrel.Dollar).
 		From("chat_members").
-		Where(squirrel.Eq{"chat_id": chatID})
+		Where(squirrel.Eq{"chat_id": chatID}).
+		OrderBy("joined_at ASC")
 
 	query, args, err := builder.ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("build query: %w", err)
 	}
 
-	var usernames []string
 	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("query chat members: %w", err)
 	}
+	defer rows.Close()
 
+	var members []MemberDTO
 	for rows.Next() {
-		var username string
-		err := rows.Scan(&username)
+		var member MemberDTO
+		err := rows.Scan(&member.UserId, &member.Username)
 		if err != nil {
-			return nil, fmt.Errorf("scan username: %w", err)
+			return nil, fmt.Errorf("scan member: %w", err)
 		}
-		usernames = append(usernames, username)
+		members = append(members, member)
 	}
 
-	return usernames, nil
+	return members, nil
+}
+
+// FindDirectChat - находим личный чат между двумя пользователями
+func (r *repo) FindDirectChat(ctx context.Context, userId1 int64, userId2 int64) (int64, error) {
+	// Личный чат — это чат ровно с 2 участниками
+	builder := squirrel.Select("cm1.chat_id").
+		PlaceholderFormat(squirrel.Dollar).
+		From("chat_members cm1").
+		Join("chats on chats.id = chat_members.chat_id").
+		Join("chat_members cm2 on cm1.chat_id = cm2.chat_id").
+		Where(squirrel.And{
+			squirrel.Eq{"chats.is_direct": true},
+			squirrel.Eq{"cm1.user_id": userId1},
+			squirrel.Eq{"cm2.user_id": userId2},
+		}).
+		Limit(1)
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return 0, fmt.Errorf("build query: %w", err)
+	}
+
+	var chatId int64
+	err = r.db.QueryRow(ctx, query, args...).Scan(&chatId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, nil
+		}
+		return 0, fmt.Errorf("query direct chat: %w", err)
+	}
+
+	return chatId, nil
+}
+
+// CreateDirectChat - создаем личный чат между двумя пользователями
+func (r *repo) CreateDirectChat(ctx context.Context, userId1 int64, userId2 int64, username1 string, username2 string) (int64, error) {
+	// Сначала создаем сам чат
+	builder := squirrel.Insert("chats").
+		PlaceholderFormat(squirrel.Dollar).
+		Columns("name", "is_direct").
+		Values("", true).
+		Suffix("RETURNING id")
+
+	chatQuery, args, err := builder.ToSql()
+	if err != nil {
+		return 0, fmt.Errorf("build query: %w", err)
+	}
+
+	var chatId int64
+	err = r.db.QueryRow(ctx, chatQuery, args...).Scan(&chatId)
+	if err != nil {
+		return 0, fmt.Errorf("create direct chat: %w", err)
+	}
+
+	// Теперь добавляем обоих участников в таблицу chat_members
+	membersBuilder := squirrel.Insert("chat_members").
+		Columns("chat_id", "user_id", "username", "role").
+		Values(chatId, userId1, username1, "member").
+		Values(chatId, userId2, username2, "member")
+
+	membersQuery, args, err := membersBuilder.ToSql()
+	if err != nil {
+		return 0, fmt.Errorf("build query: %w", err)
+	}
+
+	_, err = r.db.Exec(ctx, membersQuery, args...)
+	if err != nil {
+		return 0, fmt.Errorf("add members to direct chat: %w", err)
+	}
+
+	return chatId, nil
 }

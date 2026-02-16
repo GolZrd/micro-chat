@@ -2,8 +2,8 @@ cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMT
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/toml v1.5.0 h1:W5quZX/G/csjUnuI8SUYlsHs9M38FC7znL0lIO+DvMg=
 github.com/BurntSushi/toml v1.5.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
-github.com/GolZrd/micro-chat/auth v0.0.0-20251209161002-d3964d34f4e7 h1:F1kZFgz+txTLPAxfTZmpT71NkjLX655pJk3bgqJGrA0=
-github.com/GolZrd/micro-chat/auth v0.0.0-20251209161002-d3964d34f4e7/go.mod h1:GZr7eJB3VIGfO/VamFlaiq1Cc4YsJIwNaf9wdKn2piQ=
+github.com/GolZrd/micro-chat/auth v0.0.0-20260215071822-f0fc930a1dae h1:XMJzVClkp4gqHz6HtBm1y02fDghT79S8SBDoPG59XrU=
+github.com/GolZrd/micro-chat/auth v0.0.0-20260215071822-f0fc930a1dae/go.mod h1:L42u70p9Q+59Qg4aHq1UH5phlleGBv4j6VPMhFuIyG0=
 github.com/Masterminds/squirrel v1.5.4 h1:uUcX/aBc8O7Fg9kaISIUsHXdKuqehiXAMQTYX8afzqM=
 github.com/Masterminds/squirrel v1.5.4/go.mod h1:NNaOrjSoIDfDA40n7sr2tPNZRfjzjA400rg+riTZj10=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=

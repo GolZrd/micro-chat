@@ -20,11 +20,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Chat_Create_FullMethodName      = "/chat_v1.Chat/Create"
-	Chat_Delete_FullMethodName      = "/chat_v1.Chat/Delete"
-	Chat_SendMessage_FullMethodName = "/chat_v1.Chat/SendMessage"
-	Chat_ConnectChat_FullMethodName = "/chat_v1.Chat/ConnectChat"
-	Chat_MyChats_FullMethodName     = "/chat_v1.Chat/MyChats"
+	Chat_Create_FullMethodName                = "/chat_v1.Chat/Create"
+	Chat_Delete_FullMethodName                = "/chat_v1.Chat/Delete"
+	Chat_SendMessage_FullMethodName           = "/chat_v1.Chat/SendMessage"
+	Chat_ConnectChat_FullMethodName           = "/chat_v1.Chat/ConnectChat"
+	Chat_MyChats_FullMethodName               = "/chat_v1.Chat/MyChats"
+	Chat_GetOrCreateDirectChat_FullMethodName = "/chat_v1.Chat/GetOrCreateDirectChat"
 )
 
 // ChatClient is the client API for Chat service.
@@ -36,6 +37,7 @@ type ChatClient interface {
 	SendMessage(ctx context.Context, in *SendMessageRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	ConnectChat(ctx context.Context, in *ConnectChatRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Message], error)
 	MyChats(ctx context.Context, in *MyChatsRequest, opts ...grpc.CallOption) (*MyChatsResponse, error)
+	GetOrCreateDirectChat(ctx context.Context, in *GetOrCreateDirectChatRequest, opts ...grpc.CallOption) (*GetOrCreateDirectChatResponse, error)
 }
 
 type chatClient struct {
@@ -105,6 +107,16 @@ func (c *chatClient) MyChats(ctx context.Context, in *MyChatsRequest, opts ...gr
 	return out, nil
 }
 
+func (c *chatClient) GetOrCreateDirectChat(ctx context.Context, in *GetOrCreateDirectChatRequest, opts ...grpc.CallOption) (*GetOrCreateDirectChatResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetOrCreateDirectChatResponse)
+	err := c.cc.Invoke(ctx, Chat_GetOrCreateDirectChat_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ChatServer is the server API for Chat service.
 // All implementations must embed UnimplementedChatServer
 // for forward compatibility.
@@ -114,6 +126,7 @@ type ChatServer interface {
 	SendMessage(context.Context, *SendMessageRequest) (*emptypb.Empty, error)
 	ConnectChat(*ConnectChatRequest, grpc.ServerStreamingServer[Message]) error
 	MyChats(context.Context, *MyChatsRequest) (*MyChatsResponse, error)
+	GetOrCreateDirectChat(context.Context, *GetOrCreateDirectChatRequest) (*GetOrCreateDirectChatResponse, error)
 	mustEmbedUnimplementedChatServer()
 }
 
@@ -138,6 +151,9 @@ func (UnimplementedChatServer) ConnectChat(*ConnectChatRequest, grpc.ServerStrea
 }
 func (UnimplementedChatServer) MyChats(context.Context, *MyChatsRequest) (*MyChatsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MyChats not implemented")
+}
+func (UnimplementedChatServer) GetOrCreateDirectChat(context.Context, *GetOrCreateDirectChatRequest) (*GetOrCreateDirectChatResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOrCreateDirectChat not implemented")
 }
 func (UnimplementedChatServer) mustEmbedUnimplementedChatServer() {}
 func (UnimplementedChatServer) testEmbeddedByValue()              {}
@@ -243,6 +259,24 @@ func _Chat_MyChats_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Chat_GetOrCreateDirectChat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOrCreateDirectChatRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServer).GetOrCreateDirectChat(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Chat_GetOrCreateDirectChat_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServer).GetOrCreateDirectChat(ctx, req.(*GetOrCreateDirectChatRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Chat_ServiceDesc is the grpc.ServiceDesc for Chat service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -265,6 +299,10 @@ var Chat_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "MyChats",
 			Handler:    _Chat_MyChats_Handler,
+		},
+		{
+			MethodName: "GetOrCreateDirectChat",
+			Handler:    _Chat_GetOrCreateDirectChat_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
