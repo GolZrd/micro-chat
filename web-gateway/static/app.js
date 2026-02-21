@@ -608,35 +608,31 @@ async function loadMyChats() {
         chats.forEach(chat => {
             const chatId = chat.id;
             const users = chat.usernames || [];
+            const isDirect = chat.is_direct || false;
 
-            const chatName = chat.name || `Чат #${chatId}`;
-            
-            let createdDate = 'N/A';
-            if (chat.created_at && chat.created_at.seconds) {
-                const timestamp = chat.created_at.seconds * 1000;
-                const date = new Date(timestamp);
-                createdDate = date.toLocaleString('ru-RU', {
-                    day: 'numeric',
-                    month: 'short',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-            }
-            
+            // Для личных чатов показываем имя собеседника
+            const chatName = getChatDisplayName(chat);
+            const chatIcon = isDirect ? '👤' : '👥';
+            const chatType = isDirect ? 'Личный чат' : 'Групповой чат';
+
+            const createdDate = formatChatDate(chat.created_at);
             const usersList = users.join(', ');
-            
+
             html += `
-                <div class="chat-card">
+                <div class="chat-card ${isDirect ? 'chat-direct' : 'chat-group'}">
                     <div class="chat-card-header">
-                        <h3>💬 ${escapeHtml(chatName)}</h3>
-                        <button 
-                            onclick="event.stopPropagation(); deleteChat(${chatId})" 
-                            class="btn-delete"
-                            title="Удалить чат">
-                            🗑️
-                        </button>
+                        <h3>${chatIcon} ${escapeHtml(chatName)}</h3>
+                        <div class="chat-card-actions">
+                            <span class="chat-type-badge">${chatType}</span>
+                            <button 
+                                onclick="event.stopPropagation(); deleteChat(${chatId})" 
+                                class="btn-delete"
+                                title="Удалить чат">
+                                🗑️
+                            </button>
+                        </div>
                     </div>
-                    <p><strong>👥 Участники:</strong> <span>${usersList}</span></p>
+                    <p><strong>👥 Участники:</strong> <span>${escapeHtml(usersList)}</span></p>
                     <p><strong>📅 Создан:</strong> <span>${createdDate}</span></p>
                     <a href="/chat?id=${chatId}" class="btn-open-chat" onclick="event.stopPropagation();">
                         Открыть чат →
@@ -645,15 +641,14 @@ async function loadMyChats() {
             `;
         });
         html += '</div>';
-        
+
         chatsDiv.innerHTML = html;
-        
+
     } catch (error) {
         console.error('❌ Error:', error);
         if (chatsDiv) {
             chatsDiv.innerHTML = `<p style="color: #dc3545;">❌ Ошибка: ${error.message}</p>`;
         }
-        // Обновляем счетчик на 0 при ошибке
         updateChatCount(0);
     }
 }
@@ -662,6 +657,48 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Получить отображаемое имя чата
+function getChatDisplayName(chat) {
+    if (!chat.is_direct) {
+        return chat.name || `Чат #${chat.id}`;
+    }
+
+    // Для личного чата показываем имя собеседника
+    const currentUsername = TokenManager.getUsername(); // или откуда ты берёшь имя текущего пользователя
+    const users = chat.usernames || [];
+    const otherUser = users.find(u => u !== currentUsername);
+
+    return otherUser || chat.name || `Чат #${chat.id}`;
+}
+
+// Универсальный парсер даты (поддерживает оба формата)
+function formatChatDate(createdAt) {
+    if (!createdAt) return 'N/A';
+
+    let date;
+
+    // Формат proto: {"seconds": 123456, "nanos": 0}
+    if (createdAt.seconds) {
+        date = new Date(createdAt.seconds * 1000);
+    }
+    // Формат ISO string: "2025-06-21T12:00:00Z"
+    else if (typeof createdAt === 'string') {
+        date = new Date(createdAt);
+    }
+    else {
+        return 'N/A';
+    }
+
+    if (isNaN(date.getTime())) return 'N/A';
+
+    return date.toLocaleString('ru-RU', {
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
 }
 
 // ==================== ОБНОВЛЕНИЕ СЧЕТЧИКА ЧАТОВ ====================
@@ -1205,13 +1242,54 @@ async function removeFriend(friendId, friendName) {
     }
 }
 
-function startChatWithFriend(userId, username) {
-    // TODO: Реализовать создание/открытие чата
-    showToast({
-        type: 'info',
-        title: 'Открываем чат',
-        message: `Чат с ${username}`
-    });
+async function startChatWithFriend(userId, username) {
+    try {
+        showToast({
+            type: 'info',
+            title: 'Открываем чат',
+            message: `Подключение к чату с ${username}...`
+        });
+
+        const response = await apiRequest('/api/chat/direct', {
+            method: 'POST',
+            body: JSON.stringify({
+                user_id: userId,
+                username: username
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            showToast({
+                type: 'error',
+                title: 'Ошибка',
+                message: data.error || 'Не удалось открыть чат'
+            });
+            return;
+        }
+
+        if (data.created) {
+            showToast({
+                type: 'success',
+                title: 'Чат создан',
+                message: `Новый чат с ${username}`
+            });
+            // Обновляем счётчик чатов
+            loadChatCount();
+        }
+
+        // Переходим в чат
+        window.location.href = `/chat?id=${data.chat_id}`;
+
+    } catch (error) {
+        console.error('Error starting chat:', error);
+        showToast({
+            type: 'error',
+            title: 'Ошибка',
+            message: 'Не удалось открыть чат'
+        });
+    }
 }
 
 // Инициализация

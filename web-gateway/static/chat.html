@@ -315,10 +315,8 @@
             else if (textLength <= 20) sizeClass = 'short';
             else if (textLength > 200) sizeClass = 'long';
             
-            const timeStr = new Date().toLocaleTimeString('ru-RU', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+             // ✅ Берём время из сообщения
+            const timeStr = formatMessageTime(msg.sent_at);
             
             msgDiv.innerHTML = `
                 <div class="message-header">
@@ -333,6 +331,42 @@
             
             messageCount++;
             document.getElementById('messageCount').textContent = `${messageCount} сообщений`;
+        }
+
+        function formatMessageTime(sentAt) {
+            if (!sentAt) {
+                // Fallback если время не пришло
+                return new Date().toLocaleTimeString('ru-RU', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+
+            let date;
+
+            // ISO string: "2025-06-21T12:00:00Z"
+            if (typeof sentAt === 'string') {
+                date = new Date(sentAt);
+            }
+            // Proto format: {"seconds": 123456, "nanos": 0}
+            else if (sentAt.seconds) {
+                date = new Date(sentAt.seconds * 1000);
+            }
+            else {
+                date = new Date(sentAt);
+            }
+
+            if (isNaN(date.getTime())) {
+                return new Date().toLocaleTimeString('ru-RU', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+
+            return date.toLocaleTimeString('ru-RU', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
         }
 
         function escapeHtml(text) {

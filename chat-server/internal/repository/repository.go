@@ -52,7 +52,8 @@ func (r *repo) Create(ctx context.Context, dto CreateChatDTO) (int64, error) {
 	}
 
 	// Теперь нужно создать записи в таблице chat_members, в которых будем указывать id только что созданного чата
-	insertMembers := squirrel.Insert("chat_members").Columns("chat_id", "user_id", "username", "role")
+	insertMembers := squirrel.Insert("chat_members").PlaceholderFormat(squirrel.Dollar).Columns("chat_id", "user_id", "username", "role")
+
 	for i, member := range dto.Members {
 		role := "member"
 		if i == 0 && dto.IsGroup {
@@ -60,16 +61,16 @@ func (r *repo) Create(ctx context.Context, dto CreateChatDTO) (int64, error) {
 		}
 
 		insertMembers = insertMembers.Values(chatId, member.UserId, member.Username, role)
+	}
 
-		query, args, err := insertMembers.ToSql()
-		if err != nil {
-			return 0, fmt.Errorf("build members insert query: %w", err)
-		}
+	query, args, err := insertMembers.ToSql()
+	if err != nil {
+		return 0, fmt.Errorf("build members insert query: %w", err)
+	}
 
-		_, err = r.db.Exec(ctx, query, args...)
-		if err != nil {
-			return 0, fmt.Errorf("insert chat members: %w", err)
-		}
+	_, err = r.db.Exec(ctx, query, args...)
+	if err != nil {
+		return 0, fmt.Errorf("insert chat members: %w", err)
 	}
 
 	return chatId, nil
@@ -101,7 +102,7 @@ func (r *repo) SendMessage(ctx context.Context, msg MessageCreateDTO) error {
 	// Выполняем основной запрос, добавляем в таблицу messages
 	builder := squirrel.Insert("messages").
 		PlaceholderFormat(squirrel.Dollar).
-		Columns("chat_Id", "user_id", "from_username", "text").
+		Columns("chat_id", "user_id", "from_username", "text").
 		Values(msg.ChatId, msg.UserId, msg.FromUsername, msg.Text)
 	query, args, err := builder.ToSql()
 	if err != nil {
@@ -114,7 +115,7 @@ func (r *repo) SendMessage(ctx context.Context, msg MessageCreateDTO) error {
 	}
 
 	// Обновляем updated_at в чате после отправки сообщения
-	updateBuilder := squirrel.Update("chats").Set("updated_at", squirrel.Expr("NOW()")).Where(squirrel.Eq{"ID": msg.ChatId})
+	updateBuilder := squirrel.Update("chats").PlaceholderFormat(squirrel.Dollar).Set("updated_at", squirrel.Expr("NOW()")).Where(squirrel.Eq{"ID": msg.ChatId})
 	updateQuery, updateArgs, err := updateBuilder.ToSql()
 	if err != nil {
 		return fmt.Errorf("build update chat query: %w", err)
@@ -172,27 +173,15 @@ func (r *repo) ChatExists(ctx context.Context, id int64) (bool, error) {
 
 // Проверяем, что пользователь является участником чата
 func (r *repo) IsUserInChat(ctx context.Context, chatId, userId int64) (bool, error) {
-	builder := squirrel.Select("1").
-		PlaceholderFormat(squirrel.Dollar).
-		From("chat_members").
-		Where(squirrel.Eq{"chat_id": chatId, "user_id": userId}).
-		Limit(1)
-
-	query, args, err := builder.ToSql()
-	if err != nil {
-		return false, fmt.Errorf("build query: %w", err)
-	}
+	query := "SELECT EXISTS (SELECT 1 FROM chat_members WHERE chat_id = $1 AND user_id = $2)"
 
 	var isMember bool
-	err = r.db.QueryRow(ctx, query, args...).Scan(&isMember)
+	err := r.db.QueryRow(ctx, query, chatId, userId).Scan(&isMember)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return false, nil
-		}
 		return false, fmt.Errorf("check chat membership: %w", err)
 	}
 
-	return true, nil
+	return isMember, nil
 }
 
 func (r *repo) UserChats(ctx context.Context, userId int64) ([]ChatInfoDTO, error) {
@@ -273,7 +262,7 @@ func (r *repo) FindDirectChat(ctx context.Context, userId1 int64, userId2 int64)
 	builder := squirrel.Select("cm1.chat_id").
 		PlaceholderFormat(squirrel.Dollar).
 		From("chat_members cm1").
-		Join("chats on chats.id = chat_members.chat_id").
+		Join("chats on chats.id = cm1.chat_id").
 		Join("chat_members cm2 on cm1.chat_id = cm2.chat_id").
 		Where(squirrel.And{
 			squirrel.Eq{"chats.is_direct": true},
@@ -321,6 +310,7 @@ func (r *repo) CreateDirectChat(ctx context.Context, userId1 int64, userId2 int6
 
 	// Теперь добавляем обоих участников в таблицу chat_members
 	membersBuilder := squirrel.Insert("chat_members").
+		PlaceholderFormat(squirrel.Dollar).
 		Columns("chat_id", "user_id", "username", "role").
 		Values(chatId, userId1, username1, "member").
 		Values(chatId, userId2, username2, "member")

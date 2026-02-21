@@ -248,3 +248,36 @@
     color: var(--accent);
     font-weight: 600;
 }
+
+.chat-direct {
+    border-left: 3px solid #007bff;
+}
+
+.chat-group {
+    border-left: 3px solid #28a745;
+}
+
+.chat-type-badge {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: #f0f0f0;
+    color: #666;
+    white-space: nowrap;
+}
+
+.chat-direct .chat-type-badge {
+    background: #e3f2fd;
+    color: #1565c0;
+}
+
+.chat-group .chat-type-badge {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.chat-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}

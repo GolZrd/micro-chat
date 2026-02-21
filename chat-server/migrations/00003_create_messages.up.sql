@@ -1,7 +1,7 @@
 CREATE TABLE messages (
     ID BIGSERIAL PRIMARY KEY,
     chat_id BIGINT NOT NULL REFERENCES chats(ID) ON DELETE CASCADE,
-    user_id BIGINT NOT NULL REFERENCES users(ID) ON DELETE SET NULL,
+    user_id BIGINT NOT NULL,
     from_username VARCHAR(255) NOT NULL,
     message_type VARCHAR(20) DEFAULT 'text', -- На будущее
     text TEXT NOT NULL,

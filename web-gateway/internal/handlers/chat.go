@@ -16,7 +16,6 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 var upgrader = websocket.Upgrader{
@@ -75,9 +74,20 @@ func MyChats(client *clients.ChatClient) gin.HandlerFunc {
 			return
 		}
 
-		logger.Info("got user chats", zap.Int("count", len(resp.Chats)))
+		chats := make([]gin.H, 0, len(resp.Chats))
+		for _, ch := range resp.Chats {
+			chats = append(chats, gin.H{
+				"id":         ch.Id,
+				"name":       ch.Name,
+				"is_direct":  ch.IsDirect,
+				"usernames":  ch.Usernames,
+				"created_at": ch.CreatedAt.AsTime(),
+			})
+		}
 
-		c.JSON(http.StatusOK, gin.H{"chats": resp.Chats})
+		logger.Info("got user chats", zap.Int("count", len(chats)))
+
+		c.JSON(http.StatusOK, gin.H{"chats": chats})
 	}
 }
 
@@ -99,9 +109,8 @@ func SendMessage(client *clients.ChatClient) gin.HandlerFunc {
 
 		// Вызываем gRPC БЕЗ указания From - chat-server извлечет из токена
 		_, err := client.Client.SendMessage(ctx, &chat_v1.SendMessageRequest{
-			ChatId:    req.ChatId,
-			Text:      req.Text,
-			CreatedAt: timestamppb.Now(),
+			ChatId: req.ChatId,
+			Text:   req.Text,
 		})
 		if err != nil {
 			logger.Error("failed to send message", zap.Error(err))
@@ -218,6 +227,35 @@ func DeleteChat(client *clients.ChatClient) gin.HandlerFunc {
 	}
 }
 
+func GetOrCreateDirectChat(client *clients.ChatClient) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req struct {
+			UserId   int64  `json:"user_id"`
+			Username string `json:"username"`
+		}
+
+		if err := c.BindJSON(&req); err != nil {
+			logger.Debug("invalid get or create direct chat request", zap.Error(err))
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		ctx := utils.ContextWithToken(c)
+
+		resp, err := client.Client.GetOrCreateDirectChat(ctx, &chat_v1.GetOrCreateDirectChatRequest{
+			UserId:   req.UserId,
+			Username: req.Username,
+		})
+		if err != nil {
+			logger.Error("failed to get or create direct chat", zap.Error(err))
+			handleChatError(c, err)
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"chat_id": resp.ChatId, "created": resp.Created})
+	}
+}
+
 func handleChatError(c *gin.Context, err error) {
 	st, ok := status.FromError(err)
 	if !ok {
@@ -287,10 +325,10 @@ func convertToWebSocketMessage(msg *chat_v1.Message) map[string]interface{} {
 		}
 	default:
 		return map[string]interface{}{
-			"type":      "message",
-			"from":      msg.From,
-			"text":      msg.Text,
-			"createdAt": msg.CreatedAt.AsTime(),
+			"type":    "message",
+			"from":    msg.From,
+			"text":    msg.Text,
+			"sent_at": msg.CreatedAt.AsTime(),
 		}
 	}
 
