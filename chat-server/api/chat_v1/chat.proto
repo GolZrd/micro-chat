@@ -15,6 +15,8 @@ service Chat {
     rpc ConnectChat(ConnectChatRequest) returns (stream Message);          // ConnectChat - стриминговая ручка подключения к чату.
     rpc MyChats(MyChatsRequest) returns (MyChatsResponse);         // MyChats - ручка получения списка чатов пользователя. Не будем передавать имя пользователя. А будем его брать из токена
     rpc GetOrCreateDirectChat(GetOrCreateDirectChatRequest) returns (GetOrCreateDirectChatResponse); // GetOrCreateDirectChat - ручка получения или создания прямого чата с пользователем, где только 2 участника
+    rpc Heartbeat(HeartbeatRequest) returns (google.protobuf.Empty); // Heartbeat - ручка для проверки соединения, чтобы показывать актуальный статус пользователя (online/offline)
+    rpc FriendsPresence(FriendsPresenceRequest) returns (FriendsPresenceResponse); // FriendsPresence - ручка для проверки активности друзей
 }
 
 message CreateRequest {
@@ -87,4 +89,23 @@ message GetOrCreateDirectChatRequest {
 message GetOrCreateDirectChatResponse {
     int64 chat_id = 1;
     bool created = 2; // Если создан новый чат то возвращает true, если уже существует то false
+}
+
+// Оставляем пустым, userId мы берем из токена
+message HeartbeatRequest {
+}
+
+// Передаем список user_id друзей
+message FriendsPresenceRequest {
+    repeated int64 user_ids = 1;
+}
+
+message FriendPresence {
+    int64 user_id = 1;
+    bool is_online = 2;
+    google.protobuf.Timestamp last_seen_at = 3;
+}
+
+message FriendsPresenceResponse {
+    repeated FriendPresence friends = 1;
 }

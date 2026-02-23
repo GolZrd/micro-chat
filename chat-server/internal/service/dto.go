@@ -37,3 +37,9 @@ type OnlineUserDTO struct {
 	UserId   int64  `json:"userId"`
 	Username string `json:"username"`
 }
+
+type FriendPresenceDTO struct {
+	UserId     int64
+	IsOnline   bool
+	LastSeenAt time.Time
+}

@@ -54,9 +54,13 @@ services:
       - DB_NAME=${DB_CHAT_NAME}
       - GRPC_PORT=${GRPC_CHAT_PORT}
       - GRPC_AUTH_PORT=${GRPC_AUTH_PORT}
+      - REDIS_ADDR=${REDIS_ADDR}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_DB=${REDIS_CHAT_DB}
     depends_on:
       - postgres
       - auth
+      - redis
     networks:
       - app-network
   

@@ -26,6 +26,8 @@ const (
 	Chat_ConnectChat_FullMethodName           = "/chat_v1.Chat/ConnectChat"
 	Chat_MyChats_FullMethodName               = "/chat_v1.Chat/MyChats"
 	Chat_GetOrCreateDirectChat_FullMethodName = "/chat_v1.Chat/GetOrCreateDirectChat"
+	Chat_Heartbeat_FullMethodName             = "/chat_v1.Chat/Heartbeat"
+	Chat_FriendsPresence_FullMethodName       = "/chat_v1.Chat/FriendsPresence"
 )
 
 // ChatClient is the client API for Chat service.
@@ -38,6 +40,8 @@ type ChatClient interface {
 	ConnectChat(ctx context.Context, in *ConnectChatRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Message], error)
 	MyChats(ctx context.Context, in *MyChatsRequest, opts ...grpc.CallOption) (*MyChatsResponse, error)
 	GetOrCreateDirectChat(ctx context.Context, in *GetOrCreateDirectChatRequest, opts ...grpc.CallOption) (*GetOrCreateDirectChatResponse, error)
+	Heartbeat(ctx context.Context, in *HeartbeatRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	FriendsPresence(ctx context.Context, in *FriendsPresenceRequest, opts ...grpc.CallOption) (*FriendsPresenceResponse, error)
 }
 
 type chatClient struct {
@@ -117,6 +121,26 @@ func (c *chatClient) GetOrCreateDirectChat(ctx context.Context, in *GetOrCreateD
 	return out, nil
 }
 
+func (c *chatClient) Heartbeat(ctx context.Context, in *HeartbeatRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, Chat_Heartbeat_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *chatClient) FriendsPresence(ctx context.Context, in *FriendsPresenceRequest, opts ...grpc.CallOption) (*FriendsPresenceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(FriendsPresenceResponse)
+	err := c.cc.Invoke(ctx, Chat_FriendsPresence_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ChatServer is the server API for Chat service.
 // All implementations must embed UnimplementedChatServer
 // for forward compatibility.
@@ -127,6 +151,8 @@ type ChatServer interface {
 	ConnectChat(*ConnectChatRequest, grpc.ServerStreamingServer[Message]) error
 	MyChats(context.Context, *MyChatsRequest) (*MyChatsResponse, error)
 	GetOrCreateDirectChat(context.Context, *GetOrCreateDirectChatRequest) (*GetOrCreateDirectChatResponse, error)
+	Heartbeat(context.Context, *HeartbeatRequest) (*emptypb.Empty, error)
+	FriendsPresence(context.Context, *FriendsPresenceRequest) (*FriendsPresenceResponse, error)
 	mustEmbedUnimplementedChatServer()
 }
 
@@ -154,6 +180,12 @@ func (UnimplementedChatServer) MyChats(context.Context, *MyChatsRequest) (*MyCha
 }
 func (UnimplementedChatServer) GetOrCreateDirectChat(context.Context, *GetOrCreateDirectChatRequest) (*GetOrCreateDirectChatResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOrCreateDirectChat not implemented")
+}
+func (UnimplementedChatServer) Heartbeat(context.Context, *HeartbeatRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Heartbeat not implemented")
+}
+func (UnimplementedChatServer) FriendsPresence(context.Context, *FriendsPresenceRequest) (*FriendsPresenceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FriendsPresence not implemented")
 }
 func (UnimplementedChatServer) mustEmbedUnimplementedChatServer() {}
 func (UnimplementedChatServer) testEmbeddedByValue()              {}
@@ -277,6 +309,42 @@ func _Chat_GetOrCreateDirectChat_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Chat_Heartbeat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HeartbeatRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServer).Heartbeat(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Chat_Heartbeat_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServer).Heartbeat(ctx, req.(*HeartbeatRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Chat_FriendsPresence_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FriendsPresenceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServer).FriendsPresence(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Chat_FriendsPresence_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServer).FriendsPresence(ctx, req.(*FriendsPresenceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Chat_ServiceDesc is the grpc.ServiceDesc for Chat service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -303,6 +371,14 @@ var Chat_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetOrCreateDirectChat",
 			Handler:    _Chat_GetOrCreateDirectChat_Handler,
+		},
+		{
+			MethodName: "Heartbeat",
+			Handler:    _Chat_Heartbeat_Handler,
+		},
+		{
+			MethodName: "FriendsPresence",
+			Handler:    _Chat_FriendsPresence_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
