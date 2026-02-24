@@ -2,8 +2,8 @@ github.com/BurntSushi/toml v1.5.0 h1:W5quZX/G/csjUnuI8SUYlsHs9M38FC7znL0lIO+DvMg
 github.com/BurntSushi/toml v1.5.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
 github.com/GolZrd/micro-chat/auth v0.0.0-20260215071822-f0fc930a1dae h1:XMJzVClkp4gqHz6HtBm1y02fDghT79S8SBDoPG59XrU=
 github.com/GolZrd/micro-chat/auth v0.0.0-20260215071822-f0fc930a1dae/go.mod h1:L42u70p9Q+59Qg4aHq1UH5phlleGBv4j6VPMhFuIyG0=
-github.com/GolZrd/micro-chat/chat-server v0.0.0-20260216143411-2445378cf878 h1:GJVlcEncDmLxR8sOahSii5dNC7uLrL/vS4ntS/sA0OQ=
-github.com/GolZrd/micro-chat/chat-server v0.0.0-20260216143411-2445378cf878/go.mod h1:lqiBpm77DqaKfKZ7ngj8Jmm7w6eSWp4GUazuCF57c8s=
+github.com/GolZrd/micro-chat/chat-server v0.0.0-20260223172544-aabb3000e88a h1:SC0/jp9v+QA1vd32P2YkgnKtfZVomopPP4eCzQ8vXSQ=
+github.com/GolZrd/micro-chat/chat-server v0.0.0-20260223172544-aabb3000e88a/go.mod h1:01Iz1Bm/oRNzj/yCoWjK9Io4u/PA+e7XuQi+GvIQu+E=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
 github.com/bytedance/sonic v1.14.0 h1:/OfKt8HFw0kh2rj8N0F6C/qPGRESq0BbaNZgcNXXzQQ=

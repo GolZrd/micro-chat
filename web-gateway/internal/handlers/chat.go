@@ -256,6 +256,68 @@ func GetOrCreateDirectChat(client *clients.ChatClient) gin.HandlerFunc {
 	}
 }
 
+func Heartbeat(client *clients.ChatClient) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx := utils.ContextWithToken(c)
+
+		_, err := client.Client.Heartbeat(ctx, &chat_v1.HeartbeatRequest{})
+		if err != nil {
+			logger.Error("failed to heartbeat", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	}
+}
+
+func FriendsPresence(client *clients.ChatClient) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req struct {
+			UserIds []int64 `json:"user_ids"`
+		}
+
+		if err := c.BindJSON(&req); err != nil {
+			logger.Debug("invalid friends presence request", zap.Error(err))
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		if len(req.UserIds) == 0 {
+			c.JSON(http.StatusOK, gin.H{"presences": []interface{}{}})
+			return
+		}
+
+		ctx := utils.ContextWithToken(c)
+
+		resp, err := client.Client.FriendsPresence(ctx, &chat_v1.FriendsPresenceRequest{
+			UserIds: req.UserIds,
+		})
+		if err != nil {
+			logger.Error("failed to get friends presence", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		presences := make([]gin.H, 0, len(resp.Friends))
+		for _, f := range resp.Friends {
+			presence := gin.H{
+				"user_id":   f.UserId,
+				"is_online": f.IsOnline,
+			}
+
+			// Поле last seen добавляем только если друг не онлайн
+			if !f.IsOnline && f.LastSeenAt != nil {
+				presence["last_seen_at"] = f.LastSeenAt.AsTime()
+			}
+
+			presences = append(presences, presence)
+		}
+
+		c.JSON(http.StatusOK, gin.H{"presences": presences})
+	}
+}
+
 func handleChatError(c *gin.Context, err error) {
 	st, ok := status.FromError(err)
 	if !ok {

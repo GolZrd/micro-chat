@@ -333,6 +333,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     updateAuthStatus();
                     loadChatCount();           // Загружаем количество чатов
                     startChatCountUpdater();   // Запускаем автообновление
+                    await loadFriendsWithPresence();
+                    startPresence();
                     loginForm.reset();
                 } else {
                     resultEl.innerHTML = `❌ Ошибка: ${result.error}`;
@@ -981,15 +983,20 @@ function createFriendItem(friend) {
     item.querySelector('.friend-name').textContent = friend.username;
 
     const indicator = item.querySelector('.online-indicator');
-    const status = item.querySelector('.friend-status');
+    const statusEl = item.querySelector('.friend-status');
 
     if (friend.is_online) {
         indicator.classList.remove('offline');
         indicator.classList.add('online');
-        status.textContent = 'В сети';
-        status.classList.add('online');
+        statusEl.textContent = 'В сети';
+        statusEl.classList.add('online');
+        statusEl.classList.remove('offline');
     } else {
-        status.textContent = 'Не в сети';
+        indicator.classList.remove('online');
+        indicator.classList.add('offline');
+        statusEl.textContent = formatLastSeen(friend.last_seen_at);
+        statusEl.classList.remove('online');
+        statusEl.classList.add('offline');
     }
 
     // Клик по элементу — открыть чат
@@ -1310,10 +1317,185 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Загружаем данные если авторизован
     if (typeof TokenManager !== 'undefined' && TokenManager.isAuthenticated()) {
-        loadFriends();
         loadFriendRequests();
+        loadFriendsWithPresence()
+        startPresence();
     }
 });
+
+// Загружаем друзей и СРАЗУ обновляем их статусы
+async function loadFriendsWithPresence() {
+    await loadFriends();
+    await updateFriendsPresence();
+}
+
+// ==================== PRESENCE SYSTEM ====================
+
+let heartbeatInterval = null;
+let presenceInterval = null;
+
+// ========== Запуск/Остановка ==========
+
+function startPresence() {
+    console.log('🟢 Starting presence system');
+
+    // Сразу отправляем heartbeat
+    sendHeartbeat();
+
+    // Heartbeat каждые 30 секунд
+    heartbeatInterval = setInterval(sendHeartbeat, 30000);
+
+    // Обновляем статусы друзей каждые 15 секунд
+    presenceInterval = setInterval(updateFriendsPresence, 15000);
+
+    // При закрытии вкладки/браузера
+    window.addEventListener('beforeunload', stopPresence);
+
+    // Оптимизация: реже heartbeat когда вкладка скрыта
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+}
+
+function stopPresence() {
+    console.log('🔴 Stopping presence system');
+
+    if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+        heartbeatInterval = null;
+    }
+    if (presenceInterval) {
+        clearInterval(presenceInterval);
+        presenceInterval = null;
+    }
+}
+
+function handleVisibilityChange() {
+    if (document.hidden) {
+        // Вкладка скрыта — heartbeat реже (60 сек)
+        clearInterval(heartbeatInterval);
+        heartbeatInterval = setInterval(sendHeartbeat, 60000);
+
+        // Статусы друзей реже (30 сек)
+        clearInterval(presenceInterval);
+        presenceInterval = setInterval(updateFriendsPresence, 30000);
+    } else {
+        // Вкладка активна — возвращаем нормальную частоту
+        clearInterval(heartbeatInterval);
+        sendHeartbeat(); // Сразу отправить
+        heartbeatInterval = setInterval(sendHeartbeat, 30000);
+
+        clearInterval(presenceInterval);
+        updateFriendsPresence(); // Сразу обновить
+        presenceInterval = setInterval(updateFriendsPresence, 15000);
+    }
+}
+
+// ========== API Вызовы ==========
+
+async function sendHeartbeat() {
+    try {
+        await apiRequest('/api/presence/heartbeat', {
+            method: 'POST',
+            body: JSON.stringify({})
+        });
+    } catch (error) {
+        // Тихо проглатываем — heartbeat не критичен
+        console.debug('Heartbeat failed:', error);
+    }
+}
+
+async function updateFriendsPresence() {
+    // Не обновляем если нет друзей
+    if (!friendsList || friendsList.length === 0) return;
+
+    // Собираем user_id друзей
+    const userIds = friendsList
+        .map(f => f.user_id)
+        .filter(id => id && id > 0);
+
+    if (userIds.length === 0) return;
+
+    try {
+        const response = await apiRequest('/api/presence/friends', {
+            method: 'POST',
+            body: JSON.stringify({ user_ids: userIds })
+        });
+
+        if (!response.ok) return;
+
+        const data = await response.json();
+        const presences = data.presences || [];
+
+        console.log('📡 Presence response:', presences);
+
+        // Создаём карту user_id → presence
+        const presenceMap = {};
+        presences.forEach(p => {
+            presenceMap[p.user_id] = p;
+        });
+
+        // Обновляем данные друзей
+        let changed = false;
+        friendsList.forEach(friend => {
+            const p = presenceMap[friend.user_id];
+            const wasOnline = friend.is_online;
+
+            if (p) {
+                friend.is_online = p.is_online;
+                friend.last_seen_at = p.last_seen_at || null;
+            } else {
+                friend.is_online = false;
+            }
+
+            if (wasOnline !== friend.is_online) {
+                changed = true;
+            }
+        });
+
+        console.log('👥 Updated friends:', friendsList.map(f => 
+            `${f.username}: ${f.is_online ? 'online' : 'offline'}`
+        ));
+
+        // Перерисовываем только если что-то изменилось
+        if (changed) {
+            console.log('👥 Friends presence updated');
+            renderFriends();
+        }
+
+    } catch (error) {
+        console.debug('Failed to update presence:', error);
+    }
+}
+
+// ========== Форматирование "последний раз в сети" ==========
+
+function formatLastSeen(lastSeenAt) {
+    if (!lastSeenAt) return 'Не в сети';
+
+    const date = new Date(lastSeenAt);
+    if (isNaN(date.getTime())) return 'Не в сети';
+
+    const now = new Date();
+    const diffMs = now - date;
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffSec < 30) return 'Только что';
+    if (diffMin < 1) return 'Меньше минуты назад';
+    if (diffMin === 1) return 'Минуту назад';
+    if (diffMin < 5) return `${diffMin} минуты назад`;
+    if (diffMin < 60) return `${diffMin} мин назад`;
+    if (diffHours === 1) return 'Час назад';
+    if (diffHours < 24) return `${diffHours} ч назад`;
+    if (diffDays === 1) return 'Вчера';
+    if (diffDays < 7) return `${diffDays} дн назад`;
+
+    return date.toLocaleDateString('ru-RU', {
+        day: 'numeric',
+        month: 'short'
+    });
+}
 
 // ==================== MESSAGE INPUT HANDLER ====================
 function initMessageInput() {

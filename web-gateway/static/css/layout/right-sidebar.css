@@ -197,12 +197,12 @@ body.authenticated .right-sidebar.protected-sidebar {
     margin: 2px 0.5rem;
     border-radius: 6px;
     cursor: pointer;
-    transition: background 0.15s;
+    transition: background-color 0.2s ease;
     position: relative;
 }
 
 .right-sidebar .friend-item:hover {
-    background: rgba(255, 255, 255, 0.06);
+    background-color: rgba(0, 0, 0, 0.05);
 }
 
 /* Аватар */
@@ -226,21 +226,34 @@ body.authenticated .right-sidebar.protected-sidebar {
 }
 
 .right-sidebar .online-indicator {
-    position: absolute;
-    bottom: -2px;
-    right: -2px;
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    border: 2px solid rgba(26, 26, 36, 0.95);
+    border: 2px solid #fff;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    transition: background-color 0.3s ease;
 }
 
 .right-sidebar .online-indicator.online {
-    background: #3ba55c;
+    background-color: #28a745;
+    box-shadow: 0 0 6px rgba(40, 167, 69, 0.5);
 }
 
 .right-sidebar .online-indicator.offline {
-    background: #747f8d;
+    background-color: #6c757d;
+}
+
+/* Анимация появления онлайн */
+@keyframes pulseOnline {
+    0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); }
+    70% { box-shadow: 0 0 0 6px rgba(40, 167, 69, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+}
+
+.right-sidebar .online-indicator.online {
+    animation: pulseOnline 2s infinite;
 }
 
 /* Информация */
@@ -259,13 +272,19 @@ body.authenticated .right-sidebar.protected-sidebar {
     word-break: break-word;
 }
 
+/* Статус текст */
 .right-sidebar .friend-status {
-    font-size: 0.7rem;
-    color: var(--text-muted);
+    font-size: 0.75rem;
+    transition: color 0.3s ease;
 }
 
 .right-sidebar .friend-status.online {
-    color: #3ba55c;
+    color: #28a745;
+    font-weight: 500;
+}
+
+.right-sidebar .friend-status.offline {
+    color: #999;
 }
 
 /* Кнопка 3 точки */
