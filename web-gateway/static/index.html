@@ -16,21 +16,7 @@
                 <i class="fas fa-rocket"></i>
                 <span>Micro Chat</span>
             </div>
-            
-            <!-- Профиль пользователя -->
-            <div class="user-profile-section">
-                <div class="user-avatar">
-                    <i class="fas fa-user-circle"></i>
-                </div>
-                <div class="user-info">
-                    <div class="user-name" id="userName">Гость</div>
-                    <div class="user-status">
-                        <span class="status-indicator offline" id="statusIndicator"></span>
-                        <span id="statusText">Не в сети</span>
-                    </div>
-                </div>
-            </div>
-            
+
             <!-- Навигация -->
             <nav class="sidebar-nav">
                 <a href="#" class="nav-item active" onclick="showSection('home'); return false;">
@@ -42,19 +28,27 @@
                     <span>Мои чаты</span>
                     <span class="badge" id="chatCount">0</span>
                 </a>
-                <a href="#" class="nav-item protected-nav" onclick="showSection('profile'); return false;" style="display:none;">
-                    <i class="fas fa-user"></i>
-                    <span>Профиль</span>
-                </a>
             </nav>
-            
+
             <!-- Нижняя часть sidebar -->
             <div class="sidebar-footer">
-                <button onclick="logout()" id="logoutBtn" class="logout-btn" style="display:none;">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Выйти</span>
-                </button>
-                
+                <div class="sidebar-footer-user" id="sidebarFooterUser" style="display:none;">
+                    <!-- Профиль (клик → открыть профиль) -->
+                    <div class="footer-profile" onclick="showSection('profile')">
+                        <div class="footer-avatar">
+                            <span class="footer-avatar-initials" id="footerAvatarInitials">ГО</span>
+                            <span class="footer-online-indicator offline" id="footerOnlineIndicator"></span>
+                        </div>
+                        <div class="footer-user-info">
+                            <span class="footer-username" id="footerUsername">Гость</span>
+                            <span class="footer-status" id="footerStatus">Не в сети</span>
+                        </div>
+                    </div>
+                    <!-- Кнопка выхода -->
+                    <button onclick="logout()" class="footer-logout-btn" title="Выйти">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
                 <div class="app-version">
                     <small>v1.0.0</small>
                 </div>
@@ -391,75 +385,6 @@
             } else {
                 document.querySelector('.tab-btn:last-child').classList.add('active');
                 document.getElementById('registerTab').classList.add('active');
-            }
-        }
-        
-        // Обновление статуса в sidebar
-        function updateAuthStatus() {
-            const isAuth = TokenManager.isAuthenticated();
-            const appContainer = document.getElementById('appContainer');
-            const statusIndicator = document.getElementById('statusIndicator');
-            const statusText = document.getElementById('statusText');
-            const userNameEl = document.getElementById('userName');
-            const logoutBtn = document.getElementById('logoutBtn');
-            const protectedContent = document.querySelectorAll('.protected-content');
-            const protectedNav = document.querySelectorAll('.protected-nav');
-            const protectedSidebar = document.querySelectorAll('.protected-sidebar');
-            const guestOnly = document.querySelectorAll('.guest-only');
-            
-            if (isAuth) {
-                const username = TokenManager.getUsername();
-
-                // Добавляем класс к body
-                document.body.classList.add('authenticated');
-
-                // Показываем sidebar (убираем guest-mode)
-                appContainer.classList.remove('guest-mode');
-                
-                // Обновляем статус
-                statusIndicator.className = 'status-indicator online';
-                statusText.textContent = 'В сети';
-                userNameEl.textContent = username || 'Пользователь';
-                logoutBtn.style.display = 'flex';
-                
-                // Показываем защищенный контент
-                protectedContent.forEach(el => el.style.display = '');
-                protectedNav.forEach(el => el.style.display = 'flex');
-                protectedSidebar.forEach(el => el.style.display = 'flex'); // Показываем sidebar
-                guestOnly.forEach(el => el.style.display = 'none');
-                
-                // Обновляем заголовок
-                document.getElementById('welcomeTitle').textContent = `Добро пожаловать, ${username}!`;
-                document.getElementById('welcomeSubtitle').textContent = 'Рады видеть вас снова';
-
-                // Загружаем друзей
-                loadFriends();
-                loadFriendRequests();
-            } else {
-                // Убираем класс с body
-                document.body.classList.remove('authenticated');
-
-                // Скрываем sidebar (добавляем guest-mode)
-                appContainer.classList.add('guest-mode');
-                
-                // Обновляем статус
-                statusIndicator.className = 'status-indicator offline';
-                statusText.textContent = 'Не в сети';
-                userNameEl.textContent = 'Гость';
-                logoutBtn.style.display = 'none';
-                
-                // Скрываем защищенный контент
-                protectedContent.forEach(el => el.style.display = 'none');
-                protectedNav.forEach(el => el.style.display = 'none');
-                protectedSidebar.forEach(el => el.style.display = 'none'); // Скрываем sidebar
-                guestOnly.forEach(el => el.style.display = '');
-                
-                // Обновляем заголовок
-                document.getElementById('welcomeTitle').textContent = 'Добро пожаловать в Micro Chat';
-                document.getElementById('welcomeSubtitle').textContent = 'Современный мессенджер для вашего общения';
-                
-                // Показываем форму входа
-                switchAuthTab('login');
             }
         }
         

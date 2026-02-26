@@ -58,7 +58,52 @@
     border: 1px solid rgba(237, 66, 69, 0.2);
 }
 
-/* ==================== УЛУЧШЕННЫЙ СПИСОК ЧАТОВ ==================== */
+/* ==================== CHATS SECTION ==================== */
+
+.chats-container {
+    padding: 0.5rem 0;
+}
+
+/* Секции: Личные / Групповые */
+.chats-section {
+    margin-bottom: 1.5rem;
+}
+
+.chats-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    margin-bottom: 0.75rem;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.chats-section-title i {
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.chats-section-count {
+    margin-left: auto;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    padding: 0.1rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.7rem;
+}
+
+/* Сетка чатов */
+.chats-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* ==================== КАРТОЧКА ЧАТА (общее) ==================== */
 
 .chats-list {
     display: grid;
@@ -66,33 +111,24 @@
     margin-top: 1.5rem;
 }
 
-/* ИСПРАВЛЕНО: Плавная анимация hover */
 .chat-card {
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 1.5rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
     position: relative;
-    overflow: hidden;
+    border: 1px solid transparent;
+    background: transparent;
+    cursor: pointer;
 }
 
-/* Улучшенный эффект подсветки */
+/* Убираем старые стили */
 .chat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, 
-        rgba(88, 101, 242, 0.05) 0%, 
-        rgba(88, 101, 242, 0.1) 50%,
-        rgba(88, 101, 242, 0.05) 100%);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-    z-index: 0;
+    display: none;
 }
 
 .chat-card:hover::before {
@@ -100,12 +136,171 @@
 }
 
 .chat-card:hover {
-    background: var(--bg-hover);
-    transform: translateY(-4px);
-    border-color: rgba(88, 101, 242, 0.4);
-    box-shadow: 
-        0 8px 20px rgba(88, 101, 242, 0.15),
-        0 4px 8px rgba(0, 0, 0, 0.1);
+    background: var(--bg-tertiary);
+    border-color: var(--border);
+}
+
+/* Кнопка удаления — скрыта, показывается при hover */
+.chat-card__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.chat-card__delete {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    opacity: 0;
+    transition: all 0.2s ease;
+}
+
+.chat-card:hover .chat-card__delete {
+    opacity: 1;
+}
+
+.chat-card__delete:hover {
+    background: rgba(220, 53, 69, 0.15);
+    color: #dc3545;
+}
+
+.chat-card__arrow {
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+    opacity: 0;
+    transition: all 0.2s ease;
+}
+
+.chat-card:hover .chat-card__arrow {
+    opacity: 0.5;
+}
+
+/* ==================== ЛИЧНЫЙ ЧАТ ==================== */
+
+.chat-card__avatar {
+    position: relative;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.chat-card__initials {
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.chat-card__online-dot {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #6c757d;
+    border: 2px solid var(--bg-primary, #1a1a2e);
+}
+
+.chat-card__online-dot.online {
+    background: #28a745;
+    box-shadow: 0 0 6px rgba(40, 167, 69, 0.5);
+}
+
+/* ==================== ГРУППОВОЙ ЧАТ ==================== */
+
+.chat-card__avatars-stack {
+    display: flex;
+    flex-shrink: 0;
+    margin-right: 2px;
+}
+
+.chat-card__stacked-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #28a745, #20c997);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.6rem;
+    font-weight: 700;
+    border: 2px solid var(--bg-primary, #1a1a2e);
+    margin-left: -10px;
+    position: relative;
+}
+
+.chat-card__stacked-avatar:first-child {
+    margin-left: 0;
+}
+
+/* Разные цвета для аватаров */
+.chat-card__stacked-avatar:nth-child(1) {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.chat-card__stacked-avatar:nth-child(2) {
+    background: linear-gradient(135deg, #f093fb, #f5576c);
+}
+
+.chat-card__stacked-avatar:nth-child(3) {
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+}
+
+.chat-card__stacked-extra {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-secondary);
+    font-size: 0.65rem;
+    border-color: var(--border);
+}
+
+/* ==================== ТЕЛО КАРТОЧКИ ==================== */
+
+.chat-card__body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.chat-card__name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chat-card__members {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.chat-card__members i {
+    font-size: 0.65rem;
+    opacity: 0.7;
+}
+
+.chat-card__meta {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    opacity: 0.7;
 }
 
 /* Все элементы внутри карточки выше overlay */
@@ -158,58 +353,52 @@
     display: block;
 }
 
-/* Анимация появления карточек */
+/* ==================== АНИМАЦИЯ ПОЯВЛЕНИЯ ==================== */
+
 .chat-card {
-    animation: slideUpChat 0.4s ease backwards;
+    animation: chatSlideIn 0.3s ease backwards;
 }
 
-.chat-card:nth-child(1) { animation-delay: 0.05s; }
-.chat-card:nth-child(2) { animation-delay: 0.1s; }
-.chat-card:nth-child(3) { animation-delay: 0.15s; }
-.chat-card:nth-child(4) { animation-delay: 0.2s; }
-.chat-card:nth-child(5) { animation-delay: 0.25s; }
+.chat-card:nth-child(1) { animation-delay: 0.03s; }
+.chat-card:nth-child(2) { animation-delay: 0.06s; }
+.chat-card:nth-child(3) { animation-delay: 0.09s; }
+.chat-card:nth-child(4) { animation-delay: 0.12s; }
+.chat-card:nth-child(5) { animation-delay: 0.15s; }
+.chat-card:nth-child(6) { animation-delay: 0.18s; }
 
-@keyframes slideUpChat {
+@keyframes chatSlideIn {
     from {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateX(-10px);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateX(0);
     }
 }
 
-/* Состояние загрузки */
-.no-chats,
-.loading-chats {
+/* ==================== ПУСТОЕ СОСТОЯНИЕ ==================== */
+
+.no-chats {
     text-align: center;
-    color: var(--text-muted);
+    color: var(--text-secondary);
     padding: 3rem 2rem;
     background: var(--bg-tertiary);
     border: 1px dashed var(--border);
-    border-radius: var(--radius);
-    animation: fadeIn 0.5s ease;
+    border-radius: 12px;
 }
 
 .no-chats::before {
     content: '📭';
     display: block;
-    font-size: 3rem;
-    margin-bottom: 1rem;
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
 }
 
-.loading-chats::after {
-    content: '';
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    margin-left: 1rem;
-    border: 2px solid var(--accent);
-    border-radius: 50%;
-    border-top-color: transparent;
-    animation: spin 1s linear infinite;
-    vertical-align: middle;
+.loading-chats {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 2rem;
 }
 
 /* Header чата */

@@ -209,48 +209,89 @@ async function checkTokenOnLoad() {
 function updateAuthStatus() {
     const isAuth = TokenManager.isAuthenticated();
     const statusEl = document.getElementById('status');
-    const logoutBtn = document.getElementById('logoutBtn');
+    const appContainer = document.getElementById('appContainer');
     const protectedContent = document.querySelectorAll('.protected-content');
     const protectedNav = document.querySelectorAll('.protected-nav');
     const guestOnly = document.querySelectorAll('.guest-only');
     const guestNav = document.querySelectorAll('.guest-nav');
-    
+
+    // Footer sidebar элементы
+    const footerUser = document.getElementById('sidebarFooterUser');
+    const footerUsername = document.getElementById('footerUsername');
+    const footerInitials = document.getElementById('footerAvatarInitials');
+    const footerIndicator = document.getElementById('footerOnlineIndicator');
+    const footerStatus = document.getElementById('footerStatus');
+
     if (isAuth) {
         const username = TokenManager.getUsername();
         const userId = TokenManager.getUserId();
-        
+
+        // Классы для layout
+        document.body.classList.add('authenticated');
+        if (appContainer) appContainer.classList.remove('guest-mode');
+
+        // Статус авторизации
         if (statusEl) {
             statusEl.innerHTML = `✅ Вы авторизованы как <strong>${username}</strong> <small>(ID: ${userId})</small>`;
             statusEl.style.color = 'green';
         }
-        
-        if (logoutBtn) logoutBtn.style.display = 'inline-block';
-        
-        protectedContent.forEach(el => el.style.display = 'block');
-        protectedNav.forEach(el => el.style.display = 'flex');
+
+        // Показываем/скрываем элементы
+        protectedContent.forEach(el => el.style.removeProperty('display'));
+        protectedNav.forEach(el => el.style.removeProperty('display'));
         guestOnly.forEach(el => el.style.display = 'none');
         guestNav.forEach(el => el.style.display = 'none');
 
-        // ✅ ЗАГРУЖАЕМ КОЛИЧЕСТВО ЧАТОВ ПРИ АВТОРИЗАЦИИ
+        // Footer профиль
+        if (footerUser) footerUser.style.display = 'flex';
+        if (footerUsername) footerUsername.textContent = username;
+        if (footerInitials) footerInitials.textContent = username.substring(0, 2).toUpperCase();
+        if (footerIndicator) {
+            footerIndicator.classList.remove('offline');
+            footerIndicator.classList.add('online');
+        }
+        if (footerStatus) {
+            footerStatus.textContent = 'В сети';
+            footerStatus.classList.add('online');
+        }
+
+        // Загружаем данные
         loadChatCount();
-        // Загружаем друзей
-        loadFriends();
+        loadFriendsWithPresence();
         loadFriendRequests();
+        startPresence();
+
     } else {
+        // Классы для layout
+        document.body.classList.remove('authenticated');
+        if (appContainer) appContainer.classList.add('guest-mode');
+
+        // Статус
         if (statusEl) {
             statusEl.textContent = '❌ Не авторизован';
             statusEl.style.color = 'red';
         }
-        
-        if (logoutBtn) logoutBtn.style.display = 'none';
-        
+
+        // Скрываем элементы
         protectedContent.forEach(el => el.style.display = 'none');
         protectedNav.forEach(el => el.style.display = 'none');
-        guestOnly.forEach(el => el.style.display = 'block');
-        guestNav.forEach(el => el.style.display = 'flex');
+        guestOnly.forEach(el => el.style.removeProperty('display'));
+        guestNav.forEach(el => el.style.removeProperty('display'));
 
-        // ✅ СБРАСЫВАЕМ СЧЕТЧИК ПРИ ВЫХОДЕ
+        // Footer профиль
+        if (footerUser) footerUser.style.display = 'none';
+        if (footerIndicator) {
+            footerIndicator.classList.remove('online');
+            footerIndicator.classList.add('offline');
+        }
+        if (footerStatus) {
+            footerStatus.textContent = 'Не в сети';
+            footerStatus.classList.remove('online');
+        }
+
+        // Сбрасываем
         updateChatCount(0);
+        stopPresence();
     }
 }
 
@@ -569,96 +610,170 @@ async function deleteChat(chatId) {
 
 async function loadMyChats() {
     const chatsDiv = document.getElementById('myChats');
-    
-    // Показываем загрузку только если элемент существует
+
     if (chatsDiv) {
-        chatsDiv.innerHTML = '<p style="color: #666;">⏳ Загрузка...</p>';
+        chatsDiv.innerHTML = '<div class="loading-chats">Загрузка чатов...</div>';
     }
-    
+
     try {
         const response = await apiRequest('/api/chat/my');
         const data = await response.json();
-        
-        console.log('📦 Server response:', data);
-        
+
         if (!response.ok) {
             if (chatsDiv) {
-                chatsDiv.innerHTML = `<p style="color: #dc3545;">❌ ${data.error || 'Ошибка загрузки'}</p>`;
+                chatsDiv.innerHTML = `<div class="no-chats"><p>${data.error || 'Ошибка загрузки'}</p></div>`;
             }
-            // Обновляем счетчик на 0 при ошибке
             updateChatCount(0);
             return;
         }
-        
+
         let chats = data.chats || [];
         chats = chats.filter(chat => chat && chat.id);
-        
-        console.log('✅ Filtered chats:', chats);
-        
-        // ✅ ОБНОВЛЯЕМ СЧЕТЧИК ЧАТОВ
+
         updateChatCount(chats.length);
-        
-        // Если элемент для отображения чатов не существует, выходим
+
         if (!chatsDiv) return;
-        
+
         if (chats.length === 0) {
-            chatsDiv.innerHTML = '<p style="color: #666;">📭 У вас пока нет чатов. Создайте первый!</p>';
+            chatsDiv.innerHTML = '<div class="no-chats"><p>У вас пока нет чатов. Создайте первый!</p></div>';
             return;
         }
-        
-        let html = '<div class="chats-list">';
-        chats.forEach(chat => {
-            const chatId = chat.id;
-            const users = chat.usernames || [];
-            const isDirect = chat.is_direct || false;
 
-            // Для личных чатов показываем имя собеседника
-            const chatName = getChatDisplayName(chat);
-            const chatIcon = isDirect ? '👤' : '👥';
-            const chatType = isDirect ? 'Личный чат' : 'Групповой чат';
+        // Разделяем на личные и групповые
+        const directChats = chats.filter(c => c.is_direct);
+        const groupChats = chats.filter(c => !c.is_direct);
 
-            const createdDate = formatChatDate(chat.created_at);
-            const usersList = users.join(', ');
+        let html = '';
 
+        // Личные чаты
+        if (directChats.length > 0) {
             html += `
-                <div class="chat-card ${isDirect ? 'chat-direct' : 'chat-group'}">
-                    <div class="chat-card-header">
-                        <h3>${chatIcon} ${escapeHtml(chatName)}</h3>
-                        <div class="chat-card-actions">
-                            <span class="chat-type-badge">${chatType}</span>
-                            <button 
-                                onclick="event.stopPropagation(); deleteChat(${chatId})" 
-                                class="btn-delete"
-                                title="Удалить чат">
-                                🗑️
-                            </button>
-                        </div>
+                <div class="chats-section">
+                    <div class="chats-section-title">
+                        <i class="fas fa-user"></i>
+                        <span>Личные сообщения</span>
+                        <span class="chats-section-count">${directChats.length}</span>
                     </div>
-                    <p><strong>👥 Участники:</strong> <span>${escapeHtml(usersList)}</span></p>
-                    <p><strong>📅 Создан:</strong> <span>${createdDate}</span></p>
-                    <a href="/chat?id=${chatId}" class="btn-open-chat" onclick="event.stopPropagation();">
-                        Открыть чат →
-                    </a>
-                </div>
+                    <div class="chats-grid">
             `;
-        });
-        html += '</div>';
+
+            directChats.forEach(chat => {
+                html += renderDirectChatCard(chat);
+            });
+
+            html += '</div></div>';
+        }
+
+        // Групповые чаты
+        if (groupChats.length > 0) {
+            html += `
+                <div class="chats-section">
+                    <div class="chats-section-title">
+                        <i class="fas fa-users"></i>
+                        <span>Групповые чаты</span>
+                        <span class="chats-section-count">${groupChats.length}</span>
+                    </div>
+                    <div class="chats-grid">
+            `;
+
+            groupChats.forEach(chat => {
+                html += renderGroupChatCard(chat);
+            });
+
+            html += '</div></div>';
+        }
 
         chatsDiv.innerHTML = html;
 
     } catch (error) {
         console.error('❌ Error:', error);
         if (chatsDiv) {
-            chatsDiv.innerHTML = `<p style="color: #dc3545;">❌ Ошибка: ${error.message}</p>`;
+            chatsDiv.innerHTML = `<div class="no-chats"><p>Ошибка: ${error.message}</p></div>`;
         }
         updateChatCount(0);
     }
 }
 
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+function renderDirectChatCard(chat) {
+    const chatId = chat.id;
+    const otherUser = getChatDisplayName(chat);
+    const initials = otherUser.substring(0, 2).toUpperCase();
+    const createdDate = formatChatDate(chat.created_at);
+
+    return `
+        <a href="/chat?id=${chatId}" class="chat-card chat-card--direct">
+            <div class="chat-card__avatar">
+                <span class="chat-card__initials">${escapeHtml(initials)}</span>
+                <span class="chat-card__online-dot"></span>
+            </div>
+            <div class="chat-card__body">
+                <div class="chat-card__name">${escapeHtml(otherUser)}</div>
+                <div class="chat-card__meta">Личный чат · ${createdDate}</div>
+            </div>
+            <div class="chat-card__actions">
+                <button 
+                    onclick="event.preventDefault(); event.stopPropagation(); deleteChat(${chatId})" 
+                    class="chat-card__delete"
+                    title="Удалить чат">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+                <i class="fas fa-chevron-right chat-card__arrow"></i>
+            </div>
+        </a>
+    `;
+}
+
+function renderGroupChatCard(chat) {
+    const chatId = chat.id;
+    const users = chat.usernames || [];
+    const chatName = chat.name || `Чат #${chatId}`;
+    const createdDate = formatChatDate(chat.created_at);
+    const memberCount = users.length;
+
+    // Показываем первые 3 аватара
+    const avatarUsers = users.slice(0, 3);
+    const extraCount = users.length - 3;
+
+    let avatarsHtml = '<div class="chat-card__avatars-stack">';
+    avatarUsers.forEach((user, i) => {
+        const userInitials = user.substring(0, 2).toUpperCase();
+        avatarsHtml += `
+            <div class="chat-card__stacked-avatar" style="z-index: ${3 - i}">
+                ${escapeHtml(userInitials)}
+            </div>
+        `;
+    });
+    if (extraCount > 0) {
+        avatarsHtml += `
+            <div class="chat-card__stacked-avatar chat-card__stacked-extra" style="z-index: 0">
+                +${extraCount}
+            </div>
+        `;
+    }
+    avatarsHtml += '</div>';
+
+    return `
+        <a href="/chat?id=${chatId}" class="chat-card chat-card--group">
+            ${avatarsHtml}
+            <div class="chat-card__body">
+                <div class="chat-card__name">${escapeHtml(chatName)}</div>
+                <div class="chat-card__members">
+                    <i class="fas fa-users"></i>
+                    <span>${memberCount} участников</span>
+                </div>
+                <div class="chat-card__meta">${createdDate}</div>
+            </div>
+            <div class="chat-card__actions">
+                <button 
+                    onclick="event.preventDefault(); event.stopPropagation(); deleteChat(${chatId})" 
+                    class="chat-card__delete"
+                    title="Удалить чат">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+                <i class="fas fa-chevron-right chat-card__arrow"></i>
+            </div>
+        </a>
+    `;
 }
 
 // Получить отображаемое имя чата
@@ -667,12 +782,17 @@ function getChatDisplayName(chat) {
         return chat.name || `Чат #${chat.id}`;
     }
 
-    // Для личного чата показываем имя собеседника
-    const currentUsername = TokenManager.getUsername(); // или откуда ты берёшь имя текущего пользователя
+    const currentUsername = TokenManager.getUsername();
     const users = chat.usernames || [];
     const otherUser = users.find(u => u !== currentUsername);
 
     return otherUser || chat.name || `Чат #${chat.id}`;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // Универсальный парсер даты (поддерживает оба формата)
