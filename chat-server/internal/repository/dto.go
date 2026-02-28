@@ -6,6 +6,7 @@ import "time"
 type CreateChatDTO struct {
 	Name      string
 	IsGroup   bool // true = групповой, false = личный
+	IsPublic  bool
 	CreatorId int64
 	Members   []MemberDTO
 }
@@ -35,10 +36,20 @@ type MemberDTO struct {
 
 // ChatInfoDTO - DTO для получения информации о чате
 type ChatInfoDTO struct {
-	ID        int64
+	Id        int64
 	Name      string
 	IsDirect  bool
+	IsPublic  bool
+	CreatorId int64
 	Members   []MemberDTO
 	CreatedAt time.Time
 	UpdatedAt time.Time
+}
+
+type PublicChatDTO struct {
+	Id          int64
+	Name        string
+	MemberCount int
+	CreatorName string
+	CreatedAt   time.Time
 }

@@ -17,11 +17,16 @@ service Chat {
     rpc GetOrCreateDirectChat(GetOrCreateDirectChatRequest) returns (GetOrCreateDirectChatResponse); // GetOrCreateDirectChat - ручка получения или создания прямого чата с пользователем, где только 2 участника
     rpc Heartbeat(HeartbeatRequest) returns (google.protobuf.Empty); // Heartbeat - ручка для проверки соединения, чтобы показывать актуальный статус пользователя (online/offline)
     rpc FriendsPresence(FriendsPresenceRequest) returns (FriendsPresenceResponse); // FriendsPresence - ручка для проверки активности друзей
+    rpc AddMember(AddMemberRequest) returns (google.protobuf.Empty); // AddMember - ручка добавления пользователя в чат
+    rpc RemoveMember(RemoveMemberRequest) returns (google.protobuf.Empty); // RemoveMember - ручка удаления пользователя из чата
+    rpc JoinChat(JoinChatRequest) returns (google.protobuf.Empty); // JoinChat - ручка присоединения к чату
+    rpc PublicChats(PublicChatsRequest) returns (PublicChatsResponse); // PublicChats - ручка получения списка публичных чатов
 }
 
 message CreateRequest {
     string name = 1;
     repeated string usernames = 2;
+    bool is_public = 3;
 }
 
 message CreateResponse {
@@ -73,7 +78,9 @@ message ChatInfo {
     string name = 2;
     repeated string usernames = 3;
     bool is_direct = 4;
-    google.protobuf.Timestamp created_at = 5;
+    bool is_public = 5;
+    int64 creator_id = 6;
+    google.protobuf.Timestamp created_at = 7;
 }
 
 message MyChatsResponse {
@@ -108,4 +115,38 @@ message FriendPresence {
 
 message FriendsPresenceResponse {
     repeated FriendPresence friends = 1;
+}
+
+// Добавление пользователя в чат
+message AddMemberRequest {
+    int64 chat_id = 1;
+    string username = 2;
+}
+
+// Удаление пользователя из чата
+message RemoveMemberRequest {
+    int64 chat_id = 1;
+    int64 user_id = 2;
+}
+
+// Присоединение к открытому чату
+message JoinChatRequest {
+    int64 chat_id = 1;
+}
+
+// Получение списка публичных чатов
+message PublicChatsRequest {
+    string search = 1;
+}
+
+message PublicChatInfo {
+    int64 id = 1;
+    string name = 2;
+    int32 members_count = 3;
+    string creator_name = 4;
+    google.protobuf.Timestamp created_at = 5;
+}
+
+message PublicChatsResponse {
+    repeated PublicChatInfo chats = 1;
 }

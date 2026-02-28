@@ -20,6 +20,10 @@ type ChatRepository interface {
 	UserChats(ctx context.Context, userId int64) ([]ChatInfoDTO, error)
 	FindDirectChat(ctx context.Context, userId1 int64, userId2 int64) (int64, error)
 	CreateDirectChat(ctx context.Context, userId1 int64, userId2 int64, username1 string, username2 string) (int64, error)
+	AddMember(ctx context.Context, chatId int64, userId int64, username string) error
+	RemoveMember(ctx context.Context, chatId int64, userId int64) error
+	ChatInfo(ctx context.Context, chatId int64) (*ChatInfoDTO, error)
+	PublicChats(ctx context.Context, search string) ([]PublicChatDTO, error)
 }
 
 type repo struct {
@@ -37,8 +41,8 @@ func (r *repo) Create(ctx context.Context, dto CreateChatDTO) (int64, error) {
 	// Здесь используем простой запрос
 	chatBuilder := squirrel.Insert("chats").
 		PlaceholderFormat(squirrel.Dollar).
-		Columns("name", "is_direct").
-		Values(dto.Name, !dto.IsGroup).
+		Columns("name", "is_direct", "is_public", "creator_id").
+		Values(dto.Name, !dto.IsGroup, dto.IsPublic, dto.CreatorId).
 		Suffix("RETURNING id")
 
 	chatQuery, args, err := chatBuilder.ToSql()
@@ -205,7 +209,7 @@ func (r *repo) UserChats(ctx context.Context, userId int64) ([]ChatInfoDTO, erro
 	var chats []ChatInfoDTO
 	for rows.Next() {
 		var chat ChatInfoDTO
-		err := rows.Scan(&chat.ID, &chat.Name, &chat.IsDirect, &chat.CreatedAt, &chat.UpdatedAt)
+		err := rows.Scan(&chat.Id, &chat.Name, &chat.IsDirect, &chat.CreatedAt, &chat.UpdatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("scan chat: %w", err)
 		}
@@ -214,7 +218,7 @@ func (r *repo) UserChats(ctx context.Context, userId int64) ([]ChatInfoDTO, erro
 	}
 
 	for i := range chats {
-		members, err := r.chatMembers(ctx, chats[i].ID)
+		members, err := r.chatMembers(ctx, chats[i].Id)
 		if err != nil {
 			return nil, fmt.Errorf("get chat members: %w", err)
 		}
@@ -326,4 +330,121 @@ func (r *repo) CreateDirectChat(ctx context.Context, userId1 int64, userId2 int6
 	}
 
 	return chatId, nil
+}
+
+func (r *repo) AddMember(ctx context.Context, chatId int64, userId int64, username string) error {
+	builder := squirrel.Insert("chat_members").
+		PlaceholderFormat(squirrel.Dollar).
+		Columns("chat_id", "user_id", "username", "role").
+		Values(chatId, userId, username, "member")
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return fmt.Errorf("build query: %w", err)
+	}
+
+	_, err = r.db.Exec(ctx, query, args...)
+	if err != nil {
+		return fmt.Errorf("add member to chat: %w", err)
+	}
+
+	return nil
+}
+
+func (r *repo) RemoveMember(ctx context.Context, chatId int64, userId int64) error {
+	builder := squirrel.Delete("chat_members").
+		PlaceholderFormat(squirrel.Dollar).
+		Where(squirrel.And{
+			squirrel.Eq{"chat_id": chatId},
+			squirrel.Eq{"user_id": userId},
+		})
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return fmt.Errorf("build query: %w", err)
+	}
+
+	res, err := r.db.Exec(ctx, query, args...)
+	if err != nil {
+		return fmt.Errorf("remove member from chat: %w", err)
+	}
+
+	if res.RowsAffected() == 0 {
+		return fmt.Errorf("member not found")
+	}
+
+	return nil
+}
+
+func (r *repo) ChatInfo(ctx context.Context, chatId int64) (*ChatInfoDTO, error) {
+	builder := squirrel.Select("id", "name", "is_direct", "created_at", "updated_at").
+		PlaceholderFormat(squirrel.Dollar).
+		From("chats").
+		Where(squirrel.Eq{"id": chatId}).
+		Limit(1)
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("build query: %w", err)
+	}
+
+	var chat ChatInfoDTO
+	err = r.db.QueryRow(ctx, query, args...).Scan(&chat.Id, &chat.Name, &chat.IsDirect, &chat.IsPublic, &chat.CreatorId, &chat.CreatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("get chat info: %w", err)
+	}
+
+	members, err := r.chatMembers(ctx, chatId)
+	if err != nil {
+		return nil, fmt.Errorf("get chat members: %w", err)
+	}
+
+	chat.Members = members
+
+	return &chat, nil
+}
+
+func (r *repo) PublicChats(ctx context.Context, search string) ([]PublicChatDTO, error) {
+	builder := squirrel.Select(
+		"c.id",
+		"c.name",
+		"COUNT(cm.user_id) as member_count",
+		"COALESCE(creator.username, '') as creator_name",
+		"c.created_at",
+	).
+		PlaceholderFormat(squirrel.Dollar).
+		From("chats c").
+		LeftJoin("chat_members cm ON c.id = cm.chat_id").
+		LeftJoin("chat_members creator ON c.id = creator.chat_id AND creator.role = 'owner'").
+		Where(squirrel.Eq{"c.is_public": true, "c.is_direct": false}).
+		GroupBy("c.id", "creator.username").
+		OrderBy("c.created_at DESC")
+
+	if search != "" {
+		builder = builder.Where(squirrel.ILike{"c.name": "%" + search + "%"})
+	}
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("build query: %w", err)
+	}
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("query public chats: %w", err)
+	}
+
+	defer rows.Close()
+
+	var chats []PublicChatDTO
+	for rows.Next() {
+		var chat PublicChatDTO
+		err := rows.Scan(&chat.Id, &chat.Name, &chat.MemberCount, &chat.CreatorName, &chat.CreatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("scan chat: %w", err)
+		}
+		chats = append(chats, chat)
+	}
+
+	return chats, nil
 }

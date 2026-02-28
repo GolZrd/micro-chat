@@ -17,6 +17,10 @@ type ChatService interface {
 	Delete(ctx context.Context, id int64) error
 	MyChats(ctx context.Context, userId int64) ([]ChatInfoDTO, error)
 	GetOrCreateDirectChat(ctx context.Context, currentUserId int64, currentUsername string, targetUserId int64, targetUsername string) (int64, bool, error)
+	AddMember(ctx context.Context, chatId int64, userId int64, username string) error
+	RemoveMember(ctx context.Context, chatId int64, userId int64, targetUserId int64) error
+	JoinChat(ctx context.Context, chatId int64, userId int64, username string) error
+	PublicChats(ctx context.Context, search string) ([]PublicChatDTO, error)
 
 	// Сообщения
 	SendMessage(ctx context.Context, msg SendMessageDTO) error

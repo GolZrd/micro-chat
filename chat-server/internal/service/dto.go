@@ -43,3 +43,11 @@ type FriendPresenceDTO struct {
 	IsOnline   bool
 	LastSeenAt time.Time
 }
+
+type PublicChatDTO struct {
+	Id          int64
+	Name        string
+	MemberCount int
+	CreatorName string
+	CreatedAt   time.Time
+}

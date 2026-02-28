@@ -28,6 +28,10 @@ const (
 	Chat_GetOrCreateDirectChat_FullMethodName = "/chat_v1.Chat/GetOrCreateDirectChat"
 	Chat_Heartbeat_FullMethodName             = "/chat_v1.Chat/Heartbeat"
 	Chat_FriendsPresence_FullMethodName       = "/chat_v1.Chat/FriendsPresence"
+	Chat_AddMember_FullMethodName             = "/chat_v1.Chat/AddMember"
+	Chat_RemoveMember_FullMethodName          = "/chat_v1.Chat/RemoveMember"
+	Chat_JoinChat_FullMethodName              = "/chat_v1.Chat/JoinChat"
+	Chat_PublicChats_FullMethodName           = "/chat_v1.Chat/PublicChats"
 )
 
 // ChatClient is the client API for Chat service.
@@ -42,6 +46,10 @@ type ChatClient interface {
 	GetOrCreateDirectChat(ctx context.Context, in *GetOrCreateDirectChatRequest, opts ...grpc.CallOption) (*GetOrCreateDirectChatResponse, error)
 	Heartbeat(ctx context.Context, in *HeartbeatRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	FriendsPresence(ctx context.Context, in *FriendsPresenceRequest, opts ...grpc.CallOption) (*FriendsPresenceResponse, error)
+	AddMember(ctx context.Context, in *AddMemberRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	RemoveMember(ctx context.Context, in *RemoveMemberRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	JoinChat(ctx context.Context, in *JoinChatRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	PublicChats(ctx context.Context, in *PublicChatsRequest, opts ...grpc.CallOption) (*PublicChatsResponse, error)
 }
 
 type chatClient struct {
@@ -141,6 +149,46 @@ func (c *chatClient) FriendsPresence(ctx context.Context, in *FriendsPresenceReq
 	return out, nil
 }
 
+func (c *chatClient) AddMember(ctx context.Context, in *AddMemberRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, Chat_AddMember_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *chatClient) RemoveMember(ctx context.Context, in *RemoveMemberRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, Chat_RemoveMember_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *chatClient) JoinChat(ctx context.Context, in *JoinChatRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, Chat_JoinChat_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *chatClient) PublicChats(ctx context.Context, in *PublicChatsRequest, opts ...grpc.CallOption) (*PublicChatsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PublicChatsResponse)
+	err := c.cc.Invoke(ctx, Chat_PublicChats_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ChatServer is the server API for Chat service.
 // All implementations must embed UnimplementedChatServer
 // for forward compatibility.
@@ -153,6 +201,10 @@ type ChatServer interface {
 	GetOrCreateDirectChat(context.Context, *GetOrCreateDirectChatRequest) (*GetOrCreateDirectChatResponse, error)
 	Heartbeat(context.Context, *HeartbeatRequest) (*emptypb.Empty, error)
 	FriendsPresence(context.Context, *FriendsPresenceRequest) (*FriendsPresenceResponse, error)
+	AddMember(context.Context, *AddMemberRequest) (*emptypb.Empty, error)
+	RemoveMember(context.Context, *RemoveMemberRequest) (*emptypb.Empty, error)
+	JoinChat(context.Context, *JoinChatRequest) (*emptypb.Empty, error)
+	PublicChats(context.Context, *PublicChatsRequest) (*PublicChatsResponse, error)
 	mustEmbedUnimplementedChatServer()
 }
 
@@ -186,6 +238,18 @@ func (UnimplementedChatServer) Heartbeat(context.Context, *HeartbeatRequest) (*e
 }
 func (UnimplementedChatServer) FriendsPresence(context.Context, *FriendsPresenceRequest) (*FriendsPresenceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FriendsPresence not implemented")
+}
+func (UnimplementedChatServer) AddMember(context.Context, *AddMemberRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddMember not implemented")
+}
+func (UnimplementedChatServer) RemoveMember(context.Context, *RemoveMemberRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveMember not implemented")
+}
+func (UnimplementedChatServer) JoinChat(context.Context, *JoinChatRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method JoinChat not implemented")
+}
+func (UnimplementedChatServer) PublicChats(context.Context, *PublicChatsRequest) (*PublicChatsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PublicChats not implemented")
 }
 func (UnimplementedChatServer) mustEmbedUnimplementedChatServer() {}
 func (UnimplementedChatServer) testEmbeddedByValue()              {}
@@ -345,6 +409,78 @@ func _Chat_FriendsPresence_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Chat_AddMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddMemberRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServer).AddMember(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Chat_AddMember_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServer).AddMember(ctx, req.(*AddMemberRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Chat_RemoveMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveMemberRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServer).RemoveMember(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Chat_RemoveMember_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServer).RemoveMember(ctx, req.(*RemoveMemberRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Chat_JoinChat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(JoinChatRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServer).JoinChat(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Chat_JoinChat_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServer).JoinChat(ctx, req.(*JoinChatRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Chat_PublicChats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PublicChatsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServer).PublicChats(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Chat_PublicChats_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServer).PublicChats(ctx, req.(*PublicChatsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Chat_ServiceDesc is the grpc.ServiceDesc for Chat service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -379,6 +515,22 @@ var Chat_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "FriendsPresence",
 			Handler:    _Chat_FriendsPresence_Handler,
+		},
+		{
+			MethodName: "AddMember",
+			Handler:    _Chat_AddMember_Handler,
+		},
+		{
+			MethodName: "RemoveMember",
+			Handler:    _Chat_RemoveMember_Handler,
+		},
+		{
+			MethodName: "JoinChat",
+			Handler:    _Chat_JoinChat_Handler,
+		},
+		{
+			MethodName: "PublicChats",
+			Handler:    _Chat_PublicChats_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
