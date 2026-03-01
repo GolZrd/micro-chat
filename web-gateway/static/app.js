@@ -394,81 +394,162 @@ document.addEventListener('DOMContentLoaded', () => {
         createChatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const nameInput = document.getElementById('chat_name');
-            const name = nameInput ? nameInput.value.trim() : '';
+            const name = document.getElementById('chat_name').value.trim();
+            const usernamesStr = document.getElementById('chat_usernames').value.trim();
+            const chatType = document.querySelector('input[name="chat_type"]:checked')?.value || 'private';
 
-            const inputEl = document.getElementById('chat_usernames');
-            const usernames = inputEl.value.split(',').map(s => s.trim()).filter(s => s.length > 0);
-
-            const resultEl = document.getElementById('chatResult');
-
-            // Валидация на клиенте
-            if (usernames.length === 0) {
-                showToast({
-                    type: 'warning',
-                    title: 'Внимание',
-                    message: 'Введите имена пользователей через запятую'
-                });
+            if (!usernamesStr) {
+                showToast({ type: 'error', title: 'Ошибка', message: 'Укажите участников' });
                 return;
             }
+
+            const usernames = usernamesStr.split(',').map(u => u.trim()).filter(u => u);
 
             try {
                 const response = await apiRequest('/api/chat/create', {
                     method: 'POST',
-                    body: JSON.stringify({ 
-                        name: name, 
-                        usernames: usernames 
+                    body: JSON.stringify({
+                        name: name,
+                        usernames: usernames,
+                        is_public: chatType === 'public'
                     })
                 });
-                
-                const result = await response.json();
-                
-                if (response.ok) {
-                    // Успех - показываем toast и обновляем UI
-                    showToast({
-                        type: 'success',
-                        title: 'Чат создан!',
-                        message: `Чат #${result.chat_id} успешно создан`
-                    });
 
-                    // Показываем ссылку на чат
-                    if (resultEl) {
-                        resultEl.innerHTML = `✅ <a href="/chat?id=${result.chat_id}" style="color: #007bff;">Открыть чат →</a>`;
-                        resultEl.style.background = '#d4edda';
-                        resultEl.style.color = '#155724';
-                    }
-                    
-                    nameInput.value = '';
-                    inputEl.value = '';
+                const data = await response.json();
 
-                    // Обновляем список чатов и счетчик
-                    await loadMyChats();
-
-                    const chatsSection = document.getElementById('chatsSection');
-                    if (!chatsSection || !chatsSection.classList.contains('active')) {
-                        loadChatCount();
-                    }
-                } else {
-                    // Ошибка - обрабатываем по коду
-                    handleCreateChatError(result, resultEl);
+                if (!response.ok) {
+                    showToast({ type: 'error', title: 'Ошибка', message: data.error });
+                    return;
                 }
+
+                showToast({ type: 'success', title: 'Чат создан', message: `ID: ${data.chat_id}` });
+                closeCreateChatModal();
+                loadMyChats();
+                loadChatCount();
+
             } catch (error) {
-                console.error('Network error:', error);
-                showToast({
-                    type: 'error',
-                    title: 'Ошибка сети',
-                    message: 'Не удалось подключиться к серверу'
-                });
-                
-                if (resultEl) {
-                    resultEl.innerHTML = `❌ Ошибка сети`;
-                    resultEl.style.background = '#f8d7da';
-                    resultEl.style.color = '#721c24';
-                }
+                showToast({ type: 'error', title: 'Ошибка', message: error.message });
             }
+              
         });
     }
 });
+
+// ==================== ОТКРЫТЫЕ ЧАТЫ ====================
+
+let searchPublicTimeout = null;
+
+function searchPublicChats(query) {
+    clearTimeout(searchPublicTimeout);
+    searchPublicTimeout = setTimeout(() => loadPublicChats(query), 300);
+}
+
+async function loadPublicChats(search = '') {
+    const container = document.getElementById('publicChats');
+    if (!container) return;
+
+    container.innerHTML = '<div class="loading-chats">Поиск...</div>';
+
+    try {
+        const url = search
+            ? `/api/chat/public?search=${encodeURIComponent(search)}`
+            : '/api/chat/public';
+
+        const response = await apiRequest(url);
+        const data = await response.json();
+
+        if (!response.ok) {
+            container.innerHTML = `<div class="no-chats"><p>${data.error}</p></div>`;
+            return;
+        }
+
+        const chats = data.chats || [];
+
+        if (chats.length === 0) {
+            container.innerHTML = '<div class="no-chats"><p>Открытых чатов не найдено</p></div>';
+            return;
+        }
+
+        let html = '<div class="chats-grid">';
+        chats.forEach(chat => {
+            html += `
+                <div class="chat-card chat-card--public">
+                    <div class="chat-card__public-icon">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <div class="chat-card__body">
+                        <div class="chat-card__name">${escapeHtml(chat.name)}</div>
+                        <div class="chat-card__members">
+                            <i class="fas fa-users"></i>
+                            <span>${chat.member_count} участников</span>
+                            <span>· создал ${escapeHtml(chat.creator_name)}</span>
+                        </div>
+                        <div class="chat-card__meta">${formatChatDate(chat.created_at)}</div>
+                    </div>
+                    <button onclick="joinPublicChat(${chat.id}, '${escapeHtml(chat.name)}')" class="btn-join">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Войти
+                    </button>
+                </div>
+            `;
+        });
+        html += '</div>';
+
+        container.innerHTML = html;
+
+    } catch (error) {
+        container.innerHTML = `<div class="no-chats"><p>Ошибка: ${error.message}</p></div>`;
+    }
+}
+
+async function joinPublicChat(chatId, chatName) {
+    try {
+        const response = await apiRequest('/api/chat/join', {
+            method: 'POST',
+            body: JSON.stringify({ chat_id: chatId })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            showToast({ type: 'error', title: 'Ошибка', message: data.error });
+            return;
+        }
+
+        showToast({ type: 'success', title: 'Вы присоединились!', message: chatName });
+        loadPublicChats();
+        loadChatCount();
+
+    } catch (error) {
+        showToast({ type: 'error', title: 'Ошибка', message: error.message });
+    }
+}
+
+// ==================== УПРАВЛЕНИЕ УЧАСТНИКАМИ ====================
+
+async function addMemberToChat(chatId) {
+    const username = prompt('Введите имя пользователя:');
+    if (!username) return;
+
+    try {
+        const response = await apiRequest('/api/chat/add-member', {
+            method: 'POST',
+            body: JSON.stringify({
+                chat_id: chatId,
+                username: username.trim()
+            })
+        });
+
+        if (response.ok) {
+            showToast({ type: 'success', title: 'Добавлен', message: `${username} добавлен в чат` });
+        } else {
+            const data = await response.json();
+            showToast({ type: 'error', title: 'Ошибка', message: data.error });
+        }
+    } catch (error) {
+        showToast({ type: 'error', title: 'Ошибка', message: error.message });
+    }
+}
 
 // Обработка ошибок создания чата
 function handleCreateChatError(result, resultEl) {

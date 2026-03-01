@@ -470,3 +470,122 @@
     align-items: center;
     gap: 8px;
 }
+
+/* ==================== ТИП ЧАТА (toggle) ==================== */
+
+.chat-type-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 12px 0;
+}
+
+.toggle-option input[type="radio"] {
+    display: none;
+}
+
+.toggle-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.toggle-card i {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+}
+
+.toggle-card strong {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+}
+
+.toggle-card small {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+}
+
+.toggle-option input:checked + .toggle-card {
+    border-color: var(--accent);
+    background: rgba(88, 101, 242, 0.1);
+}
+
+.toggle-option input:checked + .toggle-card i {
+    color: var(--accent);
+}
+
+/* ==================== ОТКРЫТЫЙ ЧАТ КАРТОЧКА ==================== */
+
+.chat-card--public {
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-tertiary);
+}
+
+.chat-card__public-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f093fb, #f5576c);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: white;
+    font-size: 1rem;
+}
+
+.btn-join {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-join:hover {
+    background: var(--accent-hover);
+    transform: scale(1.05);
+}
+
+/* ==================== ПОИСК В ОБЗОРЕ ==================== */
+
+.explore-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px;
+}
+
+.explore-search i {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.explore-search input {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    outline: none;
+    width: 200px;
+}

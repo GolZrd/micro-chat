@@ -28,6 +28,10 @@
                     <span>Мои чаты</span>
                     <span class="badge" id="chatCount">0</span>
                 </a>
+                <a href="#" class="nav-item protected-nav" onclick="showSection('explore'); return false;" style="display:none;">
+                    <i class="fas fa-compass"></i>
+                    <span>Открытые чаты</span>
+                </a>
             </nav>
 
             <!-- Нижняя часть sidebar -->
@@ -173,6 +177,20 @@
                     </div>
                 </div>
             </section>
+            <section id="exploreSection" class="content-section">
+                <div class="section-header">
+                    <h1><i class="fas fa-compass"></i> Открытые чаты</h1>
+                    <div class="header-actions">
+                        <div class="explore-search">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="exploreSearchInput" placeholder="Поиск чатов..." oninput="searchPublicChats(this.value)">
+                        </div>
+                    </div>
+                </div>
+                <div id="publicChats" class="chats-container">
+                    <div class="loading-chats">Загрузка...</div>
+                </div>
+            </section>
         </main>
 
         <aside class="right-sidebar right-sidebar--friends protected-sidebar">
@@ -229,12 +247,38 @@
             </div>
             <form id="createChatForm">
                 <label for="chat_name">
-                <i class="fas fa-tag"></i> Название чата
+                    <i class="fas fa-tag"></i> Название чата
                 </label>
-                <input type="text" id="chat_name" name="name" placeholder="Например: Рабочий чат (необязательно)" maxlength="100">
+                <input type="text" id="chat_name" name="name" placeholder="Например: Рабочий чат" maxlength="100">
+
                 <label>Участники чата</label>
                 <input type="text" id="chat_usernames" placeholder="Введите имена через запятую" required>
                 <small>Например: user1, user2, user3</small>
+
+                <!-- НОВОЕ: тип чата -->
+                <div class="chat-type-toggle">
+                    <label class="toggle-option">
+                        <input type="radio" name="chat_type" value="private" checked>
+                        <div class="toggle-card">
+                            <i class="fas fa-lock"></i>
+                            <div>
+                                <strong>Закрытый</strong>
+                                <small>Только владелец добавляет участников</small>
+                            </div>
+                        </div>
+                    </label>
+                    <label class="toggle-option">
+                        <input type="radio" name="chat_type" value="public">
+                        <div class="toggle-card">
+                            <i class="fas fa-globe"></i>
+                            <div>
+                                <strong>Открытый</strong>
+                                <small>Любой может присоединиться</small>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+
                 <div class="modal-actions">
                     <button type="button" onclick="closeCreateChatModal()" class="btn-secondary">
                         Отмена
@@ -353,6 +397,12 @@
                     const chatsNav = document.querySelector('.nav-item[onclick*="chats"]');
                     if (chatsNav) chatsNav.classList.add('active');
                     loadMyChats();
+                    break;
+                case 'explore':
+                    document.getElementById('exploreSection').classList.add('active');
+                    const exploreNav = document.querySelector('.nav-item[onclick*="explore"]');
+                    if (exploreNav) exploreNav.classList.add('active');
+                    loadPublicChats();
                     break;
                 case 'profile':
                     document.getElementById('profileSection').classList.add('active');

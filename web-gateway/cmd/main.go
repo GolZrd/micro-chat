@@ -93,6 +93,10 @@ func main() {
 		api.POST("/chat/send", handlers.SendMessage(chatClient))
 		api.DELETE("/chat/delete/:id", handlers.DeleteChat(chatClient))
 		api.POST("/chat/direct", handlers.GetOrCreateDirectChat(chatClient))
+		api.POST("/chat/add-member", handlers.AddMember(chatClient))
+		api.POST("/chat/remove-member", handlers.RemoveMember(chatClient))
+		api.POST("/chat/join", handlers.JoinChat(chatClient))
+		api.GET("/chat/public", handlers.PublicChats(chatClient))
 		//Presence
 		api.POST("/presence/heartbeat", handlers.Heartbeat(chatClient))
 		api.POST("/presence/friends", handlers.FriendsPresence(chatClient))

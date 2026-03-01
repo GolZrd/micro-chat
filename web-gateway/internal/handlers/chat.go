@@ -29,6 +29,7 @@ func CreateChat(client *clients.ChatClient) gin.HandlerFunc {
 		var req struct {
 			Name      string   `json:"name"`
 			Usernames []string `json:"usernames"`
+			IsPublic  bool     `json:"is_public"`
 		}
 
 		if err := c.BindJSON(&req); err != nil {
@@ -39,6 +40,7 @@ func CreateChat(client *clients.ChatClient) gin.HandlerFunc {
 
 		logger.Info("create chat attempt",
 			zap.Strings("usernames", req.Usernames),
+			zap.Bool("is_public", req.IsPublic),
 		)
 
 		// Создаем контекст с токеном из HTTP заголовка
@@ -48,6 +50,7 @@ func CreateChat(client *clients.ChatClient) gin.HandlerFunc {
 		resp, err := client.Client.Create(ctx, &chat_v1.CreateRequest{
 			Name:      req.Name,
 			Usernames: req.Usernames,
+			IsPublic:  req.IsPublic,
 		})
 		if err != nil {
 			logger.Error("failed to create chat", zap.Error(err))
@@ -315,6 +318,125 @@ func FriendsPresence(client *clients.ChatClient) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, gin.H{"presences": presences})
+	}
+}
+
+func AddMember(client *clients.ChatClient) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req struct {
+			ChatId   int64  `json:"chat_id"`
+			Username string `json:"username"`
+		}
+
+		if err := c.BindJSON(&req); err != nil {
+			logger.Debug("invalid add member request", zap.Error(err))
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		ctx := utils.ContextWithToken(c)
+
+		_, err := client.Client.AddMember(ctx, &chat_v1.AddMemberRequest{
+			ChatId:   req.ChatId,
+			Username: req.Username,
+		})
+		if err != nil {
+			logger.Error("failed to add member", zap.Error(err))
+			handleChatError(c, err)
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"status": "member added successfully"})
+	}
+}
+
+func RemoveMember(client *clients.ChatClient) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req struct {
+			ChatId int64 `json:"chat_id"`
+			UserId int64 `json:"user_id"`
+		}
+
+		if err := c.BindJSON(&req); err != nil {
+			logger.Debug("invalid remove member request", zap.Error(err))
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		ctx := utils.ContextWithToken(c)
+
+		_, err := client.Client.RemoveMember(ctx, &chat_v1.RemoveMemberRequest{
+			ChatId: req.ChatId,
+			UserId: req.UserId,
+		})
+		if err != nil {
+			logger.Error("failed to remove member", zap.Error(err))
+			handleChatError(c, err)
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"status": "member removed successfully"})
+	}
+}
+
+func JoinChat(client *clients.ChatClient) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req struct {
+			ChatId int64 `json:"chat_id"`
+		}
+
+		if err := c.BindJSON(&req); err != nil {
+			logger.Debug("invalid join chat request", zap.Error(err))
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		ctx := utils.ContextWithToken(c)
+
+		_, err := client.Client.JoinChat(ctx, &chat_v1.JoinChatRequest{
+			ChatId: req.ChatId,
+		})
+		if err != nil {
+			logger.Error("failed to join chat", zap.Error(err))
+			handleChatError(c, err)
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"status": "joined successfully"})
+	}
+}
+
+func PublicChats(client *clients.ChatClient) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		search := c.Query("search")
+
+		ctx := utils.ContextWithToken(c)
+
+		resp, err := client.Client.PublicChats(ctx, &chat_v1.PublicChatsRequest{Search: search})
+		if err != nil {
+			logger.Error("failed to get public chats", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		chats := make([]gin.H, 0, len(resp.Chats))
+		for _, ch := range resp.Chats {
+			logger.Info("public chat",
+				zap.Int64("id", ch.GetId()),
+				zap.String("name", ch.GetName()),
+				zap.Int32("member_count", ch.GetMembersCount()),
+				zap.String("creator_name", ch.GetCreatorName()),
+			)
+			chats = append(chats, gin.H{
+				"id":           ch.Id,
+				"name":         ch.Name,
+				"member_count": ch.MembersCount,
+				"creator_name": ch.CreatorName,
+				"created_at":   ch.CreatedAt.AsTime(),
+			})
+		}
+
+		c.JSON(http.StatusOK, gin.H{"chats": chats})
 	}
 }
 
