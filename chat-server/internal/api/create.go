@@ -27,7 +27,7 @@ func (s *Implementation) Create(ctx context.Context, req *desc.CreateRequest) (*
 	logger.Debug("attempt to create chat", zap.String("creator", user.Username), zap.Strings("inviting", req.Usernames))
 
 	// Передаем создателя отдельно от приглашенных
-	id, err := s.chatService.Create(ctx, req.Name, user.UID, user.Username, req.Usernames)
+	id, err := s.chatService.Create(ctx, req.Name, req.IsPublic, user.UID, user.Username, req.Usernames)
 	if err != nil {
 		// Проверяем типизированную ошибку
 		var usersNotFound *service.ErrUserNotFound

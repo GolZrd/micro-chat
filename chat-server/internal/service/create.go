@@ -19,7 +19,7 @@ func (e *ErrUserNotFound) Error() string {
 	return fmt.Sprintf("users not found: %s", strings.Join(e.Usernames, ","))
 }
 
-func (s *service) Create(ctx context.Context, name string, creatorId int64, creatorUsername string, usernames []string) (int64, error) {
+func (s *service) Create(ctx context.Context, name string, isPublic bool, creatorId int64, creatorUsername string, usernames []string) (int64, error) {
 	// Проверяем что Usernames не пусто
 	if len(usernames) == 0 {
 		return 0, errors.New("usernames cannot be empty")
@@ -70,6 +70,7 @@ func (s *service) Create(ctx context.Context, name string, creatorId int64, crea
 	dto := repoChat.CreateChatDTO{
 		Name:      name,
 		IsGroup:   isGroup,
+		IsPublic:  isPublic,
 		CreatorId: creatorId,
 		Members:   members,
 	}
@@ -87,6 +88,7 @@ func (s *service) Create(ctx context.Context, name string, creatorId int64, crea
 	logger.Info("chat created successfully",
 		zap.Int64("chat_id", id),
 		zap.String("name", name),
+		zap.Bool("is_Public", isPublic),
 		zap.Int64("creator_id", creatorId),
 		zap.Int("members_count", len(members)),
 	)

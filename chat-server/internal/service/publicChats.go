@@ -26,5 +26,9 @@ func (s *service) PublicChats(ctx context.Context, search string) ([]PublicChatD
 		})
 	}
 
+	if len(res) == 0 {
+		logger.Info("no public chats found", zap.String("search", search))
+	}
+
 	return res, nil
 }

@@ -189,7 +189,7 @@ func (r *repo) IsUserInChat(ctx context.Context, chatId, userId int64) (bool, er
 }
 
 func (r *repo) UserChats(ctx context.Context, userId int64) ([]ChatInfoDTO, error) {
-	builder := squirrel.Select("c.ID", "c.name", "c.is_direct", "c.created_at", "c.updated_at").
+	builder := squirrel.Select("c.ID", "c.name", "c.is_direct", "c.is_public", "c.creator_id", "c.created_at", "c.updated_at").
 		PlaceholderFormat(squirrel.Dollar).
 		From("chats c").
 		Join("chat_members ON c.ID = chat_members.chat_id ").
@@ -209,7 +209,7 @@ func (r *repo) UserChats(ctx context.Context, userId int64) ([]ChatInfoDTO, erro
 	var chats []ChatInfoDTO
 	for rows.Next() {
 		var chat ChatInfoDTO
-		err := rows.Scan(&chat.Id, &chat.Name, &chat.IsDirect, &chat.CreatedAt, &chat.UpdatedAt)
+		err := rows.Scan(&chat.Id, &chat.Name, &chat.IsDirect, &chat.IsPublic, &chat.CreatorId, &chat.CreatedAt, &chat.UpdatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("scan chat: %w", err)
 		}
@@ -297,8 +297,8 @@ func (r *repo) CreateDirectChat(ctx context.Context, userId1 int64, userId2 int6
 	// Сначала создаем сам чат
 	builder := squirrel.Insert("chats").
 		PlaceholderFormat(squirrel.Dollar).
-		Columns("name", "is_direct").
-		Values("", true).
+		Columns("name", "is_direct", "is_public", "creator_id").
+		Values("", true, false, userId1).
 		Suffix("RETURNING id")
 
 	chatQuery, args, err := builder.ToSql()
@@ -377,7 +377,7 @@ func (r *repo) RemoveMember(ctx context.Context, chatId int64, userId int64) err
 }
 
 func (r *repo) ChatInfo(ctx context.Context, chatId int64) (*ChatInfoDTO, error) {
-	builder := squirrel.Select("id", "name", "is_direct", "created_at", "updated_at").
+	builder := squirrel.Select("id", "name", "is_direct", "is_public", "creator_id", "created_at", "updated_at").
 		PlaceholderFormat(squirrel.Dollar).
 		From("chats").
 		Where(squirrel.Eq{"id": chatId}).
@@ -389,7 +389,7 @@ func (r *repo) ChatInfo(ctx context.Context, chatId int64) (*ChatInfoDTO, error)
 	}
 
 	var chat ChatInfoDTO
-	err = r.db.QueryRow(ctx, query, args...).Scan(&chat.Id, &chat.Name, &chat.IsDirect, &chat.IsPublic, &chat.CreatorId, &chat.CreatedAt)
+	err = r.db.QueryRow(ctx, query, args...).Scan(&chat.Id, &chat.Name, &chat.IsDirect, &chat.IsPublic, &chat.CreatorId, &chat.CreatedAt, &chat.UpdatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("get chat info: %w", err)
 	}
