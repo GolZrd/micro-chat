@@ -158,7 +158,7 @@ func (r *repo) RecentMessages(ctx context.Context, chatID int64, limit int) ([]M
 
 	for rows.Next() {
 		var message MessageDTO
-		err := rows.Scan(&message.Id, &message.ChatId, &message.UserId, &message.From, &message.Text, &message.CreatedAt, &message.MessageType, &message.VoiceDuration)
+		err := rows.Scan(&message.Id, &message.ChatId, &message.UserId, &message.From, &message.MessageType, &message.Text, &message.VoiceDuration, &message.CreatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("scan message: %w", err)
 		}
