@@ -63,7 +63,7 @@ func (s *Implementation) ConnectChat(req *desc.ConnectChatRequest, stream desc.C
 // convertToProto конвертирует MessageDTO в proto Message
 func (s *Implementation) convertToProto(msg service.MessageDTO) *desc.Message {
 	// В зависимости от типа сообщения собираем стрктуру proto
-	switch msg.Type {
+	switch msg.MessageType {
 	case service.MessageTypeOnlineUsers:
 		// Получаем онлайн пользователей
 		onlineUsers := make([]*desc.OnlineUsers, 0, len(msg.OnlineUsers))
@@ -79,7 +79,15 @@ func (s *Implementation) convertToProto(msg service.MessageDTO) *desc.Message {
 			OnlineUsers: onlineUsers,
 			CreatedAt:   timestamppb.New(msg.CreatedAt),
 		}
-
+	case service.MessageTypeVoice:
+		// Голосовое сообщение
+		return &desc.Message{
+			Type:          desc.MessageType_MESSAGE_TYPE_VOICE,
+			From:          msg.From,
+			Text:          msg.Text,
+			CreatedAt:     timestamppb.New(msg.CreatedAt),
+			VoiceDuration: msg.VoiceDuration,
+		}
 	default:
 		// Текстовое сообщение
 		return &desc.Message{

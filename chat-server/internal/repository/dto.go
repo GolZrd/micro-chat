@@ -13,20 +13,24 @@ type CreateChatDTO struct {
 
 // MessageCreateDTO - DTO для сохранения сообщения
 type MessageCreateDTO struct {
-	ChatId       int64
-	UserId       int64
-	FromUsername string
-	Text         string
+	ChatId        int64
+	UserId        int64
+	FromUsername  string
+	Text          string
+	MessageType   string // TEXT, VOICE для БД
+	VoiceDuration float32
 }
 
 // MessageDTO - DTO для получения сообщения
 type MessageDTO struct {
-	Id        int64
-	ChatId    int64
-	UserId    int64
-	From      string
-	Text      string
-	CreatedAt time.Time
+	Id            int64
+	ChatId        int64
+	UserId        int64
+	From          string
+	Text          string
+	CreatedAt     time.Time
+	MessageType   string // TEXT, VOICE для БД
+	VoiceDuration float32
 }
 
 type MemberDTO struct {

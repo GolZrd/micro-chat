@@ -103,11 +103,16 @@ func (r *repo) Delete(ctx context.Context, chat_id int64) error {
 }
 
 func (r *repo) SendMessage(ctx context.Context, msg MessageCreateDTO) error {
+	msgType := msg.MessageType
+	if msgType == "" {
+		msgType = "text"
+	}
+
 	// Выполняем основной запрос, добавляем в таблицу messages
 	builder := squirrel.Insert("messages").
 		PlaceholderFormat(squirrel.Dollar).
-		Columns("chat_id", "user_id", "from_username", "text").
-		Values(msg.ChatId, msg.UserId, msg.FromUsername, msg.Text)
+		Columns("chat_id", "user_id", "from_username", "text", "message_type", "voice_duration").
+		Values(msg.ChatId, msg.UserId, msg.FromUsername, msg.Text, msgType, msg.VoiceDuration)
 	query, args, err := builder.ToSql()
 	if err != nil {
 		return fmt.Errorf("build send message query: %w", err)
@@ -134,7 +139,7 @@ func (r *repo) SendMessage(ctx context.Context, msg MessageCreateDTO) error {
 }
 
 func (r *repo) RecentMessages(ctx context.Context, chatID int64, limit int) ([]MessageDTO, error) {
-	builder := squirrel.Select("id", "chat_id", "user_id", "from_username", "text", "created_at").
+	builder := squirrel.Select("id", "chat_id", "user_id", "from_username", "message_type", "text", "voice_duration", "created_at").
 		PlaceholderFormat(squirrel.Dollar).
 		From("messages").
 		Where(squirrel.Eq{"chat_id": chatID}).
@@ -153,7 +158,7 @@ func (r *repo) RecentMessages(ctx context.Context, chatID int64, limit int) ([]M
 
 	for rows.Next() {
 		var message MessageDTO
-		err := rows.Scan(&message.Id, &message.ChatId, &message.UserId, &message.From, &message.Text, &message.CreatedAt)
+		err := rows.Scan(&message.Id, &message.ChatId, &message.UserId, &message.From, &message.Text, &message.CreatedAt, &message.MessageType, &message.VoiceDuration)
 		if err != nil {
 			return nil, fmt.Errorf("scan message: %w", err)
 		}

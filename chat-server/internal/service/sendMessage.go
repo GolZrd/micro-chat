@@ -12,11 +12,18 @@ import (
 
 // SendMessage сохраняет сообщение и рассылает подписчикам
 func (s *service) SendMessage(ctx context.Context, msg SendMessageDTO) error {
+	msgTypeStr := "text"
+	if msg.MessageType == MessageTypeVoice {
+		msgTypeStr = "voice"
+	}
+
 	input := repository.MessageCreateDTO{
-		ChatId:       msg.ChatId,
-		UserId:       msg.UserId,
-		FromUsername: msg.FromUsername,
-		Text:         msg.Text,
+		ChatId:        msg.ChatId,
+		UserId:        msg.UserId,
+		FromUsername:  msg.FromUsername,
+		Text:          msg.Text,
+		MessageType:   msgTypeStr,
+		VoiceDuration: msg.VoiceDuration,
 	}
 
 	logger.Info("sending message", zap.Int64("chat_id", msg.ChatId), zap.String("sent by", msg.FromUsername))
@@ -30,10 +37,11 @@ func (s *service) SendMessage(ctx context.Context, msg SendMessageDTO) error {
 
 	// Создаем DTO для рассылки
 	msgDTO := MessageDTO{
-		Type:      MessageTypeText,
-		From:      msg.FromUsername,
-		Text:      msg.Text,
-		CreatedAt: time.Now(),
+		MessageType:   msg.MessageType,
+		From:          msg.FromUsername,
+		Text:          msg.Text,
+		CreatedAt:     time.Now(),
+		VoiceDuration: msg.VoiceDuration,
 	}
 
 	// Отправляем всем подписчикам сообщение если комната существует
@@ -82,12 +90,17 @@ func (s *service) sendRecentMessages(ctx context.Context, chatID int64, msgChan 
 
 	// Отправляем сообщения
 	for _, msg := range messages {
+		msgType := MessageTypeText
+		if msg.MessageType == "voice" {
+			msgType = MessageTypeVoice
+		}
 		select {
 		case msgChan <- MessageDTO{
-			Type:      MessageTypeText,
-			From:      msg.From,
-			Text:      msg.Text,
-			CreatedAt: msg.CreatedAt,
+			MessageType:   int32(msgType),
+			From:          msg.From,
+			Text:          msg.Text,
+			CreatedAt:     msg.CreatedAt,
+			VoiceDuration: msg.VoiceDuration,
 		}:
 		case <-ctx.Done():
 			logger.Debug("history sending interrupted", zap.Int64("chat_id", chatID))

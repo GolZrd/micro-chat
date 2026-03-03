@@ -41,6 +41,8 @@ message SendMessageRequest {
     int64 chat_id = 1;
     string text = 2;
     google.protobuf.Timestamp created_at = 3;
+    MessageType type = 4; // Тип сообщения текст или голос
+    float voice_duration = 5; // Если голосовое сообщение, то мы будем передавать длительность голосового сообщения
 }
 
 message ConnectChatRequest {
@@ -51,6 +53,7 @@ message ConnectChatRequest {
 enum MessageType {
     MESSAGE_TYPE_TEXT = 0;
     MESSAGE_TYPE_ONLINE_USERS = 1;
+    MESSAGE_TYPE_VOICE = 2;
 }
 
 // Определим информацию об онлайн пользователе
@@ -67,6 +70,7 @@ message Message {
 
     // Если у нас будет тип MESSAGE_TYPE_ONLINE_USERS, то мы будем передавать список онлайн пользователей
     repeated OnlineUsers online_users = 5;
+    float voice_duration = 6;
 }
 
 // Так как нам не нужно передавать имя, то сообщение можно оставить пустым, и если вдруг, в будущем потребуется дополнить сообщение, то это будет сделать проще

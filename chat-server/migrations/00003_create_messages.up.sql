@@ -5,6 +5,7 @@ CREATE TABLE messages (
     from_username VARCHAR(255) NOT NULL,
     message_type VARCHAR(20) DEFAULT 'text', -- На будущее
     text TEXT NOT NULL,
+    voice_duration REAL NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

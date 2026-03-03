@@ -125,7 +125,7 @@ func (r *ChatRoom) BroadcastOnlineUsers() {
 
 	// Упаковываем в MessageDTO с специальным типом
 	msg := MessageDTO{
-		Type:        MessageTypeOnlineUsers,
+		MessageType: MessageTypeOnlineUsers,
 		OnlineUsers: onlineUsers,
 		CreatedAt:   time.Now(),
 	}

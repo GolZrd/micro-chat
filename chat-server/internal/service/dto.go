@@ -2,26 +2,28 @@ package service
 
 import "time"
 
-type MessageType int
-
 const (
-	MessageTypeText        MessageType = 1
-	MessageTypeOnlineUsers MessageType = 2
+	MessageTypeText        = 0
+	MessageTypeOnlineUsers = 1
+	MessageTypeVoice       = 2
 )
 
 type SendMessageDTO struct {
-	ChatId       int64
-	UserId       int64
-	FromUsername string
-	Text         string
+	ChatId        int64
+	UserId        int64
+	FromUsername  string
+	Text          string
+	MessageType   int32
+	VoiceDuration float32
 }
 
 type MessageDTO struct {
-	Type        MessageType
-	From        string
-	Text        string
-	CreatedAt   time.Time
-	OnlineUsers []OnlineUserDTO // Используется только когда у нас тип MessageTypeOnlineUsers
+	MessageType   int32
+	From          string
+	Text          string
+	CreatedAt     time.Time
+	OnlineUsers   []OnlineUserDTO // Используется только когда у нас тип MessageTypeOnlineUsers
+	VoiceDuration float32
 }
 
 type ChatInfoDTO struct {
