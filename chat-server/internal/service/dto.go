@@ -29,8 +29,10 @@ type MessageDTO struct {
 type ChatInfoDTO struct {
 	ID        int64
 	Name      string
-	IsDirect  bool
 	Usernames []string
+	IsDirect  bool
+	IsPublic  bool
+	CreatorId int64
 	CreatedAt time.Time
 }
 

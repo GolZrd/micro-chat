@@ -32,8 +32,10 @@ func (s *Implementation) MyChats(ctx context.Context, req *desc.MyChatsRequest) 
 		chatsInfo := &desc.ChatInfo{
 			Id:        chat.ID,
 			Name:      chat.Name,
-			IsDirect:  chat.IsDirect,
 			Usernames: chat.Usernames,
+			IsDirect:  chat.IsDirect,
+			IsPublic:  chat.IsPublic,
+			CreatorId: chat.CreatorId,
 			CreatedAt: timestamppb.New(chat.CreatedAt),
 		}
 		chatsPb.Chats = append(chatsPb.Chats, chatsInfo)

@@ -27,8 +27,10 @@ func (s *service) MyChats(ctx context.Context, userId int64) ([]ChatInfoDTO, err
 		allChats = append(allChats, ChatInfoDTO{
 			ID:        chat.Id,
 			Name:      chat.Name,
-			IsDirect:  chat.IsDirect,
 			Usernames: usernames,
+			IsDirect:  chat.IsDirect,
+			IsPublic:  chat.IsPublic,
+			CreatorId: chat.CreatorId,
 			CreatedAt: chat.CreatedAt,
 		})
 	}
