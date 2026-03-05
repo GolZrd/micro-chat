@@ -10,6 +10,7 @@ import (
 	"github.com/GolZrd/micro-chat/web-gateway/internal/logger"
 	"github.com/GolZrd/micro-chat/web-gateway/internal/metric"
 	"github.com/GolZrd/micro-chat/web-gateway/internal/middleware"
+	"github.com/GolZrd/micro-chat/web-gateway/internal/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/natefinch/lumberjack"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -53,6 +54,19 @@ func main() {
 	}()
 
 	logger.Info("Connected to gRPC services")
+
+	// MinIO хранилище
+	fileStorage, err := storage.NewMinioStorage(
+		os.Getenv("MINIO_ENDPOINT"),
+		os.Getenv("MINIO_ACCESS_KEY"),
+		os.Getenv("MINIO_SECRET_KEY"),
+		"chat-files",
+	)
+	if err != nil {
+		logger.Fatal("Failed to initialize Minio storage", zap.Error(err))
+	}
+
+	logger.Info("Connected to MinIO")
 
 	// Создаем HTTP сервер
 	r := gin.Default()
@@ -100,10 +114,15 @@ func main() {
 		//Presence
 		api.POST("/presence/heartbeat", handlers.Heartbeat(chatClient))
 		api.POST("/presence/friends", handlers.FriendsPresence(chatClient))
+		// Voice
+		api.POST("/chat/send-voice", handlers.SendVoice(chatClient, fileStorage))
 	}
 
 	// WebSocket для чата
 	r.GET("/ws/chat/:id", handlers.ConnectChat(chatClient))
+
+	// File proxy - отдача файлов из MinIO
+	r.GET("/files/*filepath", handlers.ProxyFiles())
 
 	// Запускаем HTTP сервер для прометеуса в горутине
 	go func() {

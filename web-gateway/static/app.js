@@ -551,6 +551,306 @@ async function addMemberToChat(chatId) {
     }
 }
 
+// ==================== CHAT SYSTEM ====================
+
+let activeChatId = null;
+let activeChatWs = null;
+let chatListData = []; // Кэш списка чатов
+
+// ========== Загрузка списка чатов ==========
+
+async function loadChatList() {
+    const container = document.getElementById('chatListItems');
+    if (!container) return;
+
+    try {
+        const response = await apiRequest('/api/chat/my');
+        const data = await response.json();
+
+        if (!response.ok) {
+            container.innerHTML = '<div class="chat-list-empty"><p>Ошибка загрузки</p></div>';
+            updateChatCount(0);
+            return;
+        }
+
+        let chats = data.chats || [];
+        chats = chats.filter(c => c && c.id);
+        chatListData = chats;
+
+        updateChatCount(chats.length);
+        renderChatList(chats);
+
+    } catch (error) {
+        container.innerHTML = '<div class="chat-list-empty"><p>Ошибка</p></div>';
+        updateChatCount(0);
+    }
+}
+
+function renderChatList(chats) {
+    const container = document.getElementById('chatListItems');
+    if (!container) return;
+
+    if (chats.length === 0) {
+        container.innerHTML = `
+            <div class="chat-list-empty">
+                <i class="fas fa-comments"></i>
+                <p>Нет чатов</p>
+            </div>
+        `;
+        return;
+    }
+
+    let html = '';
+    chats.forEach(chat => {
+        const chatName = getChatDisplayName(chat);
+        const initials = chatName.substring(0, 2).toUpperCase();
+        const isDirect = chat.is_direct || false;
+        const isPublic = chat.is_public || false;
+        const isActive = chat.id === activeChatId;
+        const members = chat.usernames || [];
+        const createdDate = formatChatDate(chat.created_at);
+
+        let avatarClass = 'chat-list-item__avatar--direct';
+        let typeClass = 'chat-list-item__type--direct';
+        let typeText = 'Личный';
+
+        if (!isDirect && isPublic) {
+            avatarClass = 'chat-list-item__avatar--public';
+            typeClass = 'chat-list-item__type--public';
+            typeText = 'Открытый';
+        } else if (!isDirect) {
+            avatarClass = 'chat-list-item__avatar--group';
+            typeClass = 'chat-list-item__type--group';
+            typeText = 'Группа';
+        }
+
+        const preview = isDirect
+            ? 'Личный чат'
+            : `${members.length} участников`;
+
+        html += `
+            <div class="chat-list-item ${isActive ? 'active' : ''}"
+                 onclick="openChat(${chat.id}, '${escapeHtml(chatName)}', ${isDirect})"
+                 data-chat-id="${chat.id}"
+                 data-chat-name="${escapeHtml(chatName).toLowerCase()}">
+                <div class="chat-list-item__avatar ${avatarClass}">
+                    ${escapeHtml(initials)}
+                </div>
+                <div class="chat-list-item__body">
+                    <div class="chat-list-item__name">${escapeHtml(chatName)}</div>
+                    <div class="chat-list-item__preview">${preview}</div>
+                </div>
+                <div class="chat-list-item__meta">
+                    <span class="chat-list-item__time">${createdDate}</span>
+                    <span class="chat-list-item__type ${typeClass}">${typeText}</span>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+// Фильтрация списка чатов
+function filterChatList(query) {
+    const items = document.querySelectorAll('.chat-list-item');
+    const q = query.toLowerCase().trim();
+
+    items.forEach(item => {
+        const name = item.dataset.chatName || '';
+        item.style.display = name.includes(q) ? 'flex' : 'none';
+    });
+}
+
+// ========== Открытие чата ==========
+
+function openChat(chatId, chatName, isDirect) {
+    // Если уже открыт этот чат — ничего не делаем
+    if (activeChatId === chatId) return;
+
+    // Закрываем предыдущий
+    if (activeChatWs) {
+        activeChatWs.close();
+        activeChatWs = null;
+    }
+
+    activeChatId = chatId;
+
+    // Обновляем шапку
+    const initials = chatName.substring(0, 2).toUpperCase();
+    document.getElementById('chatViewName').textContent = chatName;
+    document.getElementById('chatViewAvatarInitials').textContent = initials;
+    document.getElementById('chatViewStatus').textContent = 'Подключение...';
+    document.getElementById('chatViewMessages').innerHTML = '';
+    document.getElementById('chatViewInput').value = '';
+
+    // Показываем чат, скрываем пустое состояние
+    document.getElementById('chatViewEmpty').style.display = 'none';
+    document.getElementById('chatViewActive').style.display = 'flex';
+
+    // Скрываем панель участников
+    const membersPanel = document.getElementById('chatMembersPanel');
+    if (membersPanel) membersPanel.style.display = 'none';
+
+    // Подсвечиваем в списке
+    document.querySelectorAll('.chat-list-item').forEach(item => {
+        item.classList.toggle('active', parseInt(item.dataset.chatId) === chatId);
+    });
+
+    // Подключаемся
+    connectToChat(chatId);
+}
+
+function connectToChat(chatId) {
+    let token = TokenManager.getAccessToken();
+
+    if (token && token.startsWith('Bearer ')) {
+        token = token.substring(7);
+    }
+
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/chat/${chatId}?token=${encodeURIComponent(token)}`;
+
+    activeChatWs = new WebSocket(wsUrl);
+
+    activeChatWs.onopen = () => {
+        document.getElementById('chatViewStatus').textContent = 'Подключено';
+    };
+
+    activeChatWs.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+
+        if (msg.type === 'online_users') {
+            updateChatOnlineUsers(msg);
+        } else {
+            displayChatMessage(msg);
+        }
+    };
+
+    activeChatWs.onclose = () => {
+        document.getElementById('chatViewStatus').textContent = 'Отключено';
+    };
+
+    activeChatWs.onerror = () => {
+        document.getElementById('chatViewStatus').textContent = 'Ошибка';
+    };
+}
+
+// ========== Сообщения ==========
+
+async function sendActiveMessage() {
+    const input = document.getElementById('chatViewInput');
+    const text = input.value.trim();
+
+    if (!text || !activeChatId) return;
+    input.value = '';
+
+    try {
+        await apiRequest('/api/chat/send', {
+            method: 'POST',
+            body: JSON.stringify({
+                chat_id: activeChatId,
+                text: text
+            })
+        });
+    } catch (error) {
+        showToast({ type: 'error', title: 'Ошибка', message: 'Не удалось отправить' });
+    }
+}
+
+// ========== Отображение ==========
+
+function displayChatMessage(msg) {
+    const container = document.getElementById('chatViewMessages');
+    const welcome = container.querySelector('.chat-welcome');
+    if (welcome) welcome.remove();
+
+    const currentUsername = TokenManager.getUsername();
+    const isOwn = msg.from === currentUsername;
+    const timeStr = formatMessageTime(msg.sent_at);
+    const messageType = msg.message_type || 'text';
+
+    const msgEl = document.createElement('div');
+    msgEl.className = `chat-msg ${isOwn ? 'chat-msg--own' : 'chat-msg--other'}`;
+
+    let contentHtml = '';
+
+    if (messageType === 'voice') {
+        contentHtml = createVoicePlayerHtml(msg.text, msg.voice_duration || 0, isOwn);
+    } else {
+        contentHtml = `<div class="chat-msg__bubble">${escapeHtml(msg.text)}</div>`;
+    }
+
+    msgEl.innerHTML = `
+        ${!isOwn ? `<span class="chat-msg__sender">${escapeHtml(msg.from)}</span>` : ''}
+        ${contentHtml}
+        <span class="chat-msg__time">${timeStr}</span>
+    `;
+
+    container.appendChild(msgEl);
+    container.scrollTop = container.scrollHeight;
+}
+
+function updateChatOnlineUsers(msg) {
+    const onlineUsers = msg.online_users || msg.onlineUsers || [];
+    const count = onlineUsers.length;
+
+    document.getElementById('chatViewStatus').textContent = `${count} в сети`;
+    document.getElementById('chatViewMemberCount').textContent = count;
+}
+
+function toggleChatMembers() {
+    const panel = document.getElementById('chatMembersPanel');
+    if (!panel) return;
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+function toggleEmojiPicker() {
+    showToast({ type: 'info', title: 'В разработке', message: 'Эмодзи скоро появятся' });
+}
+
+function toggleChatSettings() {
+    // TODO: настройки чата
+    showToast({ type: 'info', title: 'В разработке', message: 'Настройки чата скоро появятся' });
+}
+
+
+function formatMessageTime(sentAt) {
+            if (!sentAt) {
+                // Fallback если время не пришло
+                return new Date().toLocaleTimeString('ru-RU', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+
+            let date;
+
+            // ISO string: "2025-06-21T12:00:00Z"
+            if (typeof sentAt === 'string') {
+                date = new Date(sentAt);
+            }
+            // Proto format: {"seconds": 123456, "nanos": 0}
+            else if (sentAt.seconds) {
+                date = new Date(sentAt.seconds * 1000);
+            }
+            else {
+                date = new Date(sentAt);
+            }
+
+            if (isNaN(date.getTime())) {
+                return new Date().toLocaleTimeString('ru-RU', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+
+            return date.toLocaleTimeString('ru-RU', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+}
+
 // Обработка ошибок создания чата
 function handleCreateChatError(result, resultEl) {
     console.log('Create chat error:', result);
@@ -781,8 +1081,10 @@ function renderDirectChatCard(chat) {
     const initials = otherUser.substring(0, 2).toUpperCase();
     const createdDate = formatChatDate(chat.created_at);
 
+    // Было: <a href="/chat?id=${chatId}">
+    // Стало: onclick
     return `
-        <a href="/chat?id=${chatId}" class="chat-card chat-card--direct">
+        <div class="chat-card chat-card--direct" onclick="openChat(${chatId}, '${escapeHtml(otherUser)}', true)">
             <div class="chat-card__avatar">
                 <span class="chat-card__initials">${escapeHtml(initials)}</span>
                 <span class="chat-card__online-dot"></span>
@@ -793,14 +1095,14 @@ function renderDirectChatCard(chat) {
             </div>
             <div class="chat-card__actions">
                 <button 
-                    onclick="event.preventDefault(); event.stopPropagation(); deleteChat(${chatId})" 
+                    onclick="event.stopPropagation(); deleteChat(${chatId})" 
                     class="chat-card__delete"
                     title="Удалить чат">
                     <i class="fas fa-trash-alt"></i>
                 </button>
                 <i class="fas fa-chevron-right chat-card__arrow"></i>
             </div>
-        </a>
+        </div>
     `;
 }
 
@@ -834,7 +1136,7 @@ function renderGroupChatCard(chat) {
     avatarsHtml += '</div>';
 
     return `
-        <a href="/chat?id=${chatId}" class="chat-card chat-card--group">
+        <div class="chat-card chat-card--group" onclick="openChat(${chatId}, '${escapeHtml(chatName)}', false)">
             ${avatarsHtml}
             <div class="chat-card__body">
                 <div class="chat-card__name">${escapeHtml(chatName)}</div>
@@ -846,14 +1148,14 @@ function renderGroupChatCard(chat) {
             </div>
             <div class="chat-card__actions">
                 <button 
-                    onclick="event.preventDefault(); event.stopPropagation(); deleteChat(${chatId})" 
+                    onclick="event.stopPropagation(); deleteChat(${chatId})" 
                     class="chat-card__delete"
                     title="Удалить чат">
                     <i class="fas fa-trash-alt"></i>
                 </button>
                 <i class="fas fa-chevron-right chat-card__arrow"></i>
             </div>
-        </a>
+        </div>
     `;
 }
 
@@ -1487,8 +1789,13 @@ async function startChatWithFriend(userId, username) {
             loadChatCount();
         }
 
-        // Переходим в чат
-        window.location.href = `/chat?id=${data.chat_id}`;
+        // Переключаемся на секцию чатов и открываем чат
+        showSection('chats');
+
+        // Небольшая задержка чтобы список загрузился
+        setTimeout(() => {
+            openChat(data.chat_id, username, true);
+        }, 300);
 
     } catch (error) {
         console.error('Error starting chat:', error);
@@ -1895,6 +2202,301 @@ function closeToast(btn) {
         toast.classList.add('hiding');
         setTimeout(() => toast.remove(), 300);
     }
+}
+
+// ==================== VOICE MESSAGES ====================
+
+let mediaRecorder = null;
+let audioChunks = [];
+let recordingStartTime = null;
+let recordingTimer = null;
+let isRecording = false;
+let currentAudio = null;
+let currentPlayerId = null;
+
+// ========== Запись ==========
+
+async function startVoiceRecording() {
+    if (!activeChatId) {
+        showToast({ type: 'error', title: 'Ошибка', message: 'Сначала откройте чат' });
+        return;
+    }
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                sampleRate: 48000
+            }
+        });
+
+        audioChunks = [];
+        recordingStartTime = Date.now();
+        isRecording = true;
+
+        mediaRecorder = new MediaRecorder(stream, {
+            mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+                ? 'audio/webm;codecs=opus'
+                : 'audio/webm'
+        });
+
+        mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+                audioChunks.push(event.data);
+            }
+        };
+
+        mediaRecorder.onstop = () => {
+            stream.getTracks().forEach(track => track.stop());
+
+            if (audioChunks.length > 0) {
+                const duration = (Date.now() - recordingStartTime) / 1000;
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                sendVoiceMessage(audioBlob, duration);
+            }
+
+            audioChunks = [];
+        };
+
+        mediaRecorder.start(100); // чанки каждые 100мс
+        showRecordingUI();
+        recordingTimer = setInterval(updateRecordingTimer, 100);
+
+    } catch (error) {
+        console.error('Microphone error:', error);
+
+        if (error.name === 'NotAllowedError') {
+            showToast({
+                type: 'error',
+                title: 'Нет доступа',
+                message: 'Разрешите доступ к микрофону в настройках браузера'
+            });
+        } else {
+            showToast({
+                type: 'error',
+                title: 'Ошибка',
+                message: 'Не удалось получить доступ к микрофону'
+            });
+        }
+    }
+}
+
+function stopVoiceRecording() {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        isRecording = false;
+        clearInterval(recordingTimer);
+        mediaRecorder.stop();
+        hideRecordingUI();
+    }
+}
+
+function cancelVoiceRecording() {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        isRecording = false;
+        clearInterval(recordingTimer);
+        audioChunks = []; // Очищаем чтобы onstop не отправил
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        mediaRecorder.stop();
+        hideRecordingUI();
+    }
+}
+
+// ========== UI записи ==========
+
+function showRecordingUI() {
+    const wrapper = document.getElementById('chatInputWrapper');
+    if (!wrapper) return;
+
+    wrapper.classList.add('recording');
+    wrapper.innerHTML = `
+        <button onclick="cancelVoiceRecording()" class="btn-icon-sm recording-cancel" title="Отмена">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="recording-indicator">
+            <span class="recording-dot"></span>
+            <span class="recording-time" id="recordingTime">0:00</span>
+        </div>
+        <div class="recording-wave">
+            <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <button onclick="stopVoiceRecording()" class="btn-send recording-send" title="Отправить">
+            <i class="fas fa-paper-plane"></i>
+        </button>
+    `;
+}
+
+function hideRecordingUI() {
+    const wrapper = document.getElementById('chatInputWrapper');
+    if (!wrapper) return;
+
+    wrapper.classList.remove('recording');
+    wrapper.innerHTML = `
+        <button onclick="toggleEmojiPicker()" class="btn-icon-sm" title="Эмодзи">
+            <i class="fas fa-smile"></i>
+        </button>
+        <input
+            type="text"
+            id="chatViewInput"
+            placeholder="Напишите сообщение..."
+            autocomplete="off"
+            onkeydown="if(event.key==='Enter') sendActiveMessage()"
+        >
+        <button onclick="startVoiceRecording()" class="btn-icon-sm btn-voice" title="Голосовое сообщение">
+            <i class="fas fa-microphone"></i>
+        </button>
+        <button onclick="sendActiveMessage()" class="btn-send" title="Отправить">
+            <i class="fas fa-paper-plane"></i>
+        </button>
+    `;
+
+    // Фокус на поле ввода
+    const input = document.getElementById('chatViewInput');
+    if (input) input.focus();
+}
+
+function updateRecordingTimer() {
+    const elapsed = (Date.now() - recordingStartTime) / 1000;
+    const minutes = Math.floor(elapsed / 60);
+    const seconds = Math.floor(elapsed % 60);
+    const el = document.getElementById('recordingTime');
+    if (el) {
+        el.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+}
+
+// ========== Отправка ==========
+
+async function sendVoiceMessage(audioBlob, duration) {
+    if (!activeChatId) return;
+
+    // Минимальная длительность
+    if (duration < 0.5) {
+        showToast({ type: 'info', title: 'Слишком коротко', message: 'Запишите сообщение длиннее' });
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('chat_id', activeChatId.toString());
+    formData.append('voice', audioBlob, 'voice.webm');
+    formData.append('duration', duration.toFixed(1));
+
+    try {
+        let token = TokenManager.getAccessToken();
+
+        const response = await fetch('/api/chat/send-voice', {
+            method: 'POST',
+            headers: {
+                'Authorization': token
+            },
+            body: formData
+        });
+
+        if (!response.ok) {
+            const data = await response.json();
+            showToast({
+                type: 'error',
+                title: 'Ошибка',
+                message: data.error || 'Не удалось отправить'
+            });
+        }
+    } catch (error) {
+        console.error('Failed to send voice:', error);
+        showToast({
+            type: 'error',
+            title: 'Ошибка',
+            message: 'Не удалось отправить голосовое сообщение'
+        });
+    }
+}
+
+function createVoicePlayerHtml(voiceUrl, duration, isOwn) {
+    const id = 'vp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+    const durationStr = formatVoiceDuration(duration);
+
+    return `
+        <div class="voice-player ${isOwn ? 'voice-player--own' : 'voice-player--other'}" id="${id}">
+            <button class="voice-player__btn" onclick="toggleVoice('${id}', '${voiceUrl}')">
+                <i class="fas fa-play" id="${id}_icon"></i>
+            </button>
+            <div class="voice-player__track">
+                <div class="voice-player__progress" id="${id}_bar"></div>
+            </div>
+            <span class="voice-player__time" id="${id}_time">${durationStr}</span>
+        </div>
+    `;
+}
+
+function formatVoiceDuration(sec) {
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+// ========== Воспроизведение ==========
+
+function toggleVoice(playerId, url) {
+    const icon = document.getElementById(playerId + '_icon');
+    const bar = document.getElementById(playerId + '_bar');
+    const timeEl = document.getElementById(playerId + '_time');
+
+    // Если играет этот — пауза
+    if (currentPlayerId === playerId && currentAudio && !currentAudio.paused) {
+        currentAudio.pause();
+        if (icon) icon.className = 'fas fa-play';
+        return;
+    }
+
+    // Остановить предыдущий
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+
+        if (currentPlayerId) {
+            const prevIcon = document.getElementById(currentPlayerId + '_icon');
+            const prevBar = document.getElementById(currentPlayerId + '_bar');
+            if (prevIcon) prevIcon.className = 'fas fa-play';
+            if (prevBar) prevBar.style.width = '0%';
+        }
+    }
+
+    // Играем новый
+    currentAudio = new Audio(url);
+    currentPlayerId = playerId;
+
+    if (icon) icon.className = 'fas fa-pause';
+
+    currentAudio.addEventListener('timeupdate', () => {
+        if (!currentAudio.duration) return;
+
+        const pct = (currentAudio.currentTime / currentAudio.duration) * 100;
+        if (bar) bar.style.width = pct + '%';
+
+        const remaining = currentAudio.duration - currentAudio.currentTime;
+        if (timeEl) timeEl.textContent = formatVoiceDuration(remaining);
+    });
+
+    currentAudio.addEventListener('ended', () => {
+        if (icon) icon.className = 'fas fa-play';
+        if (bar) bar.style.width = '0%';
+        currentPlayerId = null;
+
+        // Восстанавливаем исходную длительность
+        if (timeEl && currentAudio.duration) {
+            timeEl.textContent = formatVoiceDuration(currentAudio.duration);
+        }
+    });
+
+    currentAudio.addEventListener('error', () => {
+        if (icon) icon.className = 'fas fa-play';
+        showToast({ type: 'error', title: 'Ошибка', message: 'Не удалось воспроизвести' });
+        currentPlayerId = null;
+    });
+
+    currentAudio.play().catch(err => {
+        console.error('Play error:', err);
+        if (icon) icon.className = 'fas fa-play';
+    });
 }
 
 // ==================== INITIALIZATION ====================

@@ -507,12 +507,22 @@ func convertToWebSocketMessage(msg *chat_v1.Message) map[string]interface{} {
 			"onlineUsers": onlineUsers,
 			"onlineCount": len(msg.OnlineUsers),
 		}
+	case chat_v1.MessageType_MESSAGE_TYPE_VOICE:
+		return map[string]interface{}{
+			"type":           "message",
+			"message_type":   "voice",
+			"from":           msg.From,
+			"text":           msg.Text,
+			"sent_at":        msg.CreatedAt.AsTime(),
+			"voice_duration": msg.VoiceDuration,
+		}
 	default:
 		return map[string]interface{}{
-			"type":    "message",
-			"from":    msg.From,
-			"text":    msg.Text,
-			"sent_at": msg.CreatedAt.AsTime(),
+			"type":         "message",
+			"message_type": "text",
+			"from":         msg.From,
+			"text":         msg.Text,
+			"sent_at":      msg.CreatedAt.AsTime(),
 		}
 	}
 

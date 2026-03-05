@@ -154,9 +154,13 @@ services:
       - HTTP_PORT=8080
       - AUTH_GRPC_ADDR=${AUTH_GRPC_ADDR}
       - CHAT_GRPC_ADDR=${CHAT_GRPC_ADDR}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
     depends_on:
       - auth
       - chat-server
+      - minio
     networks:
       - app-network
   prometheus:
