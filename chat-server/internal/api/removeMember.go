@@ -20,11 +20,11 @@ func (s *Implementation) RemoveMember(ctx context.Context, req *desc.RemoveMembe
 		return nil, status.Error(codes.InvalidArgument, "chat id is required")
 	}
 
-	if req.UserId == 0 {
-		return nil, status.Error(codes.InvalidArgument, "user id is required")
+	if req.UserId == 0 && req.Username == "" {
+		return nil, status.Error(codes.InvalidArgument, "user_id or username is required")
 	}
 
-	err = s.chatService.RemoveMember(ctx, req.ChatId, userId, req.UserId)
+	err = s.chatService.RemoveMember(ctx, req.ChatId, userId, req.UserId, req.Username)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to remove member: %v", err)
 	}

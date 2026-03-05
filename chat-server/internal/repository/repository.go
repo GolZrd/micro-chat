@@ -22,6 +22,7 @@ type ChatRepository interface {
 	CreateDirectChat(ctx context.Context, userId1 int64, userId2 int64, username1 string, username2 string) (int64, error)
 	AddMember(ctx context.Context, chatId int64, userId int64, username string) error
 	RemoveMember(ctx context.Context, chatId int64, userId int64) error
+	RemoveMemberByUsername(ctx context.Context, chatId int64, username string) error
 	ChatInfo(ctx context.Context, chatId int64) (*ChatInfoDTO, error)
 	PublicChats(ctx context.Context, search string) ([]PublicChatDTO, error)
 }
@@ -362,6 +363,31 @@ func (r *repo) RemoveMember(ctx context.Context, chatId int64, userId int64) err
 		Where(squirrel.And{
 			squirrel.Eq{"chat_id": chatId},
 			squirrel.Eq{"user_id": userId},
+		})
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return fmt.Errorf("build query: %w", err)
+	}
+
+	res, err := r.db.Exec(ctx, query, args...)
+	if err != nil {
+		return fmt.Errorf("remove member from chat: %w", err)
+	}
+
+	if res.RowsAffected() == 0 {
+		return fmt.Errorf("member not found")
+	}
+
+	return nil
+}
+
+func (r *repo) RemoveMemberByUsername(ctx context.Context, chatID int64, username string) error {
+	builder := squirrel.Delete("chat_members").
+		PlaceholderFormat(squirrel.Dollar).
+		Where(squirrel.And{
+			squirrel.Eq{"chat_id": chatID},
+			squirrel.Eq{"username": username},
 		})
 
 	query, args, err := builder.ToSql()

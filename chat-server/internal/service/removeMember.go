@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (s *service) RemoveMember(ctx context.Context, chatId int64, userId int64, targetUserId int64) error {
+func (s *service) RemoveMember(ctx context.Context, chatId int64, userId int64, targetUserId int64, targetUsername string) error {
 	// Получаем информацию о чате
 	chat, err := s.ChatRepository.ChatInfo(ctx, chatId)
 	if err != nil {
@@ -25,6 +25,25 @@ func (s *service) RemoveMember(ctx context.Context, chatId int64, userId int64, 
 	if chat.CreatorId != userId {
 		logger.Warn("only owner can remove members from chat", zap.Int64("chat_id", chatId))
 		return errors.New("only owner can remove members from chat")
+	}
+
+	// Удаление по username
+	if targetUsername != "" {
+		// Проверяем, что не пытаемся удалить себя
+		for _, m := range chat.Members {
+			if m.Username == targetUsername && m.UserId == userId {
+				return errors.New("cannot remove yourself from chat")
+			}
+		}
+
+		err = s.ChatRepository.RemoveMemberByUsername(ctx, chatId, targetUsername)
+		if err != nil {
+			logger.Error("failed to remove member by username", zap.Int64("chat_id", chatId), zap.String("username", targetUsername), zap.Error(err))
+			return fmt.Errorf("remove member by username: %w", err)
+		}
+
+		logger.Info("member removed from chat by username", zap.Int64("chat_id", chatId), zap.String("username", targetUsername))
+		return nil
 	}
 
 	// Нельзя удалить самого себя
