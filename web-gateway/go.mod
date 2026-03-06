@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/GolZrd/micro-chat/auth v0.0.0-20260215071822-f0fc930a1dae
-	github.com/GolZrd/micro-chat/chat-server v0.0.0-20260303180428-123f5c29c7cc
+	github.com/GolZrd/micro-chat/chat-server v0.0.0-20260305114533-fbe04e31173c
 	github.com/gin-gonic/gin v1.11.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/minio/minio-go/v7 v7.0.98

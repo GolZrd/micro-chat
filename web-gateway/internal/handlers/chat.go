@@ -82,8 +82,10 @@ func MyChats(client *clients.ChatClient) gin.HandlerFunc {
 			chats = append(chats, gin.H{
 				"id":         ch.Id,
 				"name":       ch.Name,
-				"is_direct":  ch.IsDirect,
 				"usernames":  ch.Usernames,
+				"is_direct":  ch.IsDirect,
+				"is_public":  ch.IsPublic,
+				"creator_id": ch.CreatorId,
 				"created_at": ch.CreatedAt.AsTime(),
 			})
 		}
@@ -353,8 +355,9 @@ func AddMember(client *clients.ChatClient) gin.HandlerFunc {
 func RemoveMember(client *clients.ChatClient) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req struct {
-			ChatId int64 `json:"chat_id"`
-			UserId int64 `json:"user_id"`
+			ChatId   int64  `json:"chat_id"`
+			UserId   int64  `json:"user_id"`
+			Username string `json:"username"`
 		}
 
 		if err := c.BindJSON(&req); err != nil {
@@ -366,8 +369,9 @@ func RemoveMember(client *clients.ChatClient) gin.HandlerFunc {
 		ctx := utils.ContextWithToken(c)
 
 		_, err := client.Client.RemoveMember(ctx, &chat_v1.RemoveMemberRequest{
-			ChatId: req.ChatId,
-			UserId: req.UserId,
+			ChatId:   req.ChatId,
+			UserId:   req.UserId,
+			Username: req.Username,
 		})
 		if err != nil {
 			logger.Error("failed to remove member", zap.Error(err))

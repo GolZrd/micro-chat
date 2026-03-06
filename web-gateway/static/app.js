@@ -665,6 +665,9 @@ function filterChatList(query) {
 // ========== Открытие чата ==========
 
 function openChat(chatId, chatName, isDirect) {
+    // Закрываем панель инфо
+    closeChatInfo();
+
     // Если уже открыт этот чат — ничего не делаем
     if (activeChatId === chatId) return;
 
@@ -795,8 +798,11 @@ function updateChatOnlineUsers(msg) {
     const onlineUsers = msg.online_users || msg.onlineUsers || [];
     const count = onlineUsers.length;
 
-    document.getElementById('chatViewStatus').textContent = `${count} в сети`;
-    document.getElementById('chatViewMemberCount').textContent = count;
+    const statusEl = document.getElementById('chatViewStatus');
+    if (statusEl) statusEl.textContent = `${count} в сети`;
+
+    const countEl = document.getElementById('chatViewMemberCount');
+    if (countEl) countEl.textContent = count;
 }
 
 function toggleChatMembers() {
@@ -2497,6 +2503,282 @@ function toggleVoice(playerId, url) {
         console.error('Play error:', err);
         if (icon) icon.className = 'fas fa-play';
     });
+}
+
+// ==================== CHAT INFO PANEL ====================
+
+let chatInfoData = null; // Кэш данных текущего чата
+
+function toggleChatInfo() {
+    const panel = document.getElementById('chatInfoPanel');
+    if (!panel) return;
+
+    if (panel.style.display === 'none') {
+        openChatInfo();
+    } else {
+        closeChatInfo();
+    }
+}
+
+function closeChatInfo() {
+    const panel = document.getElementById('chatInfoPanel');
+    if (panel) panel.style.display = 'none';
+
+    const overlay = document.getElementById('chatInfoOverlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
+function openChatInfo() {
+    if (!activeChatId) return;
+
+    const panel = document.getElementById('chatInfoPanel');
+    if (!panel) return;
+
+    const chat = chatListData.find(c => c.id === activeChatId);
+    if (!chat) return;
+
+    chatInfoData = chat;
+    renderChatInfo(chat);
+
+    // Создаём overlay
+    let overlay = document.getElementById('chatInfoOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'chatInfoOverlay';
+        overlay.className = 'chat-info-overlay';
+        overlay.onclick = closeChatInfo;
+
+        const chatView = document.getElementById('chatViewActive');
+        if (chatView) chatView.appendChild(overlay);
+    }
+    overlay.style.display = 'block';
+
+    panel.style.display = 'flex';
+}
+
+function renderChatInfo(chat) {
+    const currentUsername = TokenManager.getUsername();
+    const currentUserId = TokenManager.getUserId();
+    const isDirect = chat.is_direct || false;
+    const isPublic = chat.is_public || false;
+    const chatName = getChatDisplayName(chat);
+    const initials = chatName.substring(0, 2).toUpperCase();
+    const members = chat.usernames || [];
+    const isOwner = chat.creator_id === parseInt(currentUserId);
+
+    // Аватар и имя
+    document.getElementById('chatInfoAvatarInitials').textContent = initials;
+    document.getElementById('chatInfoName').textContent = chatName;
+
+    // Тип чата
+    const typeEl = document.getElementById('chatInfoType');
+    if (isDirect) {
+        typeEl.innerHTML = '<i class="fas fa-user"></i><span>Личный чат</span>';
+    } else if (isPublic) {
+        typeEl.innerHTML = '<i class="fas fa-globe"></i><span>Открытый чат</span>';
+    } else {
+        typeEl.innerHTML = '<i class="fas fa-lock"></i><span>Закрытый чат</span>';
+    }
+
+    // Количество участников
+    document.getElementById('chatInfoMemberCount').textContent = members.length;
+
+    // Кнопка добавления (только владелец, не личный чат)
+    const addMemberEl = document.getElementById('chatInfoAddMember');
+    if (addMemberEl) {
+        addMemberEl.style.display = (isOwner && !isDirect) ? 'block' : 'none';
+    }
+
+    // Список участников
+    const membersContainer = document.getElementById('chatInfoMembers');
+    let membersHtml = '';
+
+    members.forEach((username, index) => {
+        const memberInitials = username.substring(0, 2).toUpperCase();
+        const isCurrentUser = username === currentUsername;
+        const isFirstMember = index === 0;
+
+        // Определяем роль
+        let roleHtml = '';
+        if (isFirstMember && !isDirect) {
+            roleHtml = '<span class="chat-info-member__role">Владелец</span>';
+        }
+
+        // "Это вы"
+        let youBadge = '';
+        if (isCurrentUser) {
+            youBadge = '<span class="chat-info-member__you">Вы</span>';
+        }
+
+        // Кнопка удаления (только владелец, не себя, не личный чат)
+        let removeBtn = '';
+        if (isOwner && !isCurrentUser && !isDirect) {
+            removeBtn = `
+                <button
+                    class="chat-info-member__remove"
+                    onclick="event.stopPropagation(); removeMemberFromChat('${escapeHtml(username)}')"
+                    title="Удалить">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+        }
+
+        membersHtml += `
+            <div class="chat-info-member">
+                <div class="chat-info-member__avatar">${escapeHtml(memberInitials)}</div>
+                <div class="chat-info-member__body">
+                    <div class="chat-info-member__name">
+                        ${escapeHtml(username)} ${youBadge}
+                    </div>
+                    ${roleHtml}
+                </div>
+                ${removeBtn}
+            </div>
+        `;
+    });
+
+    membersContainer.innerHTML = membersHtml;
+
+    // Кнопка удаления чата
+    const deleteBtn = document.getElementById('chatInfoDeleteBtn');
+    if (deleteBtn) {
+        if (isOwner || isDirect) {
+            deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i><span>Удалить чат</span>';
+            deleteBtn.style.display = 'flex';
+        } else {
+            deleteBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i><span>Покинуть чат</span>';
+            deleteBtn.style.display = 'flex';
+        }
+    }
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeChatInfo();
+    }
+});
+
+// ========== Действия ==========
+
+async function addMemberFromInput() {
+    const input = document.getElementById('addMemberInput');
+    if (!input) return;
+
+    const username = input.value.trim();
+    if (!username) return;
+
+    if (!activeChatId) return;
+
+    try {
+        const response = await apiRequest('/api/chat/add-member', {
+            method: 'POST',
+            body: JSON.stringify({
+                chat_id: activeChatId,
+                username: username
+            })
+        });
+
+        if (response.ok) {
+            showToast({
+                type: 'success',
+                title: 'Добавлен',
+                message: `${username} добавлен в чат`
+            });
+            input.value = '';
+
+            // Обновляем список чатов и панель
+            await loadChatList();
+            const updatedChat = chatListData.find(c => c.id === activeChatId);
+            if (updatedChat) {
+                renderChatInfo(updatedChat);
+            }
+        } else {
+            const data = await response.json();
+            showToast({
+                type: 'error',
+                title: 'Ошибка',
+                message: data.error || 'Не удалось добавить'
+            });
+        }
+    } catch (error) {
+        showToast({
+            type: 'error',
+            title: 'Ошибка',
+            message: error.message
+        });
+    }
+}
+
+async function removeMemberFromChat(username) {
+    if (!confirm(`Удалить ${username} из чата?`)) return;
+    if (!activeChatId) return;
+
+    try {
+        const response = await apiRequest('/api/chat/remove-member', {
+            method: 'POST',
+            body: JSON.stringify({
+                chat_id: activeChatId,
+                username: username
+            })
+        });
+
+        if (response.ok) {
+            showToast({ type: 'success', title: 'Удалён', message: `${username} удалён из чата` });
+
+            await loadChatList();
+            const updatedChat = chatListData.find(c => c.id === activeChatId);
+            if (updatedChat) renderChatInfo(updatedChat);
+        } else {
+            const data = await response.json();
+            showToast({ type: 'error', title: 'Ошибка', message: data.error });
+        }
+    } catch (error) {
+        showToast({ type: 'error', title: 'Ошибка', message: error.message });
+    }
+}
+
+async function leaveOrDeleteChat() {
+    if (!activeChatId) return;
+
+    const chat = chatListData.find(c => c.id === activeChatId);
+    const currentUserId = TokenManager.getUserId();
+    const isOwner = chat && chat.creator_id === parseInt(currentUserId);
+
+    const action = isOwner ? 'удалить' : 'покинуть';
+    if (!confirm(`Вы уверены, что хотите ${action} этот чат?`)) return;
+
+    try {
+        const response = await apiRequest(`/api/chat/delete/${activeChatId}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            showToast({
+                type: 'success',
+                title: 'Готово',
+                message: `Чат ${isOwner ? 'удалён' : 'покинут'}`
+            });
+
+            // Закрываем чат
+            closeChatInfo();
+            closeActiveChat();
+            loadChatList();
+            loadChatCount();
+        } else {
+            const data = await response.json();
+            showToast({
+                type: 'error',
+                title: 'Ошибка',
+                message: data.error
+            });
+        }
+    } catch (error) {
+        showToast({
+            type: 'error',
+            title: 'Ошибка',
+            message: error.message
+        });
+    }
 }
 
 // ==================== INITIALIZATION ====================

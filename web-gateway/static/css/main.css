@@ -16,6 +16,7 @@
 @import url('./layout/right-sidebar.css');
 @import url('./layout/sidebar.css');
 @import url('./layout/main-content.css');
+@import url('./layout/chat-info-panel.css');
 @import url('./layout/chat-layout.css');
 
 /* 4. Компоненты */

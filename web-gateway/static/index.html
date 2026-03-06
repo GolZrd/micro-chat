@@ -178,7 +178,7 @@
                         <!-- Активный чат (скрыт по умолчанию) -->
                         <div class="chat-view-active" id="chatViewActive" style="display:none;">
                             <!-- Шапка -->
-                            <div class="chat-view__header">
+                            <div class="chat-view__header" onclick="toggleChatInfo()">
                                 <div class="chat-view__header-info">
                                     <div class="chat-view__avatar" id="chatViewAvatar">
                                         <span id="chatViewAvatarInitials">CH</span>
@@ -188,10 +188,64 @@
                                         <span class="chat-view__status" id="chatViewStatus">Подключение...</span>
                                     </div>
                                 </div>
-                                <div class="chat-view__header-actions">
-                                    <button onclick="toggleChatMembers()" class="btn-icon-sm" title="Участники">
-                                        <i class="fas fa-users"></i>
-                                        <span class="mini-badge" id="chatViewMemberCount">0</span>
+                            </div>
+
+                            <!-- Панель информации о чате -->
+                            <div class="chat-info-panel" id="chatInfoPanel" style="display:none;">
+                                <div class="chat-info-panel__header">
+                                    <h3>Информация о чате</h3>
+                                    <button onclick="closeChatInfo()" class="btn-icon-sm">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+
+                                <div class="chat-info-panel__content">
+                                    <!-- Основная информация -->
+                                    <div class="chat-info-section">
+                                        <div class="chat-info-avatar" id="chatInfoAvatar">
+                                            <span id="chatInfoAvatarInitials">CH</span>
+                                        </div>
+                                        <div class="chat-info-name" id="chatInfoName">Чат</div>
+                                        <div class="chat-info-type" id="chatInfoType">
+                                            <i class="fas fa-lock"></i>
+                                            <span>Закрытый чат</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Участники -->
+                                    <div class="chat-info-section">
+                                        <div class="chat-info-section__title">
+                                            <span>Участники</span>
+                                            <span class="chat-info-count" id="chatInfoMemberCount">0</span>
+                                        </div>
+
+                                        <!-- Добавить участника (только для владельца) -->
+                                        <div class="chat-info-add-member" id="chatInfoAddMember" style="display:none;">
+                                            <div class="add-member-input">
+                                                <input
+                                                    type="text"
+                                                    id="addMemberInput"
+                                                    placeholder="Имя пользователя..."
+                                                    autocomplete="off"
+                                                    onkeydown="if(event.key==='Enter') addMemberFromInput()"
+                                                >
+                                                <button onclick="addMemberFromInput()" class="btn-icon-sm" title="Добавить">
+                                                    <i class="fas fa-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="chat-info-members" id="chatInfoMembers">
+                                            <!-- Список участников -->
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Действия -->
+                                <div class="chat-info-panel__footer">
+                                    <button onclick="leaveOrDeleteChat()" class="btn-danger" id="chatInfoDeleteBtn">
+                                        <i class="fas fa-trash-alt"></i>
+                                        <span>Удалить чат</span>
                                     </button>
                                 </div>
                             </div>
