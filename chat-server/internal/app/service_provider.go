@@ -11,6 +11,7 @@ import (
 	"github.com/GolZrd/micro-chat/chat-server/internal/interceptor"
 	"github.com/GolZrd/micro-chat/chat-server/internal/repository"
 	"github.com/GolZrd/micro-chat/chat-server/internal/repository/presence"
+	"github.com/GolZrd/micro-chat/chat-server/internal/repository/unread"
 	"github.com/GolZrd/micro-chat/chat-server/internal/service"
 	"github.com/redis/go-redis/v9"
 
@@ -28,6 +29,7 @@ type serviceProvider struct {
 
 	chatRepository     repository.ChatRepository
 	presenceRepository presence.RedisRepository
+	unreadRepository   unread.UnreadRepository
 	chatService        service.ChatService
 	chatImpl           *api.Implementation
 }
@@ -142,9 +144,17 @@ func (s *serviceProvider) PresenceRepository(redisClient *redis.Client) presence
 	return s.presenceRepository
 }
 
+func (s *serviceProvider) UnreadRepository(ctx context.Context) unread.UnreadRepository {
+	if s.unreadRepository == nil {
+		s.unreadRepository = unread.NewUnreadRepository(s.PgPool(ctx))
+	}
+
+	return s.unreadRepository
+}
+
 func (s *serviceProvider) ChatService(ctx context.Context) service.ChatService {
 	if s.chatService == nil {
-		s.chatService = service.NewService(s.ChatRepository(ctx), s.PresenceRepository(s.RedisClient()), s.AuthClient())
+		s.chatService = service.NewService(s.ChatRepository(ctx), s.PresenceRepository(s.RedisClient()), s.UnreadRepository(ctx), s.AuthClient())
 	}
 
 	return s.chatService

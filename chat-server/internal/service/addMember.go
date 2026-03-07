@@ -55,6 +55,12 @@ func (s *service) AddMember(ctx context.Context, chatId int64, userId int64, use
 		return fmt.Errorf("add member to chat: %w", err)
 	}
 
+	err = s.UnreadRepository.InitForMember(ctx, chatId, userId)
+	if err != nil {
+		logger.Error("failed to init unread for member", zap.Int64("chat_id", chatId), zap.Int64("user_id", userId), zap.Error(err))
+		return fmt.Errorf("init unread for member: %w", err)
+	}
+
 	return nil
 
 }

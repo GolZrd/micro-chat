@@ -30,14 +30,22 @@ func (s *Implementation) MyChats(ctx context.Context, req *desc.MyChatsRequest) 
 
 	for _, chat := range chats {
 		chatsInfo := &desc.ChatInfo{
-			Id:        chat.ID,
-			Name:      chat.Name,
-			Usernames: chat.Usernames,
-			IsDirect:  chat.IsDirect,
-			IsPublic:  chat.IsPublic,
-			CreatorId: chat.CreatorId,
-			CreatedAt: timestamppb.New(chat.CreatedAt),
+			Id:                chat.ID,
+			Name:              chat.Name,
+			Usernames:         chat.Usernames,
+			IsDirect:          chat.IsDirect,
+			IsPublic:          chat.IsPublic,
+			CreatorId:         chat.CreatorId,
+			CreatedAt:         timestamppb.New(chat.CreatedAt),
+			LastMessage:       chat.LastMessage,
+			LastMessageSender: chat.LastMessageSender,
+			UnreadCount:       chat.UnreadCount,
 		}
+
+		if !chat.LastMessageAt.IsZero() {
+			chatsInfo.LastMessageAt = timestamppb.New(chat.LastMessageAt)
+		}
+
 		chatsPb.Chats = append(chatsPb.Chats, chatsInfo)
 	}
 

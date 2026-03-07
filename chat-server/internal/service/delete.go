@@ -18,6 +18,15 @@ func (s *service) Delete(ctx context.Context, id int64) error {
 		return fmt.Errorf("failed to delete chat: %w", err)
 	}
 
+	// Удаляем записи непрочитанных
+	err = s.UnreadRepository.DeleteForChat(ctx, id)
+	if err != nil {
+		logger.Error("failed to delete unread for chat",
+			zap.Int64("chat_id", id),
+			zap.Error(err),
+		)
+	}
+
 	logger.Info(
 		"chat deleted successfully",
 		zap.Int64("chat_id", id),

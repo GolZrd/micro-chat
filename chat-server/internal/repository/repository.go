@@ -25,6 +25,7 @@ type ChatRepository interface {
 	RemoveMemberByUsername(ctx context.Context, chatId int64, username string) error
 	ChatInfo(ctx context.Context, chatId int64) (*ChatInfoDTO, error)
 	PublicChats(ctx context.Context, search string) ([]PublicChatDTO, error)
+	LastMessages(ctx context.Context, chatIds []int64) (map[int64]LastMessageDTO, error)
 }
 
 type repo struct {
@@ -478,4 +479,47 @@ func (r *repo) PublicChats(ctx context.Context, search string) ([]PublicChatDTO,
 	}
 
 	return chats, nil
+}
+
+func (r *repo) LastMessages(ctx context.Context, chatIds []int64) (map[int64]LastMessageDTO, error) {
+	builder := squirrel.Select(
+		"DISTINCT ON (m.chat_id) m.chat_id",
+		"m.text",
+		"m.from_username",
+		"m.created_at",
+	).
+		PlaceholderFormat(squirrel.Dollar).
+		From("messages m").
+		Where(squirrel.Eq{"m.chat_id": chatIds}).
+		OrderBy("m.chat_id", "m.created_at DESC")
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("build query: %w", err)
+	}
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("query last messages: %w", err)
+	}
+
+	defer rows.Close()
+
+	result := make(map[int64]LastMessageDTO)
+	for rows.Next() {
+		var msg LastMessageDTO
+		err := rows.Scan(&msg.ChatId, &msg.Text, &msg.FromUsername, &msg.CreatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("scan message: %w", err)
+		}
+
+		// Обрезаем текст для превью
+		if len(msg.Text) > 100 {
+			msg.Text = msg.Text[:100] + "..."
+		}
+
+		result[msg.ChatId] = msg
+	}
+
+	return result, nil
 }

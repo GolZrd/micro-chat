@@ -35,6 +35,12 @@ func (s *service) SendMessage(ctx context.Context, msg SendMessageDTO) error {
 		return fmt.Errorf("database: failed to save message: %w", err)
 	}
 
+	// Увеличиваем счетчик непрочитанных сообщений у всех кроме отправителя
+	err = s.UnreadRepository.IncrementUnreadForMembers(ctx, msg.ChatId, msg.UserId)
+	if err != nil {
+		logger.Warn("failed to increment unread count", zap.Int64("chat_id", msg.ChatId), zap.String("sent by", msg.FromUsername), zap.Error(err))
+	}
+
 	// Создаем DTO для рассылки
 	msgDTO := MessageDTO{
 		MessageType:   msg.MessageType,

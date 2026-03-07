@@ -8,6 +8,7 @@ import (
 	"github.com/GolZrd/micro-chat/chat-server/internal/logger"
 	"github.com/GolZrd/micro-chat/chat-server/internal/repository"
 	"github.com/GolZrd/micro-chat/chat-server/internal/repository/presence"
+	"github.com/GolZrd/micro-chat/chat-server/internal/repository/unread"
 	"go.uber.org/zap"
 )
 
@@ -36,21 +37,27 @@ type ChatService interface {
 	// Присутствие
 	Heartbeat(ctx context.Context, userId int64) error
 	FriendsPresence(ctx context.Context, userIds []int64) ([]FriendPresenceDTO, error)
+
+	// Непрочитанные сообщения
+	MarkChatRead(ctx context.Context, chatId, userId int64) error
+	UnreadCounts(ctx context.Context, userId int64) (map[int64]int32, error)
 }
 
 type service struct {
 	ChatRepository     repository.ChatRepository
 	PresenceRepository presence.RedisRepository
+	UnreadRepository   unread.UnreadRepository
 	authClient         *auth.Client
 
 	rooms   map[int64]*ChatRoom // chat_id → ChatRoom
 	roomsMu sync.RWMutex        // мьютекс для создания и удаления комнат
 }
 
-func NewService(chatRepository repository.ChatRepository, presenceRepo presence.RedisRepository, authClient *auth.Client) ChatService {
+func NewService(chatRepository repository.ChatRepository, presenceRepo presence.RedisRepository, unreadRepo unread.UnreadRepository, authClient *auth.Client) ChatService {
 	return &service{
 		ChatRepository:     chatRepository,
 		PresenceRepository: presenceRepo,
+		UnreadRepository:   unreadRepo,
 		authClient:         authClient,
 		rooms:              make(map[int64]*ChatRoom),
 	}

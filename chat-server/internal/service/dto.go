@@ -27,13 +27,17 @@ type MessageDTO struct {
 }
 
 type ChatInfoDTO struct {
-	ID        int64
-	Name      string
-	Usernames []string
-	IsDirect  bool
-	IsPublic  bool
-	CreatorId int64
-	CreatedAt time.Time
+	ID                int64
+	Name              string
+	Usernames         []string
+	IsDirect          bool
+	IsPublic          bool
+	CreatorId         int64
+	CreatedAt         time.Time
+	LastMessage       string
+	LastMessageSender string
+	LastMessageAt     time.Time
+	UnreadCount       int32
 }
 
 // OnlineUserDTO информация о подключенном пользователе

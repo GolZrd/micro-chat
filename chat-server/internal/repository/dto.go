@@ -57,3 +57,10 @@ type PublicChatDTO struct {
 	CreatorName string
 	CreatedAt   time.Time
 }
+
+type LastMessageDTO struct {
+	ChatId       int64
+	Text         string
+	FromUsername string
+	CreatedAt    time.Time
+}

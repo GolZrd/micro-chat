@@ -32,6 +32,8 @@ const (
 	Chat_RemoveMember_FullMethodName          = "/chat_v1.Chat/RemoveMember"
 	Chat_JoinChat_FullMethodName              = "/chat_v1.Chat/JoinChat"
 	Chat_PublicChats_FullMethodName           = "/chat_v1.Chat/PublicChats"
+	Chat_MarkChatRead_FullMethodName          = "/chat_v1.Chat/MarkChatRead"
+	Chat_UnreadCounts_FullMethodName          = "/chat_v1.Chat/UnreadCounts"
 )
 
 // ChatClient is the client API for Chat service.
@@ -50,6 +52,8 @@ type ChatClient interface {
 	RemoveMember(ctx context.Context, in *RemoveMemberRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	JoinChat(ctx context.Context, in *JoinChatRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	PublicChats(ctx context.Context, in *PublicChatsRequest, opts ...grpc.CallOption) (*PublicChatsResponse, error)
+	MarkChatRead(ctx context.Context, in *MarkChatReadRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	UnreadCounts(ctx context.Context, in *UnreadCountsRequest, opts ...grpc.CallOption) (*UnreadCountsResponse, error)
 }
 
 type chatClient struct {
@@ -189,6 +193,26 @@ func (c *chatClient) PublicChats(ctx context.Context, in *PublicChatsRequest, op
 	return out, nil
 }
 
+func (c *chatClient) MarkChatRead(ctx context.Context, in *MarkChatReadRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, Chat_MarkChatRead_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *chatClient) UnreadCounts(ctx context.Context, in *UnreadCountsRequest, opts ...grpc.CallOption) (*UnreadCountsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UnreadCountsResponse)
+	err := c.cc.Invoke(ctx, Chat_UnreadCounts_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ChatServer is the server API for Chat service.
 // All implementations must embed UnimplementedChatServer
 // for forward compatibility.
@@ -205,6 +229,8 @@ type ChatServer interface {
 	RemoveMember(context.Context, *RemoveMemberRequest) (*emptypb.Empty, error)
 	JoinChat(context.Context, *JoinChatRequest) (*emptypb.Empty, error)
 	PublicChats(context.Context, *PublicChatsRequest) (*PublicChatsResponse, error)
+	MarkChatRead(context.Context, *MarkChatReadRequest) (*emptypb.Empty, error)
+	UnreadCounts(context.Context, *UnreadCountsRequest) (*UnreadCountsResponse, error)
 	mustEmbedUnimplementedChatServer()
 }
 
@@ -250,6 +276,12 @@ func (UnimplementedChatServer) JoinChat(context.Context, *JoinChatRequest) (*emp
 }
 func (UnimplementedChatServer) PublicChats(context.Context, *PublicChatsRequest) (*PublicChatsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PublicChats not implemented")
+}
+func (UnimplementedChatServer) MarkChatRead(context.Context, *MarkChatReadRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MarkChatRead not implemented")
+}
+func (UnimplementedChatServer) UnreadCounts(context.Context, *UnreadCountsRequest) (*UnreadCountsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UnreadCounts not implemented")
 }
 func (UnimplementedChatServer) mustEmbedUnimplementedChatServer() {}
 func (UnimplementedChatServer) testEmbeddedByValue()              {}
@@ -481,6 +513,42 @@ func _Chat_PublicChats_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Chat_MarkChatRead_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MarkChatReadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServer).MarkChatRead(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Chat_MarkChatRead_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServer).MarkChatRead(ctx, req.(*MarkChatReadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Chat_UnreadCounts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnreadCountsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServer).UnreadCounts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Chat_UnreadCounts_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServer).UnreadCounts(ctx, req.(*UnreadCountsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Chat_ServiceDesc is the grpc.ServiceDesc for Chat service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -531,6 +599,14 @@ var Chat_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PublicChats",
 			Handler:    _Chat_PublicChats_Handler,
+		},
+		{
+			MethodName: "MarkChatRead",
+			Handler:    _Chat_MarkChatRead_Handler,
+		},
+		{
+			MethodName: "UnreadCounts",
+			Handler:    _Chat_UnreadCounts_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
