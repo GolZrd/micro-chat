@@ -43,14 +43,17 @@ func (s *service) MyChats(ctx context.Context, userId int64) ([]ChatInfoDTO, err
 
 	for _, chat := range chats {
 		usernames := make([]string, 0, len(chat.Members))
+		memberIds := make([]int64, 0, len(chat.Members))
 		for _, member := range chat.Members {
 			usernames = append(usernames, member.Username)
+			memberIds = append(memberIds, member.UserId)
 		}
 
 		dto := ChatInfoDTO{
 			ID:          chat.Id,
 			Name:        chat.Name,
 			Usernames:   usernames,
+			MemberIds:   memberIds,
 			IsDirect:    chat.IsDirect,
 			IsPublic:    chat.IsPublic,
 			CreatorId:   chat.CreatorId,

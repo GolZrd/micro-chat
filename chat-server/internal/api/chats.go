@@ -40,6 +40,7 @@ func (s *Implementation) MyChats(ctx context.Context, req *desc.MyChatsRequest) 
 			LastMessage:       chat.LastMessage,
 			LastMessageSender: chat.LastMessageSender,
 			UnreadCount:       chat.UnreadCount,
+			MemberIds:         chat.MemberIds,
 		}
 
 		if !chat.LastMessageAt.IsZero() {

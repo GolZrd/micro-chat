@@ -91,6 +91,7 @@ message ChatInfo {
     string last_message_sender = 9;
     google.protobuf.Timestamp last_message_at = 10;
     int32 unread_count = 11;
+    repeated int64 member_ids = 12;
 }
 
 message MyChatsResponse {

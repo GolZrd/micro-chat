@@ -30,6 +30,7 @@ type ChatInfoDTO struct {
 	ID                int64
 	Name              string
 	Usernames         []string
+	MemberIds         []int64
 	IsDirect          bool
 	IsPublic          bool
 	CreatorId         int64
