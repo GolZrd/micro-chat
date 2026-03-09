@@ -12,6 +12,8 @@ func ToUserFromRepo(user *modelRepo.User) *model.User {
 	return &model.User{
 		Id:        user.Id,
 		Info:      *ToUserInfoFromRepo(user.Info),
+		AvatarURL: user.AvatarURL,
+		Bio:       user.Bio,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 	}

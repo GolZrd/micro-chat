@@ -33,6 +33,7 @@ func TestUpdate(t *testing.T) {
 				Info: &desc.UpdateUserInfo{
 					Username: wrapperspb.String("New name"),
 					Email:    nil,
+					Bio:      nil,
 				},
 			},
 			InitMock: func(mock *serviceMocks.UserServiceMock, ctx context.Context, userId int64, dto userService.UpdateUserDTO) {
@@ -47,6 +48,7 @@ func TestUpdate(t *testing.T) {
 				Info: &desc.UpdateUserInfo{
 					Username: nil,
 					Email:    wrapperspb.String("New email"),
+					Bio:      nil,
 				},
 			},
 			InitMock: func(mock *serviceMocks.UserServiceMock, ctx context.Context, userId int64, dto userService.UpdateUserDTO) {
@@ -55,12 +57,28 @@ func TestUpdate(t *testing.T) {
 			expectSuccess: true,
 		},
 		{
-			name: "success case - update both name and email",
+			name: "success case - update only bio",
+			req: &desc.UpdateRequest{
+				Id: 64,
+				Info: &desc.UpdateUserInfo{
+					Username: nil,
+					Email:    nil,
+					Bio:      wrapperspb.String("New long bio"),
+				},
+			},
+			InitMock: func(mock *serviceMocks.UserServiceMock, ctx context.Context, userId int64, dto userService.UpdateUserDTO) {
+				mock.UpdateMock.Expect(ctx, userId, dto).Return(nil)
+			},
+			expectSuccess: true,
+		},
+		{
+			name: "success case - update all fields",
 			req: &desc.UpdateRequest{
 				Id: 64,
 				Info: &desc.UpdateUserInfo{
 					Username: wrapperspb.String("New name"),
 					Email:    wrapperspb.String("New email"),
+					Bio:      wrapperspb.String("New long bio"),
 				},
 			},
 			InitMock: func(mock *serviceMocks.UserServiceMock, ctx context.Context, userId int64, dto userService.UpdateUserDTO) {
@@ -140,6 +158,9 @@ func TestUpdate(t *testing.T) {
 				}
 				if tt.req.Info.Email != nil {
 					dto.Email = &tt.req.Info.Email.Value
+				}
+				if tt.req.Info.Bio != nil {
+					dto.Bio = &tt.req.Info.Bio.Value
 				}
 			}
 

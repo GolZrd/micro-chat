@@ -15,6 +15,8 @@ service UserAPI {
     rpc Delete(DeleteRequest) returns (google.protobuf.Empty); // Delete - удаление пользователя из системы по его идентификатору. 
     rpc CheckUsersExists(CheckUsersExistsRequest) returns (CheckUsersExistsResponse); // CheckUsersExists - ручка проверки существования пользователей
     rpc SearchUser(SearchUserRequest) returns (SearchUserResponse); // SearchUser - ручка поиска пользователей по никнейму
+
+    rpc UpdateAvatar(UpdateAvatarRequest) returns (UpdateAvatarResponse);
 }
 
 
@@ -38,6 +40,8 @@ message User {
     UserInfo info = 2;
     google.protobuf.Timestamp created_at = 3;
     google.protobuf.Timestamp updated_at = 4;
+    string avatar_url = 5;
+    string bio = 6;
 }
 
 message UserInfoShort {
@@ -66,6 +70,7 @@ message GetResponse {
 message UpdateUserInfo {
     google.protobuf.StringValue username = 1;
     google.protobuf.StringValue email = 2;
+    google.protobuf.StringValue bio = 3;
 }
 
 message UpdateRequest {
@@ -100,4 +105,13 @@ message SearchUserRequest {
 // Ответ (список пользователей)
 message SearchUserResponse {
     repeated UserSearchResult users = 1; // Список пользователей
+}
+
+message UpdateAvatarRequest {
+    int64 id = 1;
+    string avatar_url = 2;
+}
+
+message UpdateAvatarResponse {
+    string avatar_url = 1;
 }

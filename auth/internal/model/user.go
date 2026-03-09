@@ -9,6 +9,8 @@ import (
 type User struct {
 	Id        int64
 	Info      UserInfo
+	AvatarURL string
+	Bio       string
 	CreatedAt time.Time
 	UpdatedAt sql.NullTime
 }
@@ -24,6 +26,7 @@ type UserInfo struct {
 type UpdateUserInfo struct {
 	Username *string `db:"username"`
 	Email    *string `db:"email"`
+	Bio      *string `db:"bio"`
 }
 
 // Модель для получения пользователя по email

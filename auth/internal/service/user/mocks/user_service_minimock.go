@@ -61,6 +61,13 @@ type UserServiceMock struct {
 	afterUpdateCounter  uint64
 	beforeUpdateCounter uint64
 	UpdateMock          mUserServiceMockUpdate
+
+	funcUpdateAvatar          func(ctx context.Context, id int64, avatarUrl string) (err error)
+	funcUpdateAvatarOrigin    string
+	inspectFuncUpdateAvatar   func(ctx context.Context, id int64, avatarUrl string)
+	afterUpdateAvatarCounter  uint64
+	beforeUpdateAvatarCounter uint64
+	UpdateAvatarMock          mUserServiceMockUpdateAvatar
 }
 
 // NewUserServiceMock returns a mock for mm_user.UserService
@@ -88,6 +95,9 @@ func NewUserServiceMock(t minimock.Tester) *UserServiceMock {
 
 	m.UpdateMock = mUserServiceMockUpdate{mock: m}
 	m.UpdateMock.callArgs = []*UserServiceMockUpdateParams{}
+
+	m.UpdateAvatarMock = mUserServiceMockUpdateAvatar{mock: m}
+	m.UpdateAvatarMock.callArgs = []*UserServiceMockUpdateAvatarParams{}
 
 	t.Cleanup(m.MinimockFinish)
 
@@ -2244,6 +2254,379 @@ func (m *UserServiceMock) MinimockUpdateInspect() {
 	}
 }
 
+type mUserServiceMockUpdateAvatar struct {
+	optional           bool
+	mock               *UserServiceMock
+	defaultExpectation *UserServiceMockUpdateAvatarExpectation
+	expectations       []*UserServiceMockUpdateAvatarExpectation
+
+	callArgs []*UserServiceMockUpdateAvatarParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// UserServiceMockUpdateAvatarExpectation specifies expectation struct of the UserService.UpdateAvatar
+type UserServiceMockUpdateAvatarExpectation struct {
+	mock               *UserServiceMock
+	params             *UserServiceMockUpdateAvatarParams
+	paramPtrs          *UserServiceMockUpdateAvatarParamPtrs
+	expectationOrigins UserServiceMockUpdateAvatarExpectationOrigins
+	results            *UserServiceMockUpdateAvatarResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// UserServiceMockUpdateAvatarParams contains parameters of the UserService.UpdateAvatar
+type UserServiceMockUpdateAvatarParams struct {
+	ctx       context.Context
+	id        int64
+	avatarUrl string
+}
+
+// UserServiceMockUpdateAvatarParamPtrs contains pointers to parameters of the UserService.UpdateAvatar
+type UserServiceMockUpdateAvatarParamPtrs struct {
+	ctx       *context.Context
+	id        *int64
+	avatarUrl *string
+}
+
+// UserServiceMockUpdateAvatarResults contains results of the UserService.UpdateAvatar
+type UserServiceMockUpdateAvatarResults struct {
+	err error
+}
+
+// UserServiceMockUpdateAvatarOrigins contains origins of expectations of the UserService.UpdateAvatar
+type UserServiceMockUpdateAvatarExpectationOrigins struct {
+	origin          string
+	originCtx       string
+	originId        string
+	originAvatarUrl string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmUpdateAvatar *mUserServiceMockUpdateAvatar) Optional() *mUserServiceMockUpdateAvatar {
+	mmUpdateAvatar.optional = true
+	return mmUpdateAvatar
+}
+
+// Expect sets up expected params for UserService.UpdateAvatar
+func (mmUpdateAvatar *mUserServiceMockUpdateAvatar) Expect(ctx context.Context, id int64, avatarUrl string) *mUserServiceMockUpdateAvatar {
+	if mmUpdateAvatar.mock.funcUpdateAvatar != nil {
+		mmUpdateAvatar.mock.t.Fatalf("UserServiceMock.UpdateAvatar mock is already set by Set")
+	}
+
+	if mmUpdateAvatar.defaultExpectation == nil {
+		mmUpdateAvatar.defaultExpectation = &UserServiceMockUpdateAvatarExpectation{}
+	}
+
+	if mmUpdateAvatar.defaultExpectation.paramPtrs != nil {
+		mmUpdateAvatar.mock.t.Fatalf("UserServiceMock.UpdateAvatar mock is already set by ExpectParams functions")
+	}
+
+	mmUpdateAvatar.defaultExpectation.params = &UserServiceMockUpdateAvatarParams{ctx, id, avatarUrl}
+	mmUpdateAvatar.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmUpdateAvatar.expectations {
+		if minimock.Equal(e.params, mmUpdateAvatar.defaultExpectation.params) {
+			mmUpdateAvatar.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmUpdateAvatar.defaultExpectation.params)
+		}
+	}
+
+	return mmUpdateAvatar
+}
+
+// ExpectCtxParam1 sets up expected param ctx for UserService.UpdateAvatar
+func (mmUpdateAvatar *mUserServiceMockUpdateAvatar) ExpectCtxParam1(ctx context.Context) *mUserServiceMockUpdateAvatar {
+	if mmUpdateAvatar.mock.funcUpdateAvatar != nil {
+		mmUpdateAvatar.mock.t.Fatalf("UserServiceMock.UpdateAvatar mock is already set by Set")
+	}
+
+	if mmUpdateAvatar.defaultExpectation == nil {
+		mmUpdateAvatar.defaultExpectation = &UserServiceMockUpdateAvatarExpectation{}
+	}
+
+	if mmUpdateAvatar.defaultExpectation.params != nil {
+		mmUpdateAvatar.mock.t.Fatalf("UserServiceMock.UpdateAvatar mock is already set by Expect")
+	}
+
+	if mmUpdateAvatar.defaultExpectation.paramPtrs == nil {
+		mmUpdateAvatar.defaultExpectation.paramPtrs = &UserServiceMockUpdateAvatarParamPtrs{}
+	}
+	mmUpdateAvatar.defaultExpectation.paramPtrs.ctx = &ctx
+	mmUpdateAvatar.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmUpdateAvatar
+}
+
+// ExpectIdParam2 sets up expected param id for UserService.UpdateAvatar
+func (mmUpdateAvatar *mUserServiceMockUpdateAvatar) ExpectIdParam2(id int64) *mUserServiceMockUpdateAvatar {
+	if mmUpdateAvatar.mock.funcUpdateAvatar != nil {
+		mmUpdateAvatar.mock.t.Fatalf("UserServiceMock.UpdateAvatar mock is already set by Set")
+	}
+
+	if mmUpdateAvatar.defaultExpectation == nil {
+		mmUpdateAvatar.defaultExpectation = &UserServiceMockUpdateAvatarExpectation{}
+	}
+
+	if mmUpdateAvatar.defaultExpectation.params != nil {
+		mmUpdateAvatar.mock.t.Fatalf("UserServiceMock.UpdateAvatar mock is already set by Expect")
+	}
+
+	if mmUpdateAvatar.defaultExpectation.paramPtrs == nil {
+		mmUpdateAvatar.defaultExpectation.paramPtrs = &UserServiceMockUpdateAvatarParamPtrs{}
+	}
+	mmUpdateAvatar.defaultExpectation.paramPtrs.id = &id
+	mmUpdateAvatar.defaultExpectation.expectationOrigins.originId = minimock.CallerInfo(1)
+
+	return mmUpdateAvatar
+}
+
+// ExpectAvatarUrlParam3 sets up expected param avatarUrl for UserService.UpdateAvatar
+func (mmUpdateAvatar *mUserServiceMockUpdateAvatar) ExpectAvatarUrlParam3(avatarUrl string) *mUserServiceMockUpdateAvatar {
+	if mmUpdateAvatar.mock.funcUpdateAvatar != nil {
+		mmUpdateAvatar.mock.t.Fatalf("UserServiceMock.UpdateAvatar mock is already set by Set")
+	}
+
+	if mmUpdateAvatar.defaultExpectation == nil {
+		mmUpdateAvatar.defaultExpectation = &UserServiceMockUpdateAvatarExpectation{}
+	}
+
+	if mmUpdateAvatar.defaultExpectation.params != nil {
+		mmUpdateAvatar.mock.t.Fatalf("UserServiceMock.UpdateAvatar mock is already set by Expect")
+	}
+
+	if mmUpdateAvatar.defaultExpectation.paramPtrs == nil {
+		mmUpdateAvatar.defaultExpectation.paramPtrs = &UserServiceMockUpdateAvatarParamPtrs{}
+	}
+	mmUpdateAvatar.defaultExpectation.paramPtrs.avatarUrl = &avatarUrl
+	mmUpdateAvatar.defaultExpectation.expectationOrigins.originAvatarUrl = minimock.CallerInfo(1)
+
+	return mmUpdateAvatar
+}
+
+// Inspect accepts an inspector function that has same arguments as the UserService.UpdateAvatar
+func (mmUpdateAvatar *mUserServiceMockUpdateAvatar) Inspect(f func(ctx context.Context, id int64, avatarUrl string)) *mUserServiceMockUpdateAvatar {
+	if mmUpdateAvatar.mock.inspectFuncUpdateAvatar != nil {
+		mmUpdateAvatar.mock.t.Fatalf("Inspect function is already set for UserServiceMock.UpdateAvatar")
+	}
+
+	mmUpdateAvatar.mock.inspectFuncUpdateAvatar = f
+
+	return mmUpdateAvatar
+}
+
+// Return sets up results that will be returned by UserService.UpdateAvatar
+func (mmUpdateAvatar *mUserServiceMockUpdateAvatar) Return(err error) *UserServiceMock {
+	if mmUpdateAvatar.mock.funcUpdateAvatar != nil {
+		mmUpdateAvatar.mock.t.Fatalf("UserServiceMock.UpdateAvatar mock is already set by Set")
+	}
+
+	if mmUpdateAvatar.defaultExpectation == nil {
+		mmUpdateAvatar.defaultExpectation = &UserServiceMockUpdateAvatarExpectation{mock: mmUpdateAvatar.mock}
+	}
+	mmUpdateAvatar.defaultExpectation.results = &UserServiceMockUpdateAvatarResults{err}
+	mmUpdateAvatar.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmUpdateAvatar.mock
+}
+
+// Set uses given function f to mock the UserService.UpdateAvatar method
+func (mmUpdateAvatar *mUserServiceMockUpdateAvatar) Set(f func(ctx context.Context, id int64, avatarUrl string) (err error)) *UserServiceMock {
+	if mmUpdateAvatar.defaultExpectation != nil {
+		mmUpdateAvatar.mock.t.Fatalf("Default expectation is already set for the UserService.UpdateAvatar method")
+	}
+
+	if len(mmUpdateAvatar.expectations) > 0 {
+		mmUpdateAvatar.mock.t.Fatalf("Some expectations are already set for the UserService.UpdateAvatar method")
+	}
+
+	mmUpdateAvatar.mock.funcUpdateAvatar = f
+	mmUpdateAvatar.mock.funcUpdateAvatarOrigin = minimock.CallerInfo(1)
+	return mmUpdateAvatar.mock
+}
+
+// When sets expectation for the UserService.UpdateAvatar which will trigger the result defined by the following
+// Then helper
+func (mmUpdateAvatar *mUserServiceMockUpdateAvatar) When(ctx context.Context, id int64, avatarUrl string) *UserServiceMockUpdateAvatarExpectation {
+	if mmUpdateAvatar.mock.funcUpdateAvatar != nil {
+		mmUpdateAvatar.mock.t.Fatalf("UserServiceMock.UpdateAvatar mock is already set by Set")
+	}
+
+	expectation := &UserServiceMockUpdateAvatarExpectation{
+		mock:               mmUpdateAvatar.mock,
+		params:             &UserServiceMockUpdateAvatarParams{ctx, id, avatarUrl},
+		expectationOrigins: UserServiceMockUpdateAvatarExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmUpdateAvatar.expectations = append(mmUpdateAvatar.expectations, expectation)
+	return expectation
+}
+
+// Then sets up UserService.UpdateAvatar return parameters for the expectation previously defined by the When method
+func (e *UserServiceMockUpdateAvatarExpectation) Then(err error) *UserServiceMock {
+	e.results = &UserServiceMockUpdateAvatarResults{err}
+	return e.mock
+}
+
+// Times sets number of times UserService.UpdateAvatar should be invoked
+func (mmUpdateAvatar *mUserServiceMockUpdateAvatar) Times(n uint64) *mUserServiceMockUpdateAvatar {
+	if n == 0 {
+		mmUpdateAvatar.mock.t.Fatalf("Times of UserServiceMock.UpdateAvatar mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmUpdateAvatar.expectedInvocations, n)
+	mmUpdateAvatar.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmUpdateAvatar
+}
+
+func (mmUpdateAvatar *mUserServiceMockUpdateAvatar) invocationsDone() bool {
+	if len(mmUpdateAvatar.expectations) == 0 && mmUpdateAvatar.defaultExpectation == nil && mmUpdateAvatar.mock.funcUpdateAvatar == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmUpdateAvatar.mock.afterUpdateAvatarCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmUpdateAvatar.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// UpdateAvatar implements mm_user.UserService
+func (mmUpdateAvatar *UserServiceMock) UpdateAvatar(ctx context.Context, id int64, avatarUrl string) (err error) {
+	mm_atomic.AddUint64(&mmUpdateAvatar.beforeUpdateAvatarCounter, 1)
+	defer mm_atomic.AddUint64(&mmUpdateAvatar.afterUpdateAvatarCounter, 1)
+
+	mmUpdateAvatar.t.Helper()
+
+	if mmUpdateAvatar.inspectFuncUpdateAvatar != nil {
+		mmUpdateAvatar.inspectFuncUpdateAvatar(ctx, id, avatarUrl)
+	}
+
+	mm_params := UserServiceMockUpdateAvatarParams{ctx, id, avatarUrl}
+
+	// Record call args
+	mmUpdateAvatar.UpdateAvatarMock.mutex.Lock()
+	mmUpdateAvatar.UpdateAvatarMock.callArgs = append(mmUpdateAvatar.UpdateAvatarMock.callArgs, &mm_params)
+	mmUpdateAvatar.UpdateAvatarMock.mutex.Unlock()
+
+	for _, e := range mmUpdateAvatar.UpdateAvatarMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.err
+		}
+	}
+
+	if mmUpdateAvatar.UpdateAvatarMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmUpdateAvatar.UpdateAvatarMock.defaultExpectation.Counter, 1)
+		mm_want := mmUpdateAvatar.UpdateAvatarMock.defaultExpectation.params
+		mm_want_ptrs := mmUpdateAvatar.UpdateAvatarMock.defaultExpectation.paramPtrs
+
+		mm_got := UserServiceMockUpdateAvatarParams{ctx, id, avatarUrl}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmUpdateAvatar.t.Errorf("UserServiceMock.UpdateAvatar got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmUpdateAvatar.UpdateAvatarMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.id != nil && !minimock.Equal(*mm_want_ptrs.id, mm_got.id) {
+				mmUpdateAvatar.t.Errorf("UserServiceMock.UpdateAvatar got unexpected parameter id, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmUpdateAvatar.UpdateAvatarMock.defaultExpectation.expectationOrigins.originId, *mm_want_ptrs.id, mm_got.id, minimock.Diff(*mm_want_ptrs.id, mm_got.id))
+			}
+
+			if mm_want_ptrs.avatarUrl != nil && !minimock.Equal(*mm_want_ptrs.avatarUrl, mm_got.avatarUrl) {
+				mmUpdateAvatar.t.Errorf("UserServiceMock.UpdateAvatar got unexpected parameter avatarUrl, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmUpdateAvatar.UpdateAvatarMock.defaultExpectation.expectationOrigins.originAvatarUrl, *mm_want_ptrs.avatarUrl, mm_got.avatarUrl, minimock.Diff(*mm_want_ptrs.avatarUrl, mm_got.avatarUrl))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmUpdateAvatar.t.Errorf("UserServiceMock.UpdateAvatar got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmUpdateAvatar.UpdateAvatarMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmUpdateAvatar.UpdateAvatarMock.defaultExpectation.results
+		if mm_results == nil {
+			mmUpdateAvatar.t.Fatal("No results are set for the UserServiceMock.UpdateAvatar")
+		}
+		return (*mm_results).err
+	}
+	if mmUpdateAvatar.funcUpdateAvatar != nil {
+		return mmUpdateAvatar.funcUpdateAvatar(ctx, id, avatarUrl)
+	}
+	mmUpdateAvatar.t.Fatalf("Unexpected call to UserServiceMock.UpdateAvatar. %v %v %v", ctx, id, avatarUrl)
+	return
+}
+
+// UpdateAvatarAfterCounter returns a count of finished UserServiceMock.UpdateAvatar invocations
+func (mmUpdateAvatar *UserServiceMock) UpdateAvatarAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmUpdateAvatar.afterUpdateAvatarCounter)
+}
+
+// UpdateAvatarBeforeCounter returns a count of UserServiceMock.UpdateAvatar invocations
+func (mmUpdateAvatar *UserServiceMock) UpdateAvatarBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmUpdateAvatar.beforeUpdateAvatarCounter)
+}
+
+// Calls returns a list of arguments used in each call to UserServiceMock.UpdateAvatar.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmUpdateAvatar *mUserServiceMockUpdateAvatar) Calls() []*UserServiceMockUpdateAvatarParams {
+	mmUpdateAvatar.mutex.RLock()
+
+	argCopy := make([]*UserServiceMockUpdateAvatarParams, len(mmUpdateAvatar.callArgs))
+	copy(argCopy, mmUpdateAvatar.callArgs)
+
+	mmUpdateAvatar.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockUpdateAvatarDone returns true if the count of the UpdateAvatar invocations corresponds
+// the number of defined expectations
+func (m *UserServiceMock) MinimockUpdateAvatarDone() bool {
+	if m.UpdateAvatarMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.UpdateAvatarMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.UpdateAvatarMock.invocationsDone()
+}
+
+// MinimockUpdateAvatarInspect logs each unmet expectation
+func (m *UserServiceMock) MinimockUpdateAvatarInspect() {
+	for _, e := range m.UpdateAvatarMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to UserServiceMock.UpdateAvatar at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterUpdateAvatarCounter := mm_atomic.LoadUint64(&m.afterUpdateAvatarCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.UpdateAvatarMock.defaultExpectation != nil && afterUpdateAvatarCounter < 1 {
+		if m.UpdateAvatarMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to UserServiceMock.UpdateAvatar at\n%s", m.UpdateAvatarMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to UserServiceMock.UpdateAvatar at\n%s with params: %#v", m.UpdateAvatarMock.defaultExpectation.expectationOrigins.origin, *m.UpdateAvatarMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcUpdateAvatar != nil && afterUpdateAvatarCounter < 1 {
+		m.t.Errorf("Expected call to UserServiceMock.UpdateAvatar at\n%s", m.funcUpdateAvatarOrigin)
+	}
+
+	if !m.UpdateAvatarMock.invocationsDone() && afterUpdateAvatarCounter > 0 {
+		m.t.Errorf("Expected %d calls to UserServiceMock.UpdateAvatar at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.UpdateAvatarMock.expectedInvocations), m.UpdateAvatarMock.expectedInvocationsOrigin, afterUpdateAvatarCounter)
+	}
+}
+
 // MinimockFinish checks that all mocked methods have been called the expected number of times
 func (m *UserServiceMock) MinimockFinish() {
 	m.finishOnce.Do(func() {
@@ -2259,6 +2642,8 @@ func (m *UserServiceMock) MinimockFinish() {
 			m.MinimockSearchUserInspect()
 
 			m.MinimockUpdateInspect()
+
+			m.MinimockUpdateAvatarInspect()
 		}
 	})
 }
@@ -2287,5 +2672,6 @@ func (m *UserServiceMock) minimockDone() bool {
 		m.MinimockDeleteDone() &&
 		m.MinimockGetDone() &&
 		m.MinimockSearchUserDone() &&
-		m.MinimockUpdateDone()
+		m.MinimockUpdateDone() &&
+		m.MinimockUpdateAvatarDone()
 }

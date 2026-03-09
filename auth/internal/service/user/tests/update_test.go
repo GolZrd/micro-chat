@@ -22,6 +22,7 @@ func init() {
 func TestUpdate(t *testing.T) {
 	usernameToUpdate := "test"
 	emailToUpdate := "test@mail.ru"
+	bioToUpdate := "test bio"
 
 	tests := []struct {
 		name               string
@@ -62,16 +63,35 @@ func TestUpdate(t *testing.T) {
 			expectSuccess: true,
 		},
 		{
-			name:   "success case - update both name and email",
+			name:   "success case - update only bio",
 			userId: int64(1),
 			input: userService.UpdateUserDTO{
-				Username: &usernameToUpdate,
-				Email:    &emailToUpdate,
+				Username: nil,
+				Email:    nil,
+				Bio:      &bioToUpdate,
 			},
 			UserRepositoryMock: func(mock *repoMocks.UserRepositoryMock, ctx context.Context, userId int64, input userService.UpdateUserDTO) {
 				mock.UpdateMock.Expect(ctx, userId, userRepository.UpdateUserDTO{
 					Username: input.Username,
 					Email:    input.Email,
+					Bio:      input.Bio,
+				}).Return(nil)
+			},
+			expectSuccess: true,
+		},
+		{
+			name:   "success case - update all fields",
+			userId: int64(1),
+			input: userService.UpdateUserDTO{
+				Username: &usernameToUpdate,
+				Email:    &emailToUpdate,
+				Bio:      &bioToUpdate,
+			},
+			UserRepositoryMock: func(mock *repoMocks.UserRepositoryMock, ctx context.Context, userId int64, input userService.UpdateUserDTO) {
+				mock.UpdateMock.Expect(ctx, userId, userRepository.UpdateUserDTO{
+					Username: input.Username,
+					Email:    input.Email,
+					Bio:      input.Bio,
 				}).Return(nil)
 			},
 			expectSuccess: true,

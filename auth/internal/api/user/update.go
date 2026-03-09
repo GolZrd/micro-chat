@@ -20,7 +20,7 @@ func (s *Implementation) Update(ctx context.Context, req *descUser.UpdateRequest
 		return nil, status.Error(codes.InvalidArgument, "info is required")
 	}
 
-	if req.Info.Username == nil && req.Info.Email == nil {
+	if req.Info.Username == nil && req.Info.Email == nil && req.Info.Bio == nil {
 		return nil, status.Error(codes.InvalidArgument, "at least one field is required")
 	}
 
@@ -33,6 +33,10 @@ func (s *Implementation) Update(ctx context.Context, req *descUser.UpdateRequest
 
 	if req.Info.Email != nil {
 		input.Email = &req.Info.Email.Value
+	}
+
+	if req.Info.Bio != nil {
+		input.Bio = &req.Info.Bio.Value
 	}
 
 	err := s.userService.Update(ctx, req.Id, input)

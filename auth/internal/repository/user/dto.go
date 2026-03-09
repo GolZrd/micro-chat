@@ -12,4 +12,5 @@ type CreateUserDTO struct {
 type UpdateUserDTO struct {
 	Username *string
 	Email    *string
+	Bio      *string
 }

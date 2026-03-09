@@ -23,6 +23,8 @@ const (
 	emailColumn     = "email"
 	passwordColumn  = "password"
 	roleColumn      = "role"
+	avatarColumn    = "avatar_url"
+	bioColumn       = "bio"
 	CreatedAtColumn = "created_at"
 	UpdatedAtColumn = "updated_at"
 )
@@ -38,6 +40,7 @@ type UserRepository interface {
 	GetByUsernames(ctx context.Context, usernames []string) ([]model.UserShort, error)
 	GetByUsername(ctx context.Context, username string) (*model.User, error)
 	SearchUser(ctx context.Context, searchQuery string, currentUserId int64, limit int) ([]model.UserSearchResult, error)
+	UpdateAvatar(ctx context.Context, id int64, avatarUrl string) error
 }
 
 type repo struct {
@@ -73,7 +76,7 @@ func (r *repo) Create(ctx context.Context, info CreateUserDTO) (int64, error) {
 }
 
 func (r *repo) Get(ctx context.Context, id int64) (*model.User, error) {
-	builder := squirrel.Select(idColumn, usernameColumn, passwordColumn, emailColumn, roleColumn, CreatedAtColumn, UpdatedAtColumn).
+	builder := squirrel.Select(idColumn, usernameColumn, passwordColumn, emailColumn, roleColumn, avatarColumn, bioColumn, CreatedAtColumn, UpdatedAtColumn).
 		PlaceholderFormat(squirrel.Dollar).
 		From(tableName).
 		Where(squirrel.Eq{idColumn: id}).
@@ -85,7 +88,7 @@ func (r *repo) Get(ctx context.Context, id int64) (*model.User, error) {
 	}
 
 	var user modelRepo.User
-	err = r.db.QueryRow(ctx, query, args...).Scan(&user.Id, &user.Info.Username, &user.Info.Password, &user.Info.Email, &user.Info.Role, &user.CreatedAt, &user.UpdatedAt)
+	err = r.db.QueryRow(ctx, query, args...).Scan(&user.Id, &user.Info.Username, &user.Info.Password, &user.Info.Email, &user.Info.Role, &user.AvatarURL, &user.Bio, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query row: %w", err)
 	}
@@ -101,6 +104,7 @@ func (r *repo) Update(ctx context.Context, id int64, info UpdateUserDTO) error {
 		SetMap(map[string]interface{}{
 			usernameColumn:  info.Username,
 			emailColumn:     info.Email,
+			bioColumn:       info.Bio,
 			UpdatedAtColumn: time.Now(),
 		})
 
@@ -251,4 +255,14 @@ func (r *repo) SearchUser(ctx context.Context, searchQuery string, currentUserId
 	}
 
 	return users, nil
+}
+
+// UpdateAvatar обновляет аватар пользователя
+func (r *repo) UpdateAvatar(ctx context.Context, id int64, avatarUrl string) error {
+	query := "UPDATE users SET avatar_url = $1, updated_at = now() WHERE id = $2"
+	_, err := r.db.Exec(ctx, query, avatarUrl, id)
+	if err != nil {
+		return fmt.Errorf("failed to update avatar: %w", err)
+	}
+	return nil
 }

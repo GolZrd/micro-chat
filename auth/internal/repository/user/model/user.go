@@ -9,6 +9,8 @@ import (
 type User struct {
 	Id        int64        `db:"id"`
 	Info      UserInfo     `db:""`
+	AvatarURL string       `db:"avatar_url"`
+	Bio       string       `db:"bio"`
 	CreatedAt time.Time    `db:"created_at"`
 	UpdatedAt sql.NullTime `db:"updated_at"`
 }
@@ -25,6 +27,7 @@ type UserInfo struct {
 type UpdateUserInfo struct {
 	Username *string `db:"username"`
 	Email    *string `db:"email"`
+	Bio      *string `db:"bio"`
 }
 
 // Для метода GetByEmail, но для squirrel нужны теги, поэтому эта структура тут дублируется

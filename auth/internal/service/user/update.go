@@ -38,6 +38,13 @@ func (s *service) Update(ctx context.Context, id int64, info UpdateUserDTO) erro
 		fieldsToUpdate = append(fieldsToUpdate, "email")
 	}
 
+	if info.Bio != nil {
+
+		// Добавляем в DTO
+		params.Bio = info.Bio
+		fieldsToUpdate = append(fieldsToUpdate, "bio")
+	}
+
 	err := s.userRepository.Update(ctx, id, params)
 	if err != nil {
 		logger.Error("Failed to update user in DB", zap.Int64("user_id", id), zap.Strings("fields", fieldsToUpdate), zap.Error(err))

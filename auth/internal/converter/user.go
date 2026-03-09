@@ -26,6 +26,8 @@ func ToUserFromService(user *model.User) *descUser.User {
 		Info:      ToUserInfoFromService(user.Info),
 		CreatedAt: timestamppb.New(user.CreatedAt),
 		UpdatedAt: updated_at,
+		AvatarUrl: user.AvatarURL,
+		Bio:       user.Bio,
 	}
 }
 
