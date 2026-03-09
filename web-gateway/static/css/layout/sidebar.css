@@ -8,39 +8,387 @@
     background: transparent; /* ДОБАВЛЕНО */
 }
 
+/* ============================================
+   SIDEBAR — СВОРАЧИВАНИЕ
+   ============================================ */
+
 .sidebar {
-    width: var(--sidebar-width);
-    background: rgba(26, 26, 36, 0.1); /* ИЗМЕНЕНО: добавлена прозрачность */
-    backdrop-filter: blur(4px); /* ДОБАВЛЕНО: эффект размытия */
+    position: relative;
+    width: 260px;
+    min-width: 260px;
+    /* background: var(--sidebar-bg, #1a1a2e); */
+    background: rgba(26, 26, 36, 0.1);
+    backdrop-filter: blur(4px);
     border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
-    position: relative;
-    z-index: var(--z-sidebar);
-    animation: slideInLeft 0.3s ease;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    z-index: 10;
 }
 
-/* Логотип */
-.app-logo {
-    padding: 0.6rem;
+/* Свёрнутое состояние */
+.sidebar.collapsed {
+    width: 60px;
+    min-width: 60px;
+}
+
+/* Кнопка сворачивания */
+.sidebar-toggle-btn {
+    position: absolute;
+    top: 12px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.5);
+    border-radius: 6px;
+    cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    font-size: 1.5rem;
-    font-weight: 800;
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    border-bottom: 1px solid var(--border);
+    justify-content: center;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    z-index: 20;
+    opacity: 0;
+}
+
+.sidebar:hover .sidebar-toggle-btn,
+.sidebar.collapsed .sidebar-toggle-btn {
+    opacity: 1;
+}
+
+.sidebar-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Поворот иконки при сворачивании */
+.sidebar.collapsed .sidebar-toggle-btn {
+    right: 50%;
+    transform: translateX(50%);
+}
+
+.sidebar.collapsed #sidebarToggleIcon {
+    transform: rotate(180deg);
+}
+
+#sidebarToggleIcon {
+    transition: transform 0.3s ease;
+}
+
+/* Скрытие текстовых меток при сворачивании */
+.sidebar-label {
+    opacity: 1;
+    transition: opacity 0.2s ease 0.1s;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.sidebar.collapsed .sidebar-label {
+    opacity: 0;
+    width: 0;
+    margin: 0;
+    padding: 0;
+    transition: opacity 0.1s ease;
+    pointer-events: none;
+    position: absolute;
+}
+
+/* Элемент видим только при свёрнутом sidebar */
+.sidebar-icon-only {
+    display: none !important;
+}
+
+.sidebar.collapsed .sidebar-icon-only {
+    display: flex !important;
+}
+
+.sidebar.collapsed .sidebar-label {
+    display: none !important;
+}
+
+/* ============================================
+   LOGO
+   ============================================ */
+.app-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 18px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: padding 0.3s ease;
 }
 
 .app-logo i {
-    font-size: 1.75rem;
-    background: var(--accent-gradient);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+    min-width: 24px;
+    text-align: center;
+}
+
+.sidebar.collapsed .app-logo {
+    padding: 16px 0;
+    justify-content: center;
+}
+
+/* ============================================
+   NAV ITEMS
+   ============================================ */
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 18px;
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    border-radius: 8px;
+    margin: 2px 8px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    position: relative;
+}
+
+.nav-item i {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    min-width: 20px;
+    text-align: center;
+}
+
+.nav-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.nav-item.active {
+    background: rgba(108, 99, 255, 0.2);
+    color: #6c63ff;
+}
+
+/* Свёрнутый — элементы по центру */
+.sidebar.collapsed .nav-item {
+    justify-content: center;
+    padding: 12px;
+    margin: 2px 6px;
+}
+
+/* Badge при свёрнутом sidebar */
+.nav-item .badge {
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.sidebar.collapsed .nav-item .badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 18px;
+    height: 18px;
+    font-size: 10px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+/* ============================================
+   FOOTER
+   ============================================ */
+.sidebar-footer {
+    margin-top: auto;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 8px;
+}
+
+.sidebar-footer-user {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.footer-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    flex: 1;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.footer-profile:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.footer-avatar {
+    position: relative;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    background: rgba(108, 99, 255, 0.3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.footer-online-indicator {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid var(--sidebar-bg, #1a1a2e);
+}
+
+.footer-online-indicator.online {
+    background: #4ade80;
+}
+
+.footer-online-indicator.offline {
+    background: #6b7280;
+}
+
+.footer-user-info {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.footer-username {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.footer-status {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.footer-logout-btn {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.footer-logout-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+/* Компактная кнопка выхода для свёрнутого состояния */
+.footer-logout-btn-compact {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    width: 100%;
+    justify-content: center;
+}
+
+.footer-logout-btn-compact:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+/* Свёрнутый footer */
+.sidebar.collapsed .sidebar-footer-user {
+    flex-direction: column;
+    align-items: center;
+}
+
+.sidebar.collapsed .footer-profile {
+    justify-content: center;
+    padding: 8px 4px;
+}
+
+/* ============================================
+   TOOLTIP для свёрнутого sidebar
+   ============================================ */
+.sidebar.collapsed .nav-item {
+    position: relative;
+}
+
+.sidebar.collapsed .nav-item::after {
+    content: attr(title);
+    position: absolute;
+    left: calc(100% + 8px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: #1e1e3a;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.sidebar.collapsed .nav-item:hover::after {
+    opacity: 1;
+}
+
+.sidebar.collapsed .footer-profile::after {
+    content: attr(title);
+    position: absolute;
+    left: calc(100% + 8px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: #1e1e3a;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.sidebar.collapsed .footer-profile:hover::after {
+    opacity: 1;
+}
+
+/* ============================================
+   MAIN CONTENT — подстраивается
+   ============================================ */
+.main-content {
+    flex: 1;
+    overflow-y: auto;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Профиль пользователя */
@@ -100,6 +448,23 @@
     color: var(--text-secondary);
 }
 
+
+/* Навигация */
+.sidebar-nav {
+    background: transparent; /* ДОБАВЛЕНО */
+}
+
+.footer-avatar-initials {
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.footer-status.online {
+    color: #28a745;
+}
+
 .status-indicator {
     width: 8px;
     height: 8px;
@@ -122,189 +487,6 @@
     font-size: 0.875rem;
 }
 
-/* Навигация */
-.sidebar-nav {
-    background: transparent; /* ДОБАВЛЕНО */
-}
-
-.nav-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1.5rem;
-    color: var(--text-secondary);
-    text-decoration: none;
-    transition: var(--transition);
-    position: relative;
-    font-weight: 500;
-}
-
-.nav-item:hover {
-    background: rgba(42, 42, 58, 0.6); /* ИЗМЕНЕНО */
-    backdrop-filter: blur(5px); /* ДОБАВЛЕНО */
-    color: var(--text-primary);
-}
-
-.nav-item.active {
-    background: rgba(42, 42, 58, 0.8); /* ИЗМЕНЕНО */
-    backdrop-filter: blur(10px); /* ДОБАВЛЕНО */
-    color: var(--accent);
-}
-
-.nav-item.active::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 3px;
-    background: var(--accent);
-    box-shadow: 0 0 10px var(--accent); /* ДОБАВЛЕНО: свечение */
-}
-
-.nav-item i {
-    width: 20px;
-    font-size: 1.1rem;
-}
-
-.nav-item .badge {
-    margin-left: auto;
-    background: var(--accent);
-    color: white;
-    padding: 0.125rem 0.5rem;
-    border-radius: 10px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    box-shadow: 0 2px 8px rgba(88, 101, 242, 0.4); /* ДОБАВЛЕНО */
-}
-
-/* Footer */
-.sidebar-footer {
-    margin-top: auto;
-}
-
-.sidebar-footer-user {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    margin-bottom: 8px;
-}
-
-/* Профиль — кликабельная область */
-.footer-profile {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 10px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    flex: 1;
-    min-width: 0;
-}
-
-.footer-profile:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
-/* Аватар */
-.footer-avatar {
-    position: relative;
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.footer-avatar-initials {
-    color: white;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-/* Онлайн индикатор на аватаре */
-.footer-online-indicator {
-    position: absolute;
-    bottom: -1px;
-    right: -1px;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    border: 2px solid #1a1a2e;
-    transition: background-color 0.3s ease;
-}
-
-.footer-online-indicator.online {
-    background-color: #28a745;
-    box-shadow: 0 0 6px rgba(40, 167, 69, 0.5);
-}
-
-.footer-online-indicator.offline {
-    background-color: #6c757d;
-}
-
-/* Имя и статус */
-.footer-user-info {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-}
-
-.footer-username {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #e0e0e0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.footer-status {
-    font-size: 0.7rem;
-    color: #888;
-}
-
-.footer-status.online {
-    color: #28a745;
-}
-
-/* Кнопка выхода */
-.footer-logout-btn {
-    background: none;
-    border: none;
-    color: #888;
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.footer-logout-btn:hover {
-    background-color: rgba(220, 53, 69, 0.15);
-    color: #dc3545;
-}
-
-.footer-logout-btn i {
-    font-size: 1.1rem;
-}
-
-/* Версия */
-.app-version {
-    text-align: center;
-    color: #555;
-    padding-top: 4px;
-}
-
 /* Стиль для скрытия sidebar для гостей */
 .app-container.guest-mode .sidebar {
     display: none;
@@ -313,4 +495,95 @@
 .app-container.guest-mode .main-content {
     margin-left: 0;
     width: 100%;
+}
+
+/* ============================================
+   UNREAD BADGE
+   ============================================ */
+.unread-badge {
+    background: #ef4444;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    flex-shrink: 0;
+    animation: badgePop 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes badgePop {
+    0% { transform: scale(0); }
+    60% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+/* Общий badge в sidebar */
+#totalUnreadBadge {
+    background: #ef4444;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: badgePop 0.3s ease;
+}
+
+/* Sidebar collapsed — badge позиционирование */
+.sidebar.collapsed #totalUnreadBadge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    min-width: 16px;
+    height: 16px;
+    font-size: 9px;
+}
+
+/* ============================================
+   NOTIFICATION PERMISSION BANNER
+   ============================================ */
+.notification-permission-banner {
+    background: rgba(108, 99, 255, 0.12);
+    border: 1px solid rgba(108, 99, 255, 0.25);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    flex-wrap: wrap;
+}
+
+.notification-permission-banner button {
+    background: #6c63ff;
+    color: #fff;
+    border: none;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: background 0.2s;
+}
+
+.notification-permission-banner button:hover {
+    background: #5a52e0;
+}
+
+/* Скрываем баннер при свёрнутом sidebar */
+.sidebar.collapsed .notification-permission-banner {
+    display: none;
 }

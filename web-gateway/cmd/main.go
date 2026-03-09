@@ -7,6 +7,7 @@ import (
 
 	"github.com/GolZrd/micro-chat/web-gateway/internal/clients"
 	"github.com/GolZrd/micro-chat/web-gateway/internal/handlers"
+	"github.com/GolZrd/micro-chat/web-gateway/internal/hub"
 	"github.com/GolZrd/micro-chat/web-gateway/internal/logger"
 	"github.com/GolZrd/micro-chat/web-gateway/internal/metric"
 	"github.com/GolZrd/micro-chat/web-gateway/internal/middleware"
@@ -54,6 +55,10 @@ func main() {
 	}()
 
 	logger.Info("Connected to gRPC services")
+
+	// Создаём Hub уведомлений
+	notificastionHub := hub.NewHub()
+	logger.Info("Notification hub created")
 
 	// MinIO хранилище
 	fileStorage, err := storage.NewMinioStorage(
@@ -104,22 +109,27 @@ func main() {
 		// Chat
 		api.POST("/chat/create", handlers.CreateChat(chatClient))
 		api.GET("/chat/my", handlers.MyChats(chatClient))
-		api.POST("/chat/send", handlers.SendMessage(chatClient))
+		api.POST("/chat/send", handlers.SendMessage(chatClient, notificastionHub))
 		api.DELETE("/chat/delete/:id", handlers.DeleteChat(chatClient))
 		api.POST("/chat/direct", handlers.GetOrCreateDirectChat(chatClient))
 		api.POST("/chat/add-member", handlers.AddMember(chatClient))
 		api.POST("/chat/remove-member", handlers.RemoveMember(chatClient))
 		api.POST("/chat/join", handlers.JoinChat(chatClient))
 		api.GET("/chat/public", handlers.PublicChats(chatClient))
+		api.POST("/chat/read", handlers.MarkChatRead(chatClient))
+		api.GET("/chat/unread", handlers.UnreadCounts(chatClient))
 		//Presence
 		api.POST("/presence/heartbeat", handlers.Heartbeat(chatClient))
 		api.POST("/presence/friends", handlers.FriendsPresence(chatClient))
 		// Voice
-		api.POST("/chat/send-voice", handlers.SendVoice(chatClient, fileStorage))
+		api.POST("/chat/send-voice", handlers.SendVoice(chatClient, fileStorage, notificastionHub))
 	}
 
 	// WebSocket для чата
 	r.GET("/ws/chat/:id", handlers.ConnectChat(chatClient))
+
+	// WebSocket уведомлений
+	r.GET("/ws/notifications", handlers.NotificationsWS(notificastionHub))
 
 	// File proxy - отдача файлов из MinIO
 	r.GET("/files/*filepath", handlers.ProxyFiles())

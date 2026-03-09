@@ -9,6 +9,7 @@ import (
 
 	chat_v1 "github.com/GolZrd/micro-chat/chat-server/pkg/chat_v1"
 	"github.com/GolZrd/micro-chat/web-gateway/internal/clients"
+	"github.com/GolZrd/micro-chat/web-gateway/internal/hub"
 	"github.com/GolZrd/micro-chat/web-gateway/internal/logger"
 	"github.com/GolZrd/micro-chat/web-gateway/internal/utils"
 	"github.com/gin-gonic/gin"
@@ -79,15 +80,24 @@ func MyChats(client *clients.ChatClient) gin.HandlerFunc {
 
 		chats := make([]gin.H, 0, len(resp.Chats))
 		for _, ch := range resp.Chats {
-			chats = append(chats, gin.H{
-				"id":         ch.Id,
-				"name":       ch.Name,
-				"usernames":  ch.Usernames,
-				"is_direct":  ch.IsDirect,
-				"is_public":  ch.IsPublic,
-				"creator_id": ch.CreatorId,
-				"created_at": ch.CreatedAt.AsTime(),
-			})
+			chatData := gin.H{
+				"id":                  ch.Id,
+				"name":                ch.Name,
+				"usernames":           ch.Usernames,
+				"is_direct":           ch.IsDirect,
+				"is_public":           ch.IsPublic,
+				"creator_id":          ch.CreatorId,
+				"created_at":          ch.CreatedAt.AsTime(),
+				"unread_count":        ch.UnreadCount,
+				"last_message":        ch.LastMessage,
+				"last_message_sender": ch.LastMessageSender,
+			}
+
+			if ch.LastMessageAt != nil {
+				chatData["last_message_at"] = ch.LastMessageAt.AsTime()
+			}
+
+			chats = append(chats, chatData)
 		}
 
 		logger.Info("got user chats", zap.Int("count", len(chats)))
@@ -96,11 +106,13 @@ func MyChats(client *clients.ChatClient) gin.HandlerFunc {
 	}
 }
 
-func SendMessage(client *clients.ChatClient) gin.HandlerFunc {
+func SendMessage(client *clients.ChatClient, notificationHub *hub.Hub) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req struct {
-			ChatId int64  `json:"chat_id"`
-			Text   string `json:"text"`
+			ChatId        int64   `json:"chat_id"`
+			Text          string  `json:"text"`
+			Type          int32   `json:"type"`
+			VoiceDuration float32 `json:"voice_duration"`
 		}
 
 		if err := c.BindJSON(&req); err != nil {
@@ -114,14 +126,26 @@ func SendMessage(client *clients.ChatClient) gin.HandlerFunc {
 
 		// Вызываем gRPC БЕЗ указания From - chat-server извлечет из токена
 		_, err := client.Client.SendMessage(ctx, &chat_v1.SendMessageRequest{
-			ChatId: req.ChatId,
-			Text:   req.Text,
+			ChatId:        req.ChatId,
+			Text:          req.Text,
+			Type:          chat_v1.MessageType(req.Type),
+			VoiceDuration: req.VoiceDuration,
 		})
 		if err != nil {
 			logger.Error("failed to send message", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+
+		// Получаем данные отправителя из токена
+		token, _ := c.Get("authorization")
+		tokenStr, _ := token.(string)
+		senderClaims, _ := utils.ParseTokenClaims(tokenStr)
+
+		// Рассылаем уведомления в фоне
+		go func() {
+			sendNotifications(client, notificationHub, ctx, senderClaims, req.ChatId, req.Text, req.Type, req.VoiceDuration)
+		}()
 
 		c.JSON(http.StatusOK, gin.H{"status": "sent"})
 	}
@@ -442,6 +466,115 @@ func PublicChats(client *clients.ChatClient) gin.HandlerFunc {
 
 		c.JSON(http.StatusOK, gin.H{"chats": chats})
 	}
+}
+
+func MarkChatRead(client *clients.ChatClient) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req struct {
+			ChatId int64 `json:"chat_id"`
+		}
+
+		if err := c.BindJSON(&req); err != nil {
+			logger.Debug("invalid mark chat read request", zap.Error(err))
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		ctx := utils.ContextWithToken(c)
+
+		_, err := client.Client.MarkChatRead(ctx, &chat_v1.MarkChatReadRequest{ChatId: req.ChatId})
+		if err != nil {
+			logger.Error("failed to mark chat read", zap.Error(err))
+			handleChatError(c, err)
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"status": "chat marked as read successfully"})
+	}
+}
+
+func UnreadCounts(client *clients.ChatClient) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx := utils.ContextWithToken(c)
+
+		resp, err := client.Client.UnreadCounts(ctx, &chat_v1.UnreadCountsRequest{})
+		if err != nil {
+			logger.Error("failed to get unread counts", zap.Error(err))
+			handleChatError(c, err)
+			return
+		}
+
+		counts := make(map[string]int32)
+		for _, count := range resp.UnreadCounts {
+			counts[strconv.FormatInt(count.ChatId, 10)] = count.Count
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"counts": counts,
+			"total":  resp.Total,
+		})
+	}
+}
+
+func sendNotifications(client *clients.ChatClient, notificationHub *hub.Hub, ctx context.Context, sender *utils.UserClaims, chatId int64, text string, msgType int32, voiceDuration float32) {
+	if sender == nil {
+		return
+	}
+
+	// Получаем информацию о чате: имя и member_ids
+	chatsResp, err := client.Client.MyChats(ctx, &chat_v1.MyChatsRequest{})
+	if err != nil {
+		logger.Error("failed to get chats for notification", zap.Error(err))
+		return
+	}
+
+	var chatName string
+	var memberIds []int64
+
+	if chatsResp != nil {
+		for _, chat := range chatsResp.Chats {
+			if chat.Id == chatId {
+				chatName = chat.Name
+				memberIds = chat.MemberIds
+				break
+			}
+		}
+	}
+
+	if len(memberIds) == 0 {
+		logger.Debug("no members found for notification",
+			zap.Int64("chat_id", chatId),
+		)
+		return
+	}
+
+	// Формируем текст превью
+	messageType := "text"
+	previewText := text
+	if msgType == 2 {
+		messageType = "voice"
+		previewText = "🎤 Голосовое сообщение"
+	}
+	if len(previewText) > 100 {
+		previewText = previewText[:100] + "…"
+	}
+
+	// Рассылаем
+	notificationHub.NotifyUsers(memberIds, sender.UserId, hub.Notification{
+		Type:          "new_message",
+		ChatId:        chatId,
+		ChatName:      chatName,
+		SenderName:    sender.Username,
+		SenderId:      sender.UserId,
+		Text:          previewText,
+		MessageType:   messageType,
+		VoiceDuration: voiceDuration,
+	})
+
+	logger.Debug("notifications sent",
+		zap.Int64("chat_id", chatId),
+		zap.Int("recipients", len(memberIds)-1),
+	)
 }
 
 func handleChatError(c *gin.Context, err error) {

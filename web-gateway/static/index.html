@@ -10,46 +10,56 @@
 <body>
     <div class="app-container" id="appContainer">
         <!-- Боковая панель -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="mainSidebar">
+            <!-- Кнопка сворачивания -->
+            <button class="sidebar-toggle-btn" id="sidebarToggleBtn" onclick="toggleSidebar()" title="Свернуть/Развернуть">
+                <i class="fas fa-chevron-left" id="sidebarToggleIcon"></i>
+            </button>
+
             <!-- Логотип приложения -->
             <div class="app-logo">
                 <i class="fas fa-rocket"></i>
-                <span>Micro Chat</span>
+                <span class="sidebar-label">Micro Chat</span>
             </div>
 
             <!-- Навигация -->
             <nav class="sidebar-nav">
-                <a href="#" class="nav-item active" onclick="showSection('home'); return false;">
+                <a href="#" class="nav-item active" onclick="showSection('home'); return false;" title="Главная">
                     <i class="fas fa-home"></i>
-                    <span>Главная</span>
+                    <span class="sidebar-label">Главная</span>
                 </a>
-                <a href="#" class="nav-item protected-nav" onclick="showSection('chats'); return false;" style="display:none;">
+                <a href="#" class="nav-item protected-nav" onclick="showSection('chats'); return false;" style="display:none;" title="Мои чаты">
                     <i class="fas fa-comments"></i>
-                    <span>Мои чаты</span>
-                    <span class="badge" id="chatCount">0</span>
+                    <span class="sidebar-label">Мои чаты</span>
+                    <!-- <span class="badge" id="chatCount">0</span> -->
+                    <span class="unread-badge" id="totalUnreadBadge" style="display:none;">0</span>
                 </a>
-                <a href="#" class="nav-item protected-nav" onclick="showSection('explore'); return false;" style="display:none;">
+                <a href="#" class="nav-item protected-nav" onclick="showSection('explore'); return false;" style="display:none;" title="Открытые чаты">
                     <i class="fas fa-compass"></i>
-                    <span>Открытые чаты</span>
+                    <span class="sidebar-label">Открытые чаты</span>
                 </a>
             </nav>
 
             <!-- Нижняя часть sidebar -->
             <div class="sidebar-footer">
                 <div class="sidebar-footer-user" id="sidebarFooterUser" style="display:none;">
-                    <!-- Профиль (клик → открыть профиль) -->
-                    <div class="footer-profile" onclick="showSection('profile')">
+                    <!-- Профиль -->
+                    <div class="footer-profile" onclick="showSection('profile')" title="Мой профиль">
                         <div class="footer-avatar">
                             <span class="footer-avatar-initials" id="footerAvatarInitials">ГО</span>
                             <span class="footer-online-indicator offline" id="footerOnlineIndicator"></span>
                         </div>
-                        <div class="footer-user-info">
+                        <div class="footer-user-info sidebar-label">
                             <span class="footer-username" id="footerUsername">Гость</span>
                             <span class="footer-status" id="footerStatus">Не в сети</span>
                         </div>
                     </div>
                     <!-- Кнопка выхода -->
-                    <button onclick="logout()" class="footer-logout-btn" title="Выйти">
+                    <button onclick="logout()" class="footer-logout-btn sidebar-label" title="Выйти">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                    <!-- Кнопка выхода (компактная, для свёрнутого состояния) -->
+                    <button onclick="logout()" class="footer-logout-btn-compact sidebar-icon-only" title="Выйти" style="display:none;">
                         <i class="fas fa-sign-out-alt"></i>
                     </button>
                 </div>
@@ -496,63 +506,6 @@
     <!-- <script src="/static/js/starfall.js"></script> -->
 
     <script>
-        // Переключение секций
-        function showSection(sectionName) {
-            // Скрываем все секции
-            document.querySelectorAll('.content-section').forEach(section => {
-                section.classList.remove('active');
-            });
-            
-            // Убираем active у всех nav items
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            // Показываем нужную секцию
-            switch(sectionName) {
-                case 'home':
-                    document.getElementById('homeSection').classList.add('active');
-                    const homeNav = document.querySelector('.nav-item[onclick*="home"]');
-                    if (homeNav) homeNav.classList.add('active');
-                    
-                    // Обновляем заголовок в зависимости от авторизации
-                    if (TokenManager.isAuthenticated()) {
-                        const username = TokenManager.getUsername();
-                        document.getElementById('welcomeTitle').textContent = `Добро пожаловать, ${username}!`;
-                        document.getElementById('welcomeSubtitle').textContent = 'Рады видеть вас снова';
-                    } else {
-                        document.getElementById('welcomeTitle').textContent = 'Добро пожаловать в Micro Chat';
-                        document.getElementById('welcomeSubtitle').textContent = 'Современный мессенджер для вашего общения';
-                    }
-                    break;
-                case 'chats':
-                    document.getElementById('chatsSection').classList.add('active');
-                    const chatsNav = document.querySelector('.nav-item[onclick*="chats"]');
-                    if (chatsNav) chatsNav.classList.add('active');
-                    loadChatList();
-                    break;
-                case 'explore':
-                    document.getElementById('exploreSection').classList.add('active');
-                    const exploreNav = document.querySelector('.nav-item[onclick*="explore"]');
-                    if (exploreNav) exploreNav.classList.add('active');
-                    loadPublicChats();
-                    break;
-                // НОВОЕ
-                case 'activeChat':
-                    document.getElementById('activeChatSection').classList.add('active');
-                    // Подсвечиваем "Мои чаты" в навигации
-                    const chatNavForActive = document.querySelector('.nav-item[onclick*="chats"]');
-                    if (chatNavForActive) chatNavForActive.classList.add('active');
-                    break;
-                case 'profile':
-                    document.getElementById('profileSection').classList.add('active');
-                    const profileNav = document.querySelector('.nav-item[onclick*="profile"]');
-                    if (profileNav) profileNav.classList.add('active');
-                    loadUserInfo();
-                    break;
-            }
-        }
-        
         // Модальное окно создания чата
         function showCreateChatModal() {
             document.getElementById('createChatModal').classList.add('active');
@@ -597,7 +550,7 @@
         });
     </script>
     
-    <!-- Контейнер для уведомлений -->
-    <div id="toast-container"></div>
+    <!-- Контейнер для toast-уведомлений -->
+    <div class="toast-container" id="toastContainer"></div>
 </body>
 </html>

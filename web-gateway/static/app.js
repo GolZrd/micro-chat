@@ -374,6 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     updateAuthStatus();
                     loadChatCount();           // Загружаем количество чатов
                     startChatCountUpdater();   // Запускаем автообновление
+                    NotificationManager.init(); // Инициализируем уведомления
                     await loadFriendsWithPresence();
                     startPresence();
                     loginForm.reset();
@@ -600,6 +601,13 @@ function renderChatList(chats) {
         return;
     }
 
+    // Сохраняем unread_count из серверного ответа
+    chats.forEach(chat => {
+        if (chat.unread_count && chat.unread_count > 0) {
+            NotificationManager.unreadCounts[String(chat.id)] = chat.unread_count;
+        }
+    });
+
     let html = '';
     chats.forEach(chat => {
         const chatName = getChatDisplayName(chat);
@@ -608,7 +616,7 @@ function renderChatList(chats) {
         const isPublic = chat.is_public || false;
         const isActive = chat.id === activeChatId;
         const members = chat.usernames || [];
-        const createdDate = formatChatDate(chat.created_at);
+        const unreadCount = chat.unread_count || 0;
 
         let avatarClass = 'chat-list-item__avatar--direct';
         let typeClass = 'chat-list-item__type--direct';
@@ -624,12 +632,35 @@ function renderChatList(chats) {
             typeText = 'Группа';
         }
 
-        const preview = isDirect
-            ? 'Личный чат'
-            : `${members.length} участников`;
+        // Показываем последнее сообщение или fallback
+        let preview = '';
+        if (chat.last_message) {
+            const sender = chat.last_message_sender || '';
+            const text = chat.last_message.length > 40
+                ? chat.last_message.substring(0, 40) + '…'
+                : chat.last_message;
+            preview = sender ? `${sender}: ${text}` : text;
+        } else {
+            preview = isDirect ? 'Личный чат' : `${members.length} участников`;
+        }
+
+        // ✅ Время последнего сообщения или создания
+        const timeStr = chat.last_message_at
+            ? formatChatDate(chat.last_message_at)
+            : formatChatDate(chat.created_at);
+
+        // ✅ Unread badge HTML
+        const unreadHtml = unreadCount > 0
+            ? `<div class="chat-item-unread">
+                   <span class="unread-badge">${unreadCount > 99 ? '99+' : unreadCount}</span>
+               </div>`
+            : '';
+
+        // ✅ Класс для непрочитанных
+        const unreadClass = unreadCount > 0 ? 'has-unread' : '';
 
         html += `
-            <div class="chat-list-item ${isActive ? 'active' : ''}"
+            <div class="chat-list-item ${isActive ? 'active' : ''} ${unreadClass}"
                  onclick="openChat(${chat.id}, '${escapeHtml(chatName)}', ${isDirect})"
                  data-chat-id="${chat.id}"
                  data-chat-name="${escapeHtml(chatName).toLowerCase()}">
@@ -638,17 +669,21 @@ function renderChatList(chats) {
                 </div>
                 <div class="chat-list-item__body">
                     <div class="chat-list-item__name">${escapeHtml(chatName)}</div>
-                    <div class="chat-list-item__preview">${preview}</div>
+                    <div class="chat-list-item__preview">${escapeHtml(preview)}</div>
                 </div>
                 <div class="chat-list-item__meta">
-                    <span class="chat-list-item__time">${createdDate}</span>
+                    <span class="chat-list-item__time">${timeStr}</span>
                     <span class="chat-list-item__type ${typeClass}">${typeText}</span>
+                    ${unreadHtml}
                 </div>
             </div>
         `;
     });
 
     container.innerHTML = html;
+
+    // Обновляем badge общий
+    NotificationManager.updateTotalBadge();
 }
 
 // Фильтрация списка чатов
@@ -671,6 +706,11 @@ function openChat(chatId, chatName, isDirect) {
     // Если уже открыт этот чат — ничего не делаем
     if (activeChatId === chatId) return;
 
+    // Очищаем предыдущий активный чат в NotificationManager
+    if (activeChatId) {
+        NotificationManager.clearActiveChat();
+    }
+
     // Закрываем предыдущий
     if (activeChatWs) {
         activeChatWs.close();
@@ -678,6 +718,9 @@ function openChat(chatId, chatName, isDirect) {
     }
 
     activeChatId = chatId;
+
+    //Отмечаем как прочитанный
+    NotificationManager.setActiveChat(chatId);
 
     // Обновляем шапку
     const initials = chatName.substring(0, 2).toUpperCase();
@@ -727,6 +770,24 @@ function connectToChat(chatId) {
             updateChatOnlineUsers(msg);
         } else {
             displayChatMessage(msg);
+
+            // УВЕДОМЛЕНИЕ: определяем данные и вызываем NotificationManager
+            const chatName = document.getElementById('chatViewName').textContent || 'Чат';
+            const senderName = msg.from || msg.sender || 'Неизвестный';
+            const messageText = msg.text || msg.content || '';
+
+            const currentUsername = TokenManager.getUsername ? TokenManager.getUsername() : null;
+            const isMine = currentUsername && senderName === currentUsername;
+
+            if (!isMine) {
+                NotificationManager.onNewMessage(
+                    chatId,          // ID чата
+                    chatName,        // Название чата
+                    senderName,      // Имя отправителя
+                    messageText,     // Текст сообщения
+                    null             // sender_id (нет в WS, фильтруем по username)
+                );
+            }
         }
     };
 
@@ -943,6 +1004,17 @@ async function logout() {
         updateAuthStatus();
         alert('✅ Вы вышли из системы');
         location.reload();
+
+        // Сбрасываем уведомления
+        NotificationManager.reset();
+
+         // Очищаем активный чат
+        if (activeChatWs) {
+            activeChatWs.close();
+            activeChatWs = null;
+        }
+        activeChatId = null;
+
     } catch (error) {
         alert('❌ Ошибка при выходе: ' + error);
     }
@@ -2781,11 +2853,633 @@ async function leaveOrDeleteChat() {
     }
 }
 
+// ============================================
+// SIDEBAR — СВОРАЧИВАНИЕ / РАЗВОРАЧИВАНИЕ
+// ============================================
+
+let sidebarCollapsed = false;
+let sidebarAutoCollapsed = false; // флаг: свёрнут автоматически при переходе в чаты
+
+/**
+ * Ручное переключение sidebar
+ */
+function toggleSidebar() {
+    const sidebar = document.getElementById('mainSidebar');
+    
+    if (sidebarCollapsed) {
+        expandSidebar();
+        sidebarAutoCollapsed = false; // ручное действие сбрасывает авто-флаг
+    } else {
+        collapseSidebar();
+        sidebarAutoCollapsed = false;
+    }
+}
+
+/**
+ * Свернуть sidebar
+ */
+function collapseSidebar() {
+    const sidebar = document.getElementById('mainSidebar');
+    sidebar.classList.add('collapsed');
+    sidebarCollapsed = true;
+    
+    // Сохраняем состояние (только ручное)
+    if (!sidebarAutoCollapsed) {
+        localStorage.setItem('sidebarCollapsed', 'true');
+    }
+}
+
+/**
+ * Развернуть sidebar
+ */
+function expandSidebar() {
+    const sidebar = document.getElementById('mainSidebar');
+    sidebar.classList.remove('collapsed');
+    sidebarCollapsed = false;
+    
+    if (!sidebarAutoCollapsed) {
+        localStorage.setItem('sidebarCollapsed', 'false');
+    }
+}
+
+/**
+ * Обновлённая showSection — автоматически сворачивает sidebar при переходе в чаты
+ */
+const originalShowSection = typeof showSection === 'function' ? showSection : null;
+
+// Переключение секций
+function showSection(sectionName) {
+
+    // ====== АВТОСВОРАЧИВАНИЕ SIDEBAR ======
+    if (sectionName === 'chats' || sectionName === 'activeChat') {
+        if (!sidebarCollapsed) {
+            collapseSidebar();
+            sidebarAutoCollapsed = true;
+        }
+    } else {
+        if (sidebarAutoCollapsed && sidebarCollapsed) {
+            expandSidebar();
+            sidebarAutoCollapsed = false;
+        }
+    }
+    // ====== КОНЕЦ БЛОКА ======
+
+    // Скрываем все секции
+    document.querySelectorAll('.content-section').forEach(section => {
+        section.classList.remove('active');
+    });
+
+    // Убираем active у всех nav items
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+    });
+
+    // Показываем нужную секцию
+    switch(sectionName) {
+        case 'home':
+            document.getElementById('homeSection').classList.add('active');
+            const homeNav = document.querySelector('.nav-item[onclick*="home"]');
+            if (homeNav) homeNav.classList.add('active');
+
+            if (TokenManager.isAuthenticated()) {
+                const username = TokenManager.getUsername();
+                document.getElementById('welcomeTitle').textContent = `Добро пожаловать, ${username}!`;
+                document.getElementById('welcomeSubtitle').textContent = 'Рады видеть вас снова';
+            } else {
+                document.getElementById('welcomeTitle').textContent = 'Добро пожаловать в Micro Chat';
+                document.getElementById('welcomeSubtitle').textContent = 'Современный мессенджер для вашего общения';
+            }
+            break;
+        case 'chats':
+            document.getElementById('chatsSection').classList.add('active');
+            const chatsNav = document.querySelector('.nav-item[onclick*="chats"]');
+            if (chatsNav) chatsNav.classList.add('active');
+            loadChatList();
+            break;
+        case 'explore':
+            document.getElementById('exploreSection').classList.add('active');
+            const exploreNav = document.querySelector('.nav-item[onclick*="explore"]');
+            if (exploreNav) exploreNav.classList.add('active');
+            loadPublicChats();
+            break;
+        case 'activeChat':
+            document.getElementById('activeChatSection').classList.add('active');
+            const chatNavForActive = document.querySelector('.nav-item[onclick*="chats"]');
+            if (chatNavForActive) chatNavForActive.classList.add('active');
+            break;
+        case 'profile':
+            document.getElementById('profileSection').classList.add('active');
+            const profileNav = document.querySelector('.nav-item[onclick*="profile"]');
+            if (profileNav) profileNav.classList.add('active');
+            loadUserInfo();
+            break;
+    }
+}
+
+/**
+ * Инициализация — восстановление состояния sidebar
+ */
+function initSidebar() {
+    const saved = localStorage.getItem('sidebarCollapsed');
+    if (saved === 'true') {
+        collapseSidebar();
+    }
+}
+
+// Вызываем при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+    initSidebar();
+});
+
+// ============================================
+// NOTIFICATION MANAGER
+// ============================================
+
+const NotificationManager = {
+
+    unreadCounts: {},
+    activeChatId: null,
+    originalTitle: document.title,
+    titleBlinkInterval: null,
+    isPageVisible: true,
+    notifWs: null,
+    reconnectTimer: null,
+    initialized: false,
+
+    settings: {
+        soundEnabled: true,
+        pushEnabled: true,
+        toastEnabled: true,
+        titleBlinkEnabled: true,
+    },
+
+    // ============================================
+    // INIT
+    // ============================================
+    init() {
+        if (this.initialized) {
+            this.fetchUnreadCounts();
+            this.connectWS();
+            return;
+        }
+
+        this.loadSettings();
+
+        document.addEventListener('visibilitychange', () => {
+            this.isPageVisible = !document.hidden;
+            if (this.isPageVisible) {
+                this.stopTitleBlink();
+                this.fetchUnreadCounts();
+            }
+        });
+
+        this.requestPushPermission();
+        this.fetchUnreadCounts();
+        this.connectWS();
+
+        this.initialized = true;
+        console.log('NotificationManager initialized');
+    },
+
+    // ============================================
+    // WEBSOCKET
+    // ============================================
+    connectWS() {
+        if (!TokenManager.isAuthenticated()) return;
+
+        // Закрываем старое соединение
+        if (this.notifWs) {
+            this.notifWs.close();
+            this.notifWs = null;
+        }
+
+        let token = TokenManager.getAccessToken();
+        if (token && token.startsWith('Bearer ')) {
+            token = token.substring(7);
+        }
+
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const url = protocol + '//' + window.location.host +
+            '/ws/notifications?token=' + encodeURIComponent(token);
+
+        this.notifWs = new WebSocket(url);
+
+        this.notifWs.onopen = () => {
+            console.log('🔔 Notifications connected');
+            if (this.reconnectTimer) {
+                clearTimeout(this.reconnectTimer);
+                this.reconnectTimer = null;
+            }
+        };
+
+        this.notifWs.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                this.handleWsMessage(data);
+            } catch (e) {
+                console.warn('Parse notification error:', e);
+            }
+        };
+
+        this.notifWs.onclose = (event) => {
+            console.log('🔔 Notifications disconnected');
+            this.notifWs = null;
+
+            if (TokenManager.isAuthenticated()) {
+                this.reconnectTimer = setTimeout(() => {
+                    console.log('🔔 Reconnecting...');
+                    this.connectWS();
+                }, 3000);
+            }
+        };
+
+        this.notifWs.onerror = () => {};
+    },
+
+    // ============================================
+    // ОБРАБОТКА WS СООБЩЕНИЙ
+    // ============================================
+    handleWsMessage(data) {
+        switch (data.type) {
+            case 'new_message':
+                this.handleNewMessage(data);
+                break;
+            default:
+                console.log('Unknown notification type:', data.type);
+        }
+    },
+
+    handleNewMessage(data) {
+        const chatIdStr = String(data.chat_id);
+
+        // Если этот чат открыт и вкладка активна — отмечаем прочитанным
+        if (String(this.activeChatId) === chatIdStr && this.isPageVisible) {
+            this.markAsReadOnServer(data.chat_id);
+            return;
+        }
+
+        // Увеличиваем счётчик
+        this.unreadCounts[chatIdStr] = (this.unreadCounts[chatIdStr] || 0) + 1;
+
+        // Обновляем UI
+        this.updateChatItemBadge(data.chat_id);
+        this.updateTotalBadge();
+
+        // Звук
+        if (this.settings.soundEnabled) {
+            this.playSound();
+        }
+
+        // Toast
+        if (this.settings.toastEnabled) {
+            this.showToast(
+                data.chat_id,
+                data.chat_name || 'Чат',
+                data.sender_name || 'Кто-то',
+                data.text || 'Новое сообщение'
+            );
+        }
+
+        // Push (только если вкладка не активна)
+        if (this.settings.pushEnabled && !this.isPageVisible) {
+            this.showPushNotification(
+                data.chat_name || 'Чат',
+                data.sender_name || 'Кто-то',
+                data.text || 'Новое сообщение',
+                data.chat_id
+            );
+        }
+
+        // Title blink
+        if (this.settings.titleBlinkEnabled && !this.isPageVisible) {
+            this.startTitleBlink(
+                data.sender_name || 'Кто-то',
+                data.text || 'Новое сообщение'
+            );
+        }
+    },
+
+    // ============================================
+    // SERVER SYNC
+    // ============================================
+    async fetchUnreadCounts() {
+        if (!TokenManager.isAuthenticated()) return;
+
+        try {
+            let token = TokenManager.getAccessToken();
+            if (!token.startsWith('Bearer ')) token = 'Bearer ' + token;
+
+            const response = await fetch('/api/chat/unread', {
+                headers: { 'Authorization': token }
+            });
+            if (!response.ok) return;
+
+            const data = await response.json();
+            this.unreadCounts = {};
+
+            if (data.counts) {
+                for (const [chatId, count] of Object.entries(data.counts)) {
+                    if (count > 0) {
+                        this.unreadCounts[String(chatId)] = count;
+                    }
+                }
+            }
+
+            if (this.activeChatId) {
+                delete this.unreadCounts[String(this.activeChatId)];
+            }
+
+            this.updateAllChatBadges();
+            this.updateTotalBadge();
+        } catch (err) {
+            console.warn('Failed to fetch unread counts:', err);
+        }
+    },
+
+    async markAsReadOnServer(chatId) {
+        if (!TokenManager.isAuthenticated()) return;
+        try {
+            let token = TokenManager.getAccessToken();
+            if (!token.startsWith('Bearer ')) token = 'Bearer ' + token;
+
+            await fetch('/api/chat/read', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token
+                },
+                body: JSON.stringify({ chat_id: Number(chatId) })
+            });
+        } catch (err) {
+            console.warn('Failed to mark as read:', err);
+        }
+    },
+
+    // ============================================
+    // READ STATUS
+    // ============================================
+    markAsRead(chatId) {
+        const chatIdStr = String(chatId);
+        if (this.unreadCounts[chatIdStr]) {
+            delete this.unreadCounts[chatIdStr];
+            this.updateChatItemBadge(chatId);
+            this.updateTotalBadge();
+        }
+        this.markAsReadOnServer(chatId);
+    },
+
+    setActiveChat(chatId) {
+        this.activeChatId = String(chatId);
+        this.markAsRead(chatId);
+    },
+
+    clearActiveChat() {
+        this.activeChatId = null;
+    },
+
+    // ============================================
+    // BADGES
+    // ============================================
+    updateChatItemBadge(chatId) {
+        const count = this.unreadCounts[String(chatId)] || 0;
+        const item = document.querySelector('.chat-list-item[data-chat-id="' + chatId + '"]');
+        if (!item) return;
+
+        let container = item.querySelector('.chat-item-unread');
+        let badge = container ? container.querySelector('.unread-badge') : null;
+
+        if (count > 0) {
+            item.classList.add('has-unread');
+            if (!container) {
+                container = document.createElement('div');
+                container.className = 'chat-item-unread';
+                item.appendChild(container);
+            }
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'unread-badge';
+                container.appendChild(badge);
+            }
+            badge.textContent = count > 99 ? '99+' : count;
+        } else {
+            item.classList.remove('has-unread');
+            if (container) container.remove();
+        }
+    },
+
+    updateAllChatBadges() {
+        document.querySelectorAll('.chat-list-item').forEach(item => {
+            const id = item.getAttribute('data-chat-id');
+            if (id) this.updateChatItemBadge(id);
+        });
+    },
+
+    updateTotalBadge() {
+        const total = Object.values(this.unreadCounts).reduce((s, c) => s + c, 0);
+        const badge = document.getElementById('totalUnreadBadge');
+        if (badge) {
+            badge.textContent = total > 99 ? '99+' : total;
+            badge.style.display = total > 0 ? 'flex' : 'none';
+        }
+        document.title = total > 0
+            ? '(' + total + ') ' + this.originalTitle
+            : (this.isPageVisible ? this.originalTitle : document.title);
+    },
+
+    // ============================================
+    // SOUND
+    // ============================================
+    playSound() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const t = ctx.currentTime;
+
+            const o1 = ctx.createOscillator();
+            const g1 = ctx.createGain();
+            o1.connect(g1); g1.connect(ctx.destination);
+            o1.frequency.value = 830; o1.type = 'sine';
+            g1.gain.setValueAtTime(0.3, t);
+            g1.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+            o1.start(t); o1.stop(t + 0.15);
+
+            const o2 = ctx.createOscillator();
+            const g2 = ctx.createGain();
+            o2.connect(g2); g2.connect(ctx.destination);
+            o2.frequency.value = 1050; o2.type = 'sine';
+            g2.gain.setValueAtTime(0.2, t + 0.12);
+            g2.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+            o2.start(t + 0.12); o2.stop(t + 0.3);
+        } catch (e) {}
+    },
+
+    // ============================================
+    // TOAST
+    // ============================================
+    showToast(chatId, chatName, senderName, text) {
+        const container = document.getElementById('toastContainer');
+        if (!container) return;
+
+        while (container.children.length >= 3) {
+            this.removeToast(container.firstChild);
+        }
+
+        const initials = senderName ? senderName.substring(0, 2).toUpperCase() : '??';
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML =
+            '<div class="toast-avatar">' + this.esc(initials) + '</div>' +
+            '<div class="toast-body">' +
+                '<div class="toast-header">' +
+                    '<div>' +
+                        '<span class="toast-sender">' + this.esc(senderName) + '</span>' +
+                        ' <span class="toast-chat-name">&middot; ' + this.esc(chatName) + '</span>' +
+                    '</div>' +
+                    '<span class="toast-time">сейчас</span>' +
+                '</div>' +
+                '<div class="toast-message">' + this.esc(this.trunc(text, 80)) + '</div>' +
+            '</div>' +
+            '<button class="toast-close" onclick="NotificationManager.removeToast(this.parentElement)">' +
+                '<i class="fas fa-times"></i>' +
+            '</button>';
+
+        toast.addEventListener('click', (e) => {
+            if (e.target.closest('.toast-close')) return;
+            this.removeToast(toast);
+            this.openFromNotification(chatId);
+        });
+
+        container.appendChild(toast);
+        setTimeout(() => this.removeToast(toast), 5000);
+    },
+
+    removeToast(t) {
+        if (!t || t.classList.contains('toast-hiding')) return;
+        t.classList.add('toast-hiding');
+        setTimeout(() => { if (t.parentElement) t.parentElement.removeChild(t); }, 300);
+    },
+
+    // ============================================
+    // PUSH
+    // ============================================
+    requestPushPermission() {
+        if (!('Notification' in window)) return;
+        if (Notification.permission === 'default' && TokenManager.isAuthenticated()) {
+            this.showPermBanner();
+        }
+    },
+
+    showPermBanner() {
+        if (document.getElementById('notifPermBanner')) return;
+        const b = document.createElement('div');
+        b.id = 'notifPermBanner';
+        b.className = 'notification-permission-banner';
+        b.innerHTML =
+            '<i class="fas fa-bell" style="font-size:16px;color:#6c63ff;flex-shrink:0;"></i>' +
+            '<span>Включить уведомления?</span>' +
+            '<button onclick="NotificationManager.askPerm()">Да</button>' +
+            '<button onclick="this.parentElement.remove()" style="background:transparent;color:rgba(255,255,255,0.4);padding:5px 8px;">Нет</button>';
+        const nav = document.querySelector('.sidebar-nav');
+        if (nav) nav.after(b);
+    },
+
+    async askPerm() {
+        try { await Notification.requestPermission(); } catch (e) {}
+        const b = document.getElementById('notifPermBanner');
+        if (b) b.remove();
+    },
+
+    showPushNotification(chatName, sender, text, chatId) {
+        if (!('Notification' in window) || Notification.permission !== 'granted') return;
+        try {
+            const n = new Notification(sender + ' · ' + chatName, {
+                body: this.trunc(text, 100),
+                icon: '/static/favicon.ico',
+                tag: 'chat-' + chatId,
+                renotify: true,
+            });
+            n.onclick = () => { window.focus(); this.openFromNotification(chatId); n.close(); };
+            setTimeout(() => n.close(), 5000);
+        } catch (e) {}
+    },
+
+    // ============================================
+    // TITLE BLINK
+    // ============================================
+    startTitleBlink(sender, text) {
+        if (this.titleBlinkInterval) return;
+        const msg = '💬 ' + sender + ': ' + this.trunc(text, 30);
+        let show = true;
+        this.titleBlinkInterval = setInterval(() => {
+            document.title = show ? msg : this.originalTitle;
+            show = !show;
+        }, 1500);
+    },
+
+    stopTitleBlink() {
+        if (this.titleBlinkInterval) {
+            clearInterval(this.titleBlinkInterval);
+            this.titleBlinkInterval = null;
+        }
+        this.updateTotalBadge();
+    },
+
+    // ============================================
+    // NAVIGATION
+    // ============================================
+    openFromNotification(chatId) {
+        if (typeof showSection === 'function') showSection('chats');
+        setTimeout(() => {
+            const item = document.querySelector('.chat-list-item[data-chat-id="' + chatId + '"]');
+            if (item) item.click();
+        }, 500);
+    },
+
+    // ============================================
+    // UTILS
+    // ============================================
+    loadSettings() {
+        try {
+            const s = localStorage.getItem('notifSettings');
+            if (s) this.settings = { ...this.settings, ...JSON.parse(s) };
+        } catch (e) {}
+    },
+
+    esc(t) {
+        if (!t) return '';
+        const d = document.createElement('div');
+        d.textContent = t;
+        return d.innerHTML;
+    },
+
+    trunc(t, m) {
+        if (!t) return '';
+        return t.length > m ? t.substring(0, m) + '…' : t;
+    },
+
+    reset() {
+        this.unreadCounts = {};
+        this.activeChatId = null;
+        this.initialized = false;
+        this.stopTitleBlink();
+        this.updateTotalBadge();
+        document.title = this.originalTitle;
+
+        if (this.notifWs) { this.notifWs.close(); this.notifWs = null; }
+        if (this.reconnectTimer) { clearTimeout(this.reconnectTimer); this.reconnectTimer = null; }
+
+        const b = document.getElementById('notifPermBanner');
+        if (b) b.remove();
+        const c = document.getElementById('toastContainer');
+        if (c) c.innerHTML = '';
+    }
+};
+
 // ==================== INITIALIZATION ====================
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 App initializing...');
     checkTokenOnLoad();
     updateAuthStatus();
+    NotificationManager.init();
     initMessageInput();
     // Запускаем автообновление если авторизован
     if (TokenManager.isAuthenticated()) {

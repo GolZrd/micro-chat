@@ -8,6 +8,7 @@ import (
 
 	chat_v1 "github.com/GolZrd/micro-chat/chat-server/pkg/chat_v1"
 	"github.com/GolZrd/micro-chat/web-gateway/internal/clients"
+	"github.com/GolZrd/micro-chat/web-gateway/internal/hub"
 	"github.com/GolZrd/micro-chat/web-gateway/internal/logger"
 	"github.com/GolZrd/micro-chat/web-gateway/internal/storage"
 	"github.com/GolZrd/micro-chat/web-gateway/internal/utils"
@@ -17,7 +18,7 @@ import (
 
 const maxVoiceSize = 10 << 20 // 10 MB
 
-func SendVoice(client *clients.ChatClient, storage storage.Storage) gin.HandlerFunc {
+func SendVoice(client *clients.ChatClient, storage storage.Storage, notificationHub *hub.Hub) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		chatIdStr := c.PostForm("chat_id")
 		chatId, err := strconv.ParseInt(chatIdStr, 10, 64)
@@ -72,8 +73,19 @@ func SendVoice(client *clients.ChatClient, storage storage.Storage) gin.HandlerF
 			return
 		}
 
+		// После успешной отправки — уведомления
+		token, _ := c.Get("authorization")
+		tokenStr, _ := token.(string)
+		senderClaims, _ := utils.ParseTokenClaims(tokenStr)
+
+		go func() {
+			ctx := utils.ContextWithToken(c)
+			sendNotifications(client, notificationHub, ctx, senderClaims, chatId, voiceURL, int32(chat_v1.MessageType_MESSAGE_TYPE_VOICE), float32(duration))
+		}()
+
 		c.JSON(http.StatusOK, gin.H{
 			"status":    "sent",
-			"voice_url": voiceURL})
+			"voice_url": voiceURL},
+		)
 	}
 }

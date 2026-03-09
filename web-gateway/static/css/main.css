@@ -27,6 +27,7 @@
 @import url('./components/messages.css');
 @import url('./components/navigation.css');
 @import url('./components/emoji-picker.css'); /* ДОБАВЛЕНО */
+@import url('./components/toast.css');
 
 /* ==================== ВЫБЕРИТЕ ТЕМУ ==================== */
 
