@@ -101,12 +101,27 @@ func (r *repo) Update(ctx context.Context, id int64, info UpdateUserDTO) error {
 	builder := squirrel.Update(tableName).
 		PlaceholderFormat(squirrel.Dollar).
 		Where(squirrel.Eq{idColumn: id}).
-		SetMap(map[string]interface{}{
-			usernameColumn:  info.Username,
-			emailColumn:     info.Email,
-			bioColumn:       info.Bio,
-			UpdatedAtColumn: time.Now(),
-		})
+		Set(UpdatedAtColumn, time.Now())
+
+	hasUpdates := false
+
+	// Обновляем ТОЛЬКО переданные поля
+	if info.Username != nil {
+		builder = builder.Set(usernameColumn, *info.Username)
+		hasUpdates = true
+	}
+	if info.Email != nil {
+		builder = builder.Set(emailColumn, *info.Email)
+		hasUpdates = true
+	}
+	if info.Bio != nil {
+		builder = builder.Set(bioColumn, *info.Bio)
+		hasUpdates = true
+	}
+
+	if !hasUpdates {
+		return nil
+	}
 
 	query, args, err := builder.ToSql()
 	if err != nil {
