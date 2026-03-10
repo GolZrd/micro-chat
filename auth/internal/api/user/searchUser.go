@@ -37,6 +37,7 @@ func (s *Implementation) SearchUser(ctx context.Context, req *descUser.SearchUse
 			Id:               user.Id,
 			Username:         user.Username,
 			FriendshipStatus: user.FriendshipStatus,
+			AvatarUrl:        user.AvatarURL,
 		})
 	}
 

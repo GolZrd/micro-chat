@@ -15,6 +15,7 @@ type UserService interface {
 	CheckUsersExists(ctx context.Context, usernames []string) (foundUsers []model.UserShort, notFoundUsers []string, err error)
 	SearchUser(ctx context.Context, searchQuery string, currentUserId int64, limit int) ([]model.UserSearchResult, error)
 	UpdateAvatar(ctx context.Context, id int64, avatarUrl string) error
+	GetUsers(ctx context.Context, ids []int64) ([]model.UserShort, error)
 }
 
 type service struct {

@@ -16,6 +16,7 @@ service UserAPI {
     rpc CheckUsersExists(CheckUsersExistsRequest) returns (CheckUsersExistsResponse); // CheckUsersExists - ручка проверки существования пользователей
     rpc SearchUser(SearchUserRequest) returns (SearchUserResponse); // SearchUser - ручка поиска пользователей по никнейму
 
+    rpc GetUsers(GetUsersRequest) returns (GetUsersResponse); // GetUsers - ручка получения списка пользователей
     rpc UpdateAvatar(UpdateAvatarRequest) returns (UpdateAvatarResponse);
 }
 
@@ -47,6 +48,7 @@ message User {
 message UserInfoShort {
     int64 id = 1;
     string username = 2;
+    string avatar_url = 3;
 }
 
 message CreateRequest {
@@ -95,6 +97,7 @@ message UserSearchResult {
     int64 id = 1;
     string username = 2;
     string friendship_status = 3; // Статусы могут быть "none", "pending", "accepted" и т.д.
+    string avatar_url = 4;
 }
 
 message SearchUserRequest {
@@ -114,4 +117,12 @@ message UpdateAvatarRequest {
 
 message UpdateAvatarResponse {
     string avatar_url = 1;
+}
+
+message GetUsersRequest {
+    repeated int64 ids = 1;
+}
+
+message GetUsersResponse {
+    repeated UserInfoShort users = 1;
 }

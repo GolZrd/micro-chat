@@ -38,6 +38,7 @@ type UserRepository interface {
 	Delete(ctx context.Context, id int64) error
 	GetByEmail(ctx context.Context, email string) (*model.UserAuthData, error)
 	GetByUsernames(ctx context.Context, usernames []string) ([]model.UserShort, error)
+	GetUsers(ctx context.Context, ids []int64) ([]model.UserShort, error)
 	GetByUsername(ctx context.Context, username string) (*model.User, error)
 	SearchUser(ctx context.Context, searchQuery string, currentUserId int64, limit int) ([]model.UserSearchResult, error)
 	UpdateAvatar(ctx context.Context, id int64, avatarUrl string) error
@@ -97,7 +98,6 @@ func (r *repo) Get(ctx context.Context, id int64) (*model.User, error) {
 }
 
 func (r *repo) Update(ctx context.Context, id int64, info UpdateUserDTO) error {
-	//TODO: Добавить возможность обновить что то одно
 	builder := squirrel.Update(tableName).
 		PlaceholderFormat(squirrel.Dollar).
 		Where(squirrel.Eq{idColumn: id}).
@@ -186,7 +186,7 @@ func (r *repo) GetByEmail(ctx context.Context, email string) (*model.UserAuthDat
 // GetByUsernames возвращает имена существующих пользователей
 func (r *repo) GetByUsernames(ctx context.Context, usernames []string) ([]model.UserShort, error) {
 	// Простой запрос, потому что проверяем только имя, squirrel builder избыточен
-	query := "SELECT id, username FROM users WHERE username = ANY($1)"
+	query := "SELECT id, username, COALESCE(avatar_url, '') FROM users WHERE username = ANY($1)"
 
 	rows, err := r.db.Query(ctx, query, usernames)
 	if err != nil {
@@ -197,7 +197,7 @@ func (r *repo) GetByUsernames(ctx context.Context, usernames []string) ([]model.
 	var existingUsers []model.UserShort
 	for rows.Next() {
 		var user modelRepo.UserShort
-		if err := rows.Scan(&user.Id, &user.Username); err != nil {
+		if err := rows.Scan(&user.Id, &user.Username, &user.AvatarUrl); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
 
@@ -205,6 +205,36 @@ func (r *repo) GetByUsernames(ctx context.Context, usernames []string) ([]model.
 	}
 	// Возвращаются только те пользователи, которые есть в БД
 	return existingUsers, nil
+}
+
+func (r *repo) GetUsers(ctx context.Context, ids []int64) ([]model.UserShort, error) {
+	builder := squirrel.Select(idColumn, usernameColumn, "COALESCE(avatar_url, '')").
+		PlaceholderFormat(squirrel.Dollar).
+		From(tableName).
+		Where(squirrel.Eq{idColumn: ids})
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build query: %w", err)
+	}
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query: %w", err)
+	}
+	defer rows.Close()
+
+	var users []model.UserShort
+	for rows.Next() {
+		var user modelRepo.UserShort
+		if err := rows.Scan(&user.Id, &user.Username, &user.AvatarUrl); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
+		}
+
+		users = append(users, *converter.ToUserShortFromRepo(&user))
+	}
+
+	return users, nil
 }
 
 func (r *repo) GetByUsername(ctx context.Context, username string) (*model.User, error) {
@@ -237,7 +267,8 @@ func (r *repo) SearchUser(ctx context.Context, searchQuery string, currentUserId
 	builder := squirrel.Select(
 		"u.id",
 		"u.username",
-		"COALESCE(f.status, 'none') as friendship_status"). // COALESCE - возвращает первое не NULL значение, то есть, если связи нет, вернет "none"
+		"COALESCE(f.status, 'none') as friendship_status",
+		"COALESCE(u.avatar_url, '') as avatar_url"). // COALESCE - возвращает первое не NULL значение, то есть, если связи нет, вернет "none"
 		PlaceholderFormat(squirrel.Dollar).
 		From("users u").
 		LeftJoin("friends f ON f.friend_id = u.id AND f.user_id = ?", currentUserId). // f.user_id - текущий пользователь, f.friend_id - пользователь, которого мы ищем
@@ -263,7 +294,7 @@ func (r *repo) SearchUser(ctx context.Context, searchQuery string, currentUserId
 
 	for rows.Next() {
 		var user model.UserSearchResult
-		if err := rows.Scan(&user.Id, &user.Username, &user.FriendshipStatus); err != nil {
+		if err := rows.Scan(&user.Id, &user.Username, &user.FriendshipStatus, &user.AvatarURL); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
 		users = append(users, user)

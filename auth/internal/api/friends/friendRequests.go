@@ -25,10 +25,11 @@ func (s *Implementation) GetFriendRequests(ctx context.Context, req *desc.GetFri
 
 	for _, req := range requests {
 		result = append(result, &desc.FriendRequest{
-			Id:           req.Id,
-			FromUserId:   req.FromUserId,
-			FromUsername: req.FromUsername,
-			CreatedAt:    timestamppb.New(req.CreatedAt),
+			Id:            req.Id,
+			FromUserId:    req.FromUserId,
+			FromUsername:  req.FromUsername,
+			CreatedAt:     timestamppb.New(req.CreatedAt),
+			FromAvatarUrl: req.FromAvatarUrl,
 		})
 	}
 

@@ -26,6 +26,7 @@ const (
 	UserAPI_Delete_FullMethodName           = "/user_v1.UserAPI/Delete"
 	UserAPI_CheckUsersExists_FullMethodName = "/user_v1.UserAPI/CheckUsersExists"
 	UserAPI_SearchUser_FullMethodName       = "/user_v1.UserAPI/SearchUser"
+	UserAPI_GetUsers_FullMethodName         = "/user_v1.UserAPI/GetUsers"
 	UserAPI_UpdateAvatar_FullMethodName     = "/user_v1.UserAPI/UpdateAvatar"
 )
 
@@ -39,6 +40,7 @@ type UserAPIClient interface {
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	CheckUsersExists(ctx context.Context, in *CheckUsersExistsRequest, opts ...grpc.CallOption) (*CheckUsersExistsResponse, error)
 	SearchUser(ctx context.Context, in *SearchUserRequest, opts ...grpc.CallOption) (*SearchUserResponse, error)
+	GetUsers(ctx context.Context, in *GetUsersRequest, opts ...grpc.CallOption) (*GetUsersResponse, error)
 	UpdateAvatar(ctx context.Context, in *UpdateAvatarRequest, opts ...grpc.CallOption) (*UpdateAvatarResponse, error)
 }
 
@@ -110,6 +112,16 @@ func (c *userAPIClient) SearchUser(ctx context.Context, in *SearchUserRequest, o
 	return out, nil
 }
 
+func (c *userAPIClient) GetUsers(ctx context.Context, in *GetUsersRequest, opts ...grpc.CallOption) (*GetUsersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetUsersResponse)
+	err := c.cc.Invoke(ctx, UserAPI_GetUsers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *userAPIClient) UpdateAvatar(ctx context.Context, in *UpdateAvatarRequest, opts ...grpc.CallOption) (*UpdateAvatarResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UpdateAvatarResponse)
@@ -130,6 +142,7 @@ type UserAPIServer interface {
 	Delete(context.Context, *DeleteRequest) (*emptypb.Empty, error)
 	CheckUsersExists(context.Context, *CheckUsersExistsRequest) (*CheckUsersExistsResponse, error)
 	SearchUser(context.Context, *SearchUserRequest) (*SearchUserResponse, error)
+	GetUsers(context.Context, *GetUsersRequest) (*GetUsersResponse, error)
 	UpdateAvatar(context.Context, *UpdateAvatarRequest) (*UpdateAvatarResponse, error)
 	mustEmbedUnimplementedUserAPIServer()
 }
@@ -158,6 +171,9 @@ func (UnimplementedUserAPIServer) CheckUsersExists(context.Context, *CheckUsersE
 }
 func (UnimplementedUserAPIServer) SearchUser(context.Context, *SearchUserRequest) (*SearchUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SearchUser not implemented")
+}
+func (UnimplementedUserAPIServer) GetUsers(context.Context, *GetUsersRequest) (*GetUsersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUsers not implemented")
 }
 func (UnimplementedUserAPIServer) UpdateAvatar(context.Context, *UpdateAvatarRequest) (*UpdateAvatarResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateAvatar not implemented")
@@ -291,6 +307,24 @@ func _UserAPI_SearchUser_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserAPI_GetUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUsersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserAPIServer).GetUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserAPI_GetUsers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserAPIServer).GetUsers(ctx, req.(*GetUsersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UserAPI_UpdateAvatar_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateAvatarRequest)
 	if err := dec(in); err != nil {
@@ -339,6 +373,10 @@ var UserAPI_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SearchUser",
 			Handler:    _UserAPI_SearchUser_Handler,
+		},
+		{
+			MethodName: "GetUsers",
+			Handler:    _UserAPI_GetUsers_Handler,
 		},
 		{
 			MethodName: "UpdateAvatar",

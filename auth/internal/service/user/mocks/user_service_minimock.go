@@ -48,6 +48,13 @@ type UserServiceMock struct {
 	beforeGetCounter uint64
 	GetMock          mUserServiceMockGet
 
+	funcGetUsers          func(ctx context.Context, ids []int64) (ua1 []model.UserShort, err error)
+	funcGetUsersOrigin    string
+	inspectFuncGetUsers   func(ctx context.Context, ids []int64)
+	afterGetUsersCounter  uint64
+	beforeGetUsersCounter uint64
+	GetUsersMock          mUserServiceMockGetUsers
+
 	funcSearchUser          func(ctx context.Context, searchQuery string, currentUserId int64, limit int) (ua1 []model.UserSearchResult, err error)
 	funcSearchUserOrigin    string
 	inspectFuncSearchUser   func(ctx context.Context, searchQuery string, currentUserId int64, limit int)
@@ -89,6 +96,9 @@ func NewUserServiceMock(t minimock.Tester) *UserServiceMock {
 
 	m.GetMock = mUserServiceMockGet{mock: m}
 	m.GetMock.callArgs = []*UserServiceMockGetParams{}
+
+	m.GetUsersMock = mUserServiceMockGetUsers{mock: m}
+	m.GetUsersMock.callArgs = []*UserServiceMockGetUsersParams{}
 
 	m.SearchUserMock = mUserServiceMockSearchUser{mock: m}
 	m.SearchUserMock.callArgs = []*UserServiceMockSearchUserParams{}
@@ -1476,6 +1486,349 @@ func (m *UserServiceMock) MinimockGetInspect() {
 	}
 }
 
+type mUserServiceMockGetUsers struct {
+	optional           bool
+	mock               *UserServiceMock
+	defaultExpectation *UserServiceMockGetUsersExpectation
+	expectations       []*UserServiceMockGetUsersExpectation
+
+	callArgs []*UserServiceMockGetUsersParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// UserServiceMockGetUsersExpectation specifies expectation struct of the UserService.GetUsers
+type UserServiceMockGetUsersExpectation struct {
+	mock               *UserServiceMock
+	params             *UserServiceMockGetUsersParams
+	paramPtrs          *UserServiceMockGetUsersParamPtrs
+	expectationOrigins UserServiceMockGetUsersExpectationOrigins
+	results            *UserServiceMockGetUsersResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// UserServiceMockGetUsersParams contains parameters of the UserService.GetUsers
+type UserServiceMockGetUsersParams struct {
+	ctx context.Context
+	ids []int64
+}
+
+// UserServiceMockGetUsersParamPtrs contains pointers to parameters of the UserService.GetUsers
+type UserServiceMockGetUsersParamPtrs struct {
+	ctx *context.Context
+	ids *[]int64
+}
+
+// UserServiceMockGetUsersResults contains results of the UserService.GetUsers
+type UserServiceMockGetUsersResults struct {
+	ua1 []model.UserShort
+	err error
+}
+
+// UserServiceMockGetUsersOrigins contains origins of expectations of the UserService.GetUsers
+type UserServiceMockGetUsersExpectationOrigins struct {
+	origin    string
+	originCtx string
+	originIds string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmGetUsers *mUserServiceMockGetUsers) Optional() *mUserServiceMockGetUsers {
+	mmGetUsers.optional = true
+	return mmGetUsers
+}
+
+// Expect sets up expected params for UserService.GetUsers
+func (mmGetUsers *mUserServiceMockGetUsers) Expect(ctx context.Context, ids []int64) *mUserServiceMockGetUsers {
+	if mmGetUsers.mock.funcGetUsers != nil {
+		mmGetUsers.mock.t.Fatalf("UserServiceMock.GetUsers mock is already set by Set")
+	}
+
+	if mmGetUsers.defaultExpectation == nil {
+		mmGetUsers.defaultExpectation = &UserServiceMockGetUsersExpectation{}
+	}
+
+	if mmGetUsers.defaultExpectation.paramPtrs != nil {
+		mmGetUsers.mock.t.Fatalf("UserServiceMock.GetUsers mock is already set by ExpectParams functions")
+	}
+
+	mmGetUsers.defaultExpectation.params = &UserServiceMockGetUsersParams{ctx, ids}
+	mmGetUsers.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmGetUsers.expectations {
+		if minimock.Equal(e.params, mmGetUsers.defaultExpectation.params) {
+			mmGetUsers.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmGetUsers.defaultExpectation.params)
+		}
+	}
+
+	return mmGetUsers
+}
+
+// ExpectCtxParam1 sets up expected param ctx for UserService.GetUsers
+func (mmGetUsers *mUserServiceMockGetUsers) ExpectCtxParam1(ctx context.Context) *mUserServiceMockGetUsers {
+	if mmGetUsers.mock.funcGetUsers != nil {
+		mmGetUsers.mock.t.Fatalf("UserServiceMock.GetUsers mock is already set by Set")
+	}
+
+	if mmGetUsers.defaultExpectation == nil {
+		mmGetUsers.defaultExpectation = &UserServiceMockGetUsersExpectation{}
+	}
+
+	if mmGetUsers.defaultExpectation.params != nil {
+		mmGetUsers.mock.t.Fatalf("UserServiceMock.GetUsers mock is already set by Expect")
+	}
+
+	if mmGetUsers.defaultExpectation.paramPtrs == nil {
+		mmGetUsers.defaultExpectation.paramPtrs = &UserServiceMockGetUsersParamPtrs{}
+	}
+	mmGetUsers.defaultExpectation.paramPtrs.ctx = &ctx
+	mmGetUsers.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmGetUsers
+}
+
+// ExpectIdsParam2 sets up expected param ids for UserService.GetUsers
+func (mmGetUsers *mUserServiceMockGetUsers) ExpectIdsParam2(ids []int64) *mUserServiceMockGetUsers {
+	if mmGetUsers.mock.funcGetUsers != nil {
+		mmGetUsers.mock.t.Fatalf("UserServiceMock.GetUsers mock is already set by Set")
+	}
+
+	if mmGetUsers.defaultExpectation == nil {
+		mmGetUsers.defaultExpectation = &UserServiceMockGetUsersExpectation{}
+	}
+
+	if mmGetUsers.defaultExpectation.params != nil {
+		mmGetUsers.mock.t.Fatalf("UserServiceMock.GetUsers mock is already set by Expect")
+	}
+
+	if mmGetUsers.defaultExpectation.paramPtrs == nil {
+		mmGetUsers.defaultExpectation.paramPtrs = &UserServiceMockGetUsersParamPtrs{}
+	}
+	mmGetUsers.defaultExpectation.paramPtrs.ids = &ids
+	mmGetUsers.defaultExpectation.expectationOrigins.originIds = minimock.CallerInfo(1)
+
+	return mmGetUsers
+}
+
+// Inspect accepts an inspector function that has same arguments as the UserService.GetUsers
+func (mmGetUsers *mUserServiceMockGetUsers) Inspect(f func(ctx context.Context, ids []int64)) *mUserServiceMockGetUsers {
+	if mmGetUsers.mock.inspectFuncGetUsers != nil {
+		mmGetUsers.mock.t.Fatalf("Inspect function is already set for UserServiceMock.GetUsers")
+	}
+
+	mmGetUsers.mock.inspectFuncGetUsers = f
+
+	return mmGetUsers
+}
+
+// Return sets up results that will be returned by UserService.GetUsers
+func (mmGetUsers *mUserServiceMockGetUsers) Return(ua1 []model.UserShort, err error) *UserServiceMock {
+	if mmGetUsers.mock.funcGetUsers != nil {
+		mmGetUsers.mock.t.Fatalf("UserServiceMock.GetUsers mock is already set by Set")
+	}
+
+	if mmGetUsers.defaultExpectation == nil {
+		mmGetUsers.defaultExpectation = &UserServiceMockGetUsersExpectation{mock: mmGetUsers.mock}
+	}
+	mmGetUsers.defaultExpectation.results = &UserServiceMockGetUsersResults{ua1, err}
+	mmGetUsers.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmGetUsers.mock
+}
+
+// Set uses given function f to mock the UserService.GetUsers method
+func (mmGetUsers *mUserServiceMockGetUsers) Set(f func(ctx context.Context, ids []int64) (ua1 []model.UserShort, err error)) *UserServiceMock {
+	if mmGetUsers.defaultExpectation != nil {
+		mmGetUsers.mock.t.Fatalf("Default expectation is already set for the UserService.GetUsers method")
+	}
+
+	if len(mmGetUsers.expectations) > 0 {
+		mmGetUsers.mock.t.Fatalf("Some expectations are already set for the UserService.GetUsers method")
+	}
+
+	mmGetUsers.mock.funcGetUsers = f
+	mmGetUsers.mock.funcGetUsersOrigin = minimock.CallerInfo(1)
+	return mmGetUsers.mock
+}
+
+// When sets expectation for the UserService.GetUsers which will trigger the result defined by the following
+// Then helper
+func (mmGetUsers *mUserServiceMockGetUsers) When(ctx context.Context, ids []int64) *UserServiceMockGetUsersExpectation {
+	if mmGetUsers.mock.funcGetUsers != nil {
+		mmGetUsers.mock.t.Fatalf("UserServiceMock.GetUsers mock is already set by Set")
+	}
+
+	expectation := &UserServiceMockGetUsersExpectation{
+		mock:               mmGetUsers.mock,
+		params:             &UserServiceMockGetUsersParams{ctx, ids},
+		expectationOrigins: UserServiceMockGetUsersExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmGetUsers.expectations = append(mmGetUsers.expectations, expectation)
+	return expectation
+}
+
+// Then sets up UserService.GetUsers return parameters for the expectation previously defined by the When method
+func (e *UserServiceMockGetUsersExpectation) Then(ua1 []model.UserShort, err error) *UserServiceMock {
+	e.results = &UserServiceMockGetUsersResults{ua1, err}
+	return e.mock
+}
+
+// Times sets number of times UserService.GetUsers should be invoked
+func (mmGetUsers *mUserServiceMockGetUsers) Times(n uint64) *mUserServiceMockGetUsers {
+	if n == 0 {
+		mmGetUsers.mock.t.Fatalf("Times of UserServiceMock.GetUsers mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmGetUsers.expectedInvocations, n)
+	mmGetUsers.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmGetUsers
+}
+
+func (mmGetUsers *mUserServiceMockGetUsers) invocationsDone() bool {
+	if len(mmGetUsers.expectations) == 0 && mmGetUsers.defaultExpectation == nil && mmGetUsers.mock.funcGetUsers == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmGetUsers.mock.afterGetUsersCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmGetUsers.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// GetUsers implements mm_user.UserService
+func (mmGetUsers *UserServiceMock) GetUsers(ctx context.Context, ids []int64) (ua1 []model.UserShort, err error) {
+	mm_atomic.AddUint64(&mmGetUsers.beforeGetUsersCounter, 1)
+	defer mm_atomic.AddUint64(&mmGetUsers.afterGetUsersCounter, 1)
+
+	mmGetUsers.t.Helper()
+
+	if mmGetUsers.inspectFuncGetUsers != nil {
+		mmGetUsers.inspectFuncGetUsers(ctx, ids)
+	}
+
+	mm_params := UserServiceMockGetUsersParams{ctx, ids}
+
+	// Record call args
+	mmGetUsers.GetUsersMock.mutex.Lock()
+	mmGetUsers.GetUsersMock.callArgs = append(mmGetUsers.GetUsersMock.callArgs, &mm_params)
+	mmGetUsers.GetUsersMock.mutex.Unlock()
+
+	for _, e := range mmGetUsers.GetUsersMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.ua1, e.results.err
+		}
+	}
+
+	if mmGetUsers.GetUsersMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmGetUsers.GetUsersMock.defaultExpectation.Counter, 1)
+		mm_want := mmGetUsers.GetUsersMock.defaultExpectation.params
+		mm_want_ptrs := mmGetUsers.GetUsersMock.defaultExpectation.paramPtrs
+
+		mm_got := UserServiceMockGetUsersParams{ctx, ids}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmGetUsers.t.Errorf("UserServiceMock.GetUsers got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmGetUsers.GetUsersMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.ids != nil && !minimock.Equal(*mm_want_ptrs.ids, mm_got.ids) {
+				mmGetUsers.t.Errorf("UserServiceMock.GetUsers got unexpected parameter ids, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmGetUsers.GetUsersMock.defaultExpectation.expectationOrigins.originIds, *mm_want_ptrs.ids, mm_got.ids, minimock.Diff(*mm_want_ptrs.ids, mm_got.ids))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmGetUsers.t.Errorf("UserServiceMock.GetUsers got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmGetUsers.GetUsersMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmGetUsers.GetUsersMock.defaultExpectation.results
+		if mm_results == nil {
+			mmGetUsers.t.Fatal("No results are set for the UserServiceMock.GetUsers")
+		}
+		return (*mm_results).ua1, (*mm_results).err
+	}
+	if mmGetUsers.funcGetUsers != nil {
+		return mmGetUsers.funcGetUsers(ctx, ids)
+	}
+	mmGetUsers.t.Fatalf("Unexpected call to UserServiceMock.GetUsers. %v %v", ctx, ids)
+	return
+}
+
+// GetUsersAfterCounter returns a count of finished UserServiceMock.GetUsers invocations
+func (mmGetUsers *UserServiceMock) GetUsersAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGetUsers.afterGetUsersCounter)
+}
+
+// GetUsersBeforeCounter returns a count of UserServiceMock.GetUsers invocations
+func (mmGetUsers *UserServiceMock) GetUsersBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGetUsers.beforeGetUsersCounter)
+}
+
+// Calls returns a list of arguments used in each call to UserServiceMock.GetUsers.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmGetUsers *mUserServiceMockGetUsers) Calls() []*UserServiceMockGetUsersParams {
+	mmGetUsers.mutex.RLock()
+
+	argCopy := make([]*UserServiceMockGetUsersParams, len(mmGetUsers.callArgs))
+	copy(argCopy, mmGetUsers.callArgs)
+
+	mmGetUsers.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockGetUsersDone returns true if the count of the GetUsers invocations corresponds
+// the number of defined expectations
+func (m *UserServiceMock) MinimockGetUsersDone() bool {
+	if m.GetUsersMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.GetUsersMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.GetUsersMock.invocationsDone()
+}
+
+// MinimockGetUsersInspect logs each unmet expectation
+func (m *UserServiceMock) MinimockGetUsersInspect() {
+	for _, e := range m.GetUsersMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to UserServiceMock.GetUsers at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterGetUsersCounter := mm_atomic.LoadUint64(&m.afterGetUsersCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.GetUsersMock.defaultExpectation != nil && afterGetUsersCounter < 1 {
+		if m.GetUsersMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to UserServiceMock.GetUsers at\n%s", m.GetUsersMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to UserServiceMock.GetUsers at\n%s with params: %#v", m.GetUsersMock.defaultExpectation.expectationOrigins.origin, *m.GetUsersMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcGetUsers != nil && afterGetUsersCounter < 1 {
+		m.t.Errorf("Expected call to UserServiceMock.GetUsers at\n%s", m.funcGetUsersOrigin)
+	}
+
+	if !m.GetUsersMock.invocationsDone() && afterGetUsersCounter > 0 {
+		m.t.Errorf("Expected %d calls to UserServiceMock.GetUsers at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.GetUsersMock.expectedInvocations), m.GetUsersMock.expectedInvocationsOrigin, afterGetUsersCounter)
+	}
+}
+
 type mUserServiceMockSearchUser struct {
 	optional           bool
 	mock               *UserServiceMock
@@ -2639,6 +2992,8 @@ func (m *UserServiceMock) MinimockFinish() {
 
 			m.MinimockGetInspect()
 
+			m.MinimockGetUsersInspect()
+
 			m.MinimockSearchUserInspect()
 
 			m.MinimockUpdateInspect()
@@ -2671,6 +3026,7 @@ func (m *UserServiceMock) minimockDone() bool {
 		m.MinimockCreateDone() &&
 		m.MinimockDeleteDone() &&
 		m.MinimockGetDone() &&
+		m.MinimockGetUsersDone() &&
 		m.MinimockSearchUserDone() &&
 		m.MinimockUpdateDone() &&
 		m.MinimockUpdateAvatarDone()

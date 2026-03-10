@@ -41,7 +41,8 @@ func ToUserAuthDataFromRepo(user *modelRepo.UserAuthData) *model.UserAuthData {
 
 func ToUserShortFromRepo(user *modelRepo.UserShort) *model.UserShort {
 	return &model.UserShort{
-		Id:       user.Id,
-		Username: user.Username,
+		Id:        user.Id,
+		Username:  user.Username,
+		AvatarURL: user.AvatarUrl,
 	}
 }

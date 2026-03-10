@@ -24,9 +24,10 @@ func (s *Implementation) GetFriends(ctx context.Context, req *desc.GetFriendsReq
 
 	for _, friend := range friendsList {
 		result = append(result, &desc.Friend{
-			Id:       friend.Id,
-			UserId:   friend.UserId,
-			Username: friend.Username,
+			Id:        friend.Id,
+			UserId:    friend.UserId,
+			Username:  friend.Username,
+			AvatarUrl: friend.AvatarUrl,
 		})
 	}
 

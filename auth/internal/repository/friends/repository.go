@@ -177,7 +177,7 @@ func (r *repo) RejectFriendRequest(ctx context.Context, requestId int64, userId 
 
 func (r *repo) Friends(ctx context.Context, userid int64) ([]model.Friend, error) {
 	// Запрос использующий Join удобнее просто написать без squirrel
-	query := `SELECT f.ID, u.id, u.username
+	query := `SELECT f.ID, u.id, u.username, COALESCE(u.avatar_url, '') as avatar_url
 			FROM friends f 
 			JOIN users u ON u.id = f.friend_id
 			WHERE f.user_id = $1 AND f.status = 'accepted'
@@ -192,7 +192,7 @@ func (r *repo) Friends(ctx context.Context, userid int64) ([]model.Friend, error
 	var friends []model.Friend
 	for rows.Next() {
 		var friend model.Friend
-		if err := rows.Scan(&friend.Id, &friend.UserId, &friend.Username); err != nil {
+		if err := rows.Scan(&friend.Id, &friend.UserId, &friend.Username, &friend.AvatarUrl); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
 		friends = append(friends, friend)
@@ -223,7 +223,7 @@ func (r *repo) RemoveFriend(ctx context.Context, userId, friendId int64) error {
 }
 
 func (r *repo) FriendRequests(ctx context.Context, userId int64) ([]model.FriendRequest, error) {
-	query := `SELECT f.ID, f.user_id, u.username, f.created_at
+	query := `SELECT f.ID, f.user_id, u.username, f.created_at, COALESCE(u.avatar_url, '') as avatar_url
 			FROM friends f 
 			JOIN users u ON u.id = f.user_id
 			WHERE f.friend_id = $1 AND f.status = 'pending'
@@ -238,7 +238,7 @@ func (r *repo) FriendRequests(ctx context.Context, userId int64) ([]model.Friend
 	var requests []model.FriendRequest
 	for rows.Next() {
 		var req model.FriendRequest
-		if err := rows.Scan(&req.Id, &req.FromUserId, &req.FromUsername, &req.CreatedAt); err != nil {
+		if err := rows.Scan(&req.Id, &req.FromUserId, &req.FromUsername, &req.CreatedAt, &req.FromAvatarUrl); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
 		requests = append(requests, req)

@@ -40,8 +40,9 @@ type UserAuthData struct {
 
 // Модель для проверки существования пользователя
 type UserShort struct {
-	Id       int64
-	Username string
+	Id        int64
+	Username  string
+	AvatarURL string
 }
 
 // Модель для поиска пользователей
@@ -49,4 +50,5 @@ type UserSearchResult struct {
 	Id               int64
 	Username         string
 	FriendshipStatus string
+	AvatarURL        string
 }

@@ -41,8 +41,9 @@ type UserAuthData struct {
 
 // Для метода CheckUsersExists
 type UserShort struct {
-	Id       int64  `db:"id"`
-	Username string `db:"username"`
+	Id        int64  `db:"id"`
+	Username  string `db:"username"`
+	AvatarUrl string `db:"avatar_url"`
 }
 
 // Для метода SearchUser
