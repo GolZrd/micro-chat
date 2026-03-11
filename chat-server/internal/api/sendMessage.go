@@ -33,6 +33,9 @@ func (s *Implementation) SendMessage(ctx context.Context, req *desc.SendMessageR
 		Text:          req.Text,
 		MessageType:   int32(req.Type),
 		VoiceDuration: req.VoiceDuration,
+		FileUrl:       req.FileUrl,
+		FileName:      req.FileName,
+		FileSize:      req.FileSize,
 	}
 
 	err = s.chatService.SendMessage(ctx, msg)

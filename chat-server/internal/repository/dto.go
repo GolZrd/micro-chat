@@ -17,8 +17,11 @@ type MessageCreateDTO struct {
 	UserId        int64
 	FromUsername  string
 	Text          string
-	MessageType   string // TEXT, VOICE для БД
+	MessageType   string // TEXT, VOICE, IMAGE, FILE для БД
 	VoiceDuration float32
+	FileUrl       string
+	FileName      string
+	FileSize      int64
 }
 
 // MessageDTO - DTO для получения сообщения
@@ -31,6 +34,9 @@ type MessageDTO struct {
 	CreatedAt     time.Time
 	MessageType   string // TEXT, VOICE для БД
 	VoiceDuration float32
+	FileUrl       string
+	FileName      string
+	FileSize      int64
 }
 
 type MemberDTO struct {

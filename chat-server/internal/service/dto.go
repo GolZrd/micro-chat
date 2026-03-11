@@ -6,6 +6,8 @@ const (
 	MessageTypeText        = 0
 	MessageTypeOnlineUsers = 1
 	MessageTypeVoice       = 2
+	MessageTypeImage       = 3
+	MessageTypeFile        = 4
 )
 
 type SendMessageDTO struct {
@@ -15,6 +17,9 @@ type SendMessageDTO struct {
 	Text          string
 	MessageType   int32
 	VoiceDuration float32
+	FileUrl       string
+	FileName      string
+	FileSize      int64
 }
 
 type MessageDTO struct {
@@ -24,6 +29,9 @@ type MessageDTO struct {
 	CreatedAt     time.Time
 	OnlineUsers   []OnlineUserDTO // Используется только когда у нас тип MessageTypeOnlineUsers
 	VoiceDuration float32
+	FileUrl       string
+	FileName      string
+	FileSize      int64
 }
 
 type ChatInfoDTO struct {

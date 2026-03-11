@@ -6,6 +6,9 @@ CREATE TABLE messages (
     message_type VARCHAR(20) DEFAULT 'text', -- На будущее
     text TEXT NOT NULL,
     voice_duration REAL NOT NULL DEFAULT 0,
+    file_url VARCHAR(500) DEFAULT '',
+    file_name VARCHAR(255) DEFAULT '',
+    file_size BIGINT DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

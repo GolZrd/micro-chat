@@ -13,8 +13,13 @@ import (
 // SendMessage сохраняет сообщение и рассылает подписчикам
 func (s *service) SendMessage(ctx context.Context, msg SendMessageDTO) error {
 	msgTypeStr := "text"
-	if msg.MessageType == MessageTypeVoice {
+	switch msg.MessageType {
+	case MessageTypeVoice:
 		msgTypeStr = "voice"
+	case MessageTypeImage:
+		msgTypeStr = "image"
+	case MessageTypeFile:
+		msgTypeStr = "file"
 	}
 
 	input := repository.MessageCreateDTO{
@@ -24,6 +29,9 @@ func (s *service) SendMessage(ctx context.Context, msg SendMessageDTO) error {
 		Text:          msg.Text,
 		MessageType:   msgTypeStr,
 		VoiceDuration: msg.VoiceDuration,
+		FileUrl:       msg.FileUrl,
+		FileName:      msg.FileName,
+		FileSize:      msg.FileSize,
 	}
 
 	logger.Info("sending message", zap.Int64("chat_id", msg.ChatId), zap.String("sent by", msg.FromUsername))
@@ -48,6 +56,9 @@ func (s *service) SendMessage(ctx context.Context, msg SendMessageDTO) error {
 		Text:          msg.Text,
 		CreatedAt:     time.Now(),
 		VoiceDuration: msg.VoiceDuration,
+		FileUrl:       msg.FileUrl,
+		FileName:      msg.FileName,
+		FileSize:      msg.FileSize,
 	}
 
 	// Отправляем всем подписчикам сообщение если комната существует
@@ -97,9 +108,15 @@ func (s *service) sendRecentMessages(ctx context.Context, chatID int64, msgChan 
 	// Отправляем сообщения
 	for _, msg := range messages {
 		msgType := MessageTypeText
-		if msg.MessageType == "voice" {
+		switch msg.MessageType {
+		case "voice":
 			msgType = MessageTypeVoice
+		case "image":
+			msgType = MessageTypeImage
+		case "file":
+			msgType = MessageTypeFile
 		}
+
 		select {
 		case msgChan <- MessageDTO{
 			MessageType:   int32(msgType),
@@ -107,6 +124,9 @@ func (s *service) sendRecentMessages(ctx context.Context, chatID int64, msgChan 
 			Text:          msg.Text,
 			CreatedAt:     msg.CreatedAt,
 			VoiceDuration: msg.VoiceDuration,
+			FileUrl:       msg.FileUrl,
+			FileName:      msg.FileName,
+			FileSize:      msg.FileSize,
 		}:
 		case <-ctx.Done():
 			logger.Debug("history sending interrupted", zap.Int64("chat_id", chatID))

@@ -88,6 +88,28 @@ func (s *Implementation) convertToProto(msg service.MessageDTO) *desc.Message {
 			CreatedAt:     timestamppb.New(msg.CreatedAt),
 			VoiceDuration: msg.VoiceDuration,
 		}
+	case service.MessageTypeImage:
+		// Изображение
+		return &desc.Message{
+			Type:      desc.MessageType_MESSAGE_TYPE_IMAGE,
+			From:      msg.From,
+			Text:      msg.Text,
+			CreatedAt: timestamppb.New(msg.CreatedAt),
+			FileUrl:   msg.FileUrl,
+			FileName:  msg.FileName,
+			FileSize:  msg.FileSize,
+		}
+	case service.MessageTypeFile:
+		// Файл
+		return &desc.Message{
+			Type:      desc.MessageType_MESSAGE_TYPE_FILE,
+			From:      msg.From,
+			Text:      msg.Text,
+			CreatedAt: timestamppb.New(msg.CreatedAt),
+			FileUrl:   msg.FileUrl,
+			FileName:  msg.FileName,
+			FileSize:  msg.FileSize,
+		}
 	default:
 		// Текстовое сообщение
 		return &desc.Message{
