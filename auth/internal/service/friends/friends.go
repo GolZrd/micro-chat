@@ -16,7 +16,7 @@ func (s *service) Friends(ctx context.Context, userid int64) ([]model.Friend, er
 		return nil, fmt.Errorf("failed to get friends %w", err)
 	}
 
-	logger.Info("Get friends", zap.Int64("user_id", userid), zap.Int("count", len(frineds)))
+	logger.Info("Get friends", zap.Int64("friends of user with id", userid), zap.Int("count", len(frineds)))
 
 	return frineds, nil
 }

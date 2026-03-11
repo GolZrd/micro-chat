@@ -307,14 +307,7 @@
             
             <!-- Секция: Профиль -->
             <section id="profileSection" class="content-section">
-                <div class="section-header">
-                    <h1><i class="fas fa-user"></i> Мой профиль</h1>
-                    <button onclick="loadUserInfo()" class="btn-icon">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
-                </div>
-                
-                <div id="userInfo" class="profile-container">
+                <div class="profile-page" id="profilePage">
                     <div class="loading">
                         <p>Загрузка профиля...</p>
                     </div>
@@ -438,15 +431,18 @@
     <!-- Templates -->
     <template id="friendItemTemplate">
         <div class="friend-item">
-            <div class="friend-avatar">
-                <span class="avatar-initials"></span>
+            <div class="friend-avatar-wrapper">
+                <div class="friend-avatar">
+                    <img class="friend-avatar-img" src="" alt="" style="display:none;">
+                    <span class="avatar-initials"></span>
+                </div>
                 <span class="online-indicator offline"></span>
             </div>
             <div class="friend-info">
                 <span class="friend-name"></span>
                 <span class="friend-status offline"></span>
             </div>
-            <button class="btn-more" title="Действия">
+            <button class="btn-more" title="Ещё">
                 <i class="fas fa-ellipsis-v"></i>
             </button>
         </div>
@@ -466,35 +462,35 @@
     </div>
 
     <template id="friendRequestItemTemplate">
-        <div class="request-item">
-            <div class="request-avatar">
-                <span class="avatar-initials"></span>
+        <div class="friend-request-item">
+            <div class="friend-avatar-wrapper">
+                <div class="friend-avatar">
+                    <img class="friend-avatar-img" src="" alt="" style="display:none;">
+                    <span class="avatar-initials"></span>
+                </div>
             </div>
             <div class="request-info">
                 <span class="request-name"></span>
                 <span class="request-date"></span>
             </div>
             <div class="request-actions">
-                <button class="btn-icon btn-accept" title="Принять">
-                    <i class="fas fa-check"></i>
-                </button>
-                <button class="btn-icon btn-reject" title="Отклонить">
-                    <i class="fas fa-times"></i>
-                </button>
+                <button class="btn-accept" title="Принять"><i class="fas fa-check"></i></button>
+                <button class="btn-reject" title="Отклонить"><i class="fas fa-times"></i></button>
             </div>
         </div>
     </template>
 
     <template id="searchResultItemTemplate">
         <div class="search-result-item">
-            <div class="result-avatar">
+            <div class="search-result-avatar">
+                <img class="search-avatar-img" src="" alt="" style="display:none;">
                 <span class="avatar-initials"></span>
             </div>
             <div class="result-info">
                 <span class="result-name"></span>
                 <span class="result-status"></span>
             </div>
-            <button class="btn-add-friend">
+            <button class="btn-add-friend" title="Добавить в друзья">
                 <i class="fas fa-user-plus"></i>
             </button>
         </div>

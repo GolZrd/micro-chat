@@ -95,6 +95,8 @@ func main() {
 
 		// User
 		api.GET("/user/:id", handlers.GetUser(authClient))
+		api.POST("/user/avatar", handlers.UploadAvatar(authClient, fileStorage))
+		api.PUT("/user/profile", handlers.UpdateProfile(authClient))
 
 		// Search
 		api.GET("/users/search", handlers.SearchUsers(authClient))
@@ -108,7 +110,7 @@ func main() {
 		api.DELETE("/friends/:id", handlers.RemoveFriend(authClient))
 		// Chat
 		api.POST("/chat/create", handlers.CreateChat(chatClient))
-		api.GET("/chat/my", handlers.MyChats(chatClient))
+		api.GET("/chat/my", handlers.MyChats(chatClient, authClient))
 		api.POST("/chat/send", handlers.SendMessage(chatClient, notificastionHub))
 		api.DELETE("/chat/delete/:id", handlers.DeleteChat(chatClient))
 		api.POST("/chat/direct", handlers.GetOrCreateDirectChat(chatClient))

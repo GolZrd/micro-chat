@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	user_v1 "github.com/GolZrd/micro-chat/auth/pkg/user_v1"
 	chat_v1 "github.com/GolZrd/micro-chat/chat-server/pkg/chat_v1"
 	"github.com/GolZrd/micro-chat/web-gateway/internal/clients"
 	"github.com/GolZrd/micro-chat/web-gateway/internal/hub"
@@ -66,7 +67,7 @@ func CreateChat(client *clients.ChatClient) gin.HandlerFunc {
 }
 
 // MyChats возвращает список чатов пользователя
-func MyChats(client *clients.ChatClient) gin.HandlerFunc {
+func MyChats(client *clients.ChatClient, authClient *clients.AuthClient) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Создаем контекст с токеном из HTTP заголовка
 		ctx := utils.ContextWithToken(c)
@@ -78,12 +79,48 @@ func MyChats(client *clients.ChatClient) gin.HandlerFunc {
 			return
 		}
 
+		// Собираем уникальные user_id
+		uniqueIds := make(map[int64]struct{})
+		for _, ch := range resp.Chats {
+			for _, uid := range ch.MemberIds {
+				uniqueIds[uid] = struct{}{}
+			}
+		}
+
+		// Выполняем один batch запрос
+		var ids []int64
+		for uid := range uniqueIds {
+			ids = append(ids, uid)
+		}
+
+		avatarMap := make(map[int64]string)
+
+		if len(ids) > 0 {
+			users, err := authClient.UserClient.GetUsers(ctx, &user_v1.GetUsersRequest{Ids: ids})
+			if err != nil {
+				logger.Warn("failed to load user avatars", zap.Error(err))
+			} else if users != nil {
+				for _, u := range users.Users {
+					if u.AvatarUrl != "" {
+						avatarMap[u.Id] = u.AvatarUrl
+					}
+				}
+			}
+		}
+
 		chats := make([]gin.H, 0, len(resp.Chats))
 		for _, ch := range resp.Chats {
+			memberAvatars := make(map[string]string)
+			for _, uid := range ch.MemberIds {
+				if url, ok := avatarMap[uid]; ok {
+					memberAvatars[strconv.FormatInt(uid, 10)] = url
+				}
+			}
 			chatData := gin.H{
 				"id":                  ch.Id,
 				"name":                ch.Name,
 				"usernames":           ch.Usernames,
+				"member_ids":          ch.MemberIds,
 				"is_direct":           ch.IsDirect,
 				"is_public":           ch.IsPublic,
 				"creator_id":          ch.CreatorId,
@@ -91,6 +128,7 @@ func MyChats(client *clients.ChatClient) gin.HandlerFunc {
 				"unread_count":        ch.UnreadCount,
 				"last_message":        ch.LastMessage,
 				"last_message_sender": ch.LastMessageSender,
+				"member_avatars":      memberAvatars,
 			}
 
 			if ch.LastMessageAt != nil {

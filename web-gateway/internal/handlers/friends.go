@@ -28,9 +28,10 @@ func GetFriends(client *clients.AuthClient) gin.HandlerFunc {
 		friends := make([]gin.H, 0, len(resp.Friends))
 		for _, friend := range resp.Friends {
 			friends = append(friends, gin.H{
-				"id":       friend.Id,
-				"user_id":  friend.UserId,
-				"username": friend.Username,
+				"id":         friend.Id,
+				"user_id":    friend.UserId,
+				"username":   friend.Username,
+				"avatar_url": friend.AvatarUrl,
 			})
 		}
 

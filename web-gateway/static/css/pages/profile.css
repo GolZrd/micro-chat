@@ -1,57 +1,456 @@
-/* ==================== PROFILE PAGE ==================== */
-
-.user-info-card {
-    background: rgba(37, 37, 51, 0.3); /* ИЗМЕНЕНО */
-    backdrop-filter: blur(15px); /* ДОБАВЛЕНО */
-    border-radius: var(--radius-sm);
-    padding: 1.5rem;
-    margin-top: 1rem;
-    border: 1px solid var(--border); /* ДОБАВЛЕНО */
+/* ============================================
+   ПРОФИЛЬ
+   ============================================ */
+.profile-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
 }
 
-.user-info-card p {
+/* Шапка профиля */
+.profile-header {
+    position: relative;
+    background: linear-gradient(135deg, #6c63ff 0%, #3b3695 100%);
+    border-radius: 16px;
+    padding: 40px 30px 30px;
+    margin-bottom: 24px;
+    overflow: hidden;
+}
+
+.profile-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+.profile-header-content {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    gap: 24px;
+    z-index: 1;
+}
+
+/* Аватар */
+.profile-avatar-container {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 1rem;
-    margin: 0.75rem 0;
-    background: rgba(15, 15, 21, 0.4); /* ИЗМЕНЕНО */
-    backdrop-filter: blur(10px); /* ДОБАВЛЕНО */
-    border-radius: var(--radius-sm);
-    color: var(--text-secondary);
-    border-left: 3px solid var(--accent);
+    justify-content: center;
+    font-size: 40px;
+    font-weight: 700;
+    color: #fff;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-avatar-upload {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 36px;
+    height: 36px;
+    background: #6c63ff;
+    border: 3px solid #1a1a2e;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #fff;
+    font-size: 14px;
+}
+
+.profile-avatar-upload:hover {
+    background: #5a52e0;
+    transform: scale(1.1);
+}
+
+.profile-avatar-upload input {
+    display: none;
+}
+
+/* Имя и статус */
+.profile-header-info {
+    flex: 1;
+    padding-bottom: 8px;
+}
+
+.profile-name {
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 4px 0;
+}
+
+.profile-role {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.profile-role i {
+    font-size: 10px;
+}
+
+/* Статистика */
+.profile-stats {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.profile-stat {
+    flex: 1;
+    background: var(--card-bg, #1e1e3a);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
     transition: all 0.2s ease;
 }
 
-.user-info-card p:hover {
-    background: rgba(26, 26, 36, 0.8); /* ИЗМЕНЕНО */
-    transform: translateX(4px);
-    box-shadow: 0 4px 12px rgba(88, 101, 242, 0.2); /* ДОБАВЛЕНО */
+.profile-stat:hover {
+    border-color: rgba(108, 99, 255, 0.3);
+    transform: translateY(-2px);
 }
 
-.user-info-card p strong {
-    color: var(--accent);
+.profile-stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #6c63ff;
+    display: block;
+}
+
+.profile-stat-label {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 4px;
+    display: block;
+}
+
+/* Секции профиля */
+.profile-section {
+    background: var(--card-bg, #1e1e3a);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 16px;
+}
+
+.profile-section-title {
+    font-size: 16px;
     font-weight: 600;
-    min-width: 100px;
+    color: #fff;
+    margin: 0 0 16px 0;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 8px;
 }
 
-.user-info-card p span {
-    color: var(--text-primary);
-    font-weight: 400;
+.profile-section-title i {
+    color: #6c63ff;
+    font-size: 14px;
 }
 
-/* Иконки для профиля */
-.user-info-card p strong::before {
-    font-family: 'Font Awesome 6 Free';
-    font-weight: 900;
-    opacity: 0.7;
+/* Поля профиля */
+.profile-field {
+    display: flex;
+    align-items: flex-start;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
-.user-info-card p:nth-child(1) strong::before { content: '\f2bd'; }
-.user-info-card p:nth-child(2) strong::before { content: '\f007'; }
-.user-info-card p:nth-child(3) strong::before { content: '\f0e0'; }
-.user-info-card p:nth-child(4) strong::before { content: '\f0c0'; }
-.user-info-card p:nth-child(5) strong::before { content: '\f073'; }
+.profile-field:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.profile-field-icon {
+    width: 36px;
+    height: 36px;
+    background: rgba(108, 99, 255, 0.1);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c63ff;
+    font-size: 14px;
+    margin-right: 14px;
+    flex-shrink: 0;
+}
+
+.profile-field-content {
+    flex: 1;
+}
+
+.profile-field-label {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.profile-field-value {
+    font-size: 14px;
+    color: #fff;
+    word-break: break-word;
+}
+
+/* Bio */
+.profile-bio {
+    position: relative;
+}
+
+.profile-bio-text {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.profile-bio-empty {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.3);
+    font-style: italic;
+}
+
+/* Редактирование */
+.profile-edit-form {
+    display: none;
+}
+
+.profile-edit-form.active {
+    display: block;
+}
+
+.profile-edit-field {
+    margin-bottom: 16px;
+}
+
+.profile-edit-field label {
+    display: block;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.profile-edit-field input,
+.profile-edit-field textarea {
+    width: 100%;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.profile-edit-field input:focus,
+.profile-edit-field textarea:focus {
+    outline: none;
+    border-color: #6c63ff;
+    background: rgba(108, 99, 255, 0.05);
+}
+
+.profile-edit-field textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.profile-edit-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.profile-edit-actions button {
+    padding: 8px 20px;
+    border-radius: 8px;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-save {
+    background: #6c63ff;
+    color: #fff;
+}
+
+.btn-save:hover {
+    background: #5a52e0;
+}
+
+.btn-cancel {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+/* Кнопка редактирования */
+.profile-edit-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    z-index: 2;
+}
+
+.profile-edit-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+/* Дата регистрации */
+.profile-joined {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: 8px;
+}
+
+.profile-joined i {
+    font-size: 12px;
+}
+
+/* Загрузка аватара — прогресс */
+.avatar-upload-progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 14px;
+}
+
+.friend-avatar-wrapper {
+    position: relative;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+}
+
+.friend-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(108, 99, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    overflow: hidden;
+    position: relative;
+}
+
+.friend-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.friend-avatar-wrapper .online-indicator {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid var(--sidebar-bg, #1a1a2e);
+}
+
+.friend-avatar-wrapper .online-indicator.online {
+    background: #4ade80;
+}
+
+.friend-avatar-wrapper .online-indicator.offline {
+    background: #6b7280;
+}
+
+.search-result-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(108, 99, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.search-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}

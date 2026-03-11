@@ -3,7 +3,7 @@ module github.com/GolZrd/micro-chat/web-gateway
 go 1.24.0
 
 require (
-	github.com/GolZrd/micro-chat/auth v0.0.0-20260215071822-f0fc930a1dae
+	github.com/GolZrd/micro-chat/auth v0.0.0-20260310140915-76e300d39773
 	github.com/GolZrd/micro-chat/chat-server v0.0.0-20260308152347-74b6d3794e73
 	github.com/gin-gonic/gin v1.11.0
 	github.com/golang-jwt/jwt/v5 v5.3.0
