@@ -140,6 +140,7 @@ func (r *repo) RecentMessages(ctx context.Context, chatID int64, limit int) ([]M
 		PlaceholderFormat(squirrel.Dollar).
 		From("messages").
 		Where(squirrel.Eq{"chat_id": chatID}).
+		OrderBy("created_at ASC").
 		Limit(uint64(limit))
 
 	query, args, err := builder.ToSql()

@@ -281,23 +281,41 @@
 
                             <!-- Ввод -->
                             <div class="chat-view__input">
+                                <!-- Превью файла перед отправкой -->
+                                <div class="file-preview" id="filePreview" style="display:none;">
+                                    <div class="file-preview__content" id="filePreviewContent"></div>
+                                    <button class="file-preview__close" onclick="cancelFileUpload()">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+
                                 <div class="chat-input-wrapper" id="chatInputWrapper">
+                                    <!-- Кнопка прикрепить файл -->
+                                    <label class="btn-icon-sm btn-attach" title="Прикрепить файл">
+                                        <i class="fas fa-paperclip"></i>
+                                        <input type="file" id="fileInput" style="display:none;"
+                                            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar,.txt"
+                                            onchange="handleFileSelect(this)">
+                                    </label>
+
                                     <button onclick="toggleEmojiPicker()" class="btn-icon-sm" title="Эмодзи">
                                         <i class="fas fa-smile"></i>
                                     </button>
-                                    <input
-                                        type="text"
-                                        id="chatViewInput"
-                                        placeholder="Напишите сообщение..."
-                                        autocomplete="off"
-                                        onkeydown="if(event.key==='Enter') sendActiveMessage()"
-                                    >
+                                    <input type="text" id="chatViewInput" placeholder="Напишите сообщение..."
+                                        autocomplete="off" onkeydown="if(event.key==='Enter') sendActiveMessage()">
                                     <button onclick="startVoiceRecording()" class="btn-icon-sm btn-voice" id="btnVoice" title="Голосовое сообщение">
                                         <i class="fas fa-microphone"></i>
                                     </button>
                                     <button onclick="sendActiveMessage()" class="btn-send" title="Отправить">
                                         <i class="fas fa-paper-plane"></i>
                                     </button>
+                                </div>
+                            </div>
+                            <!-- Overlay для drag&drop -->
+                            <div class="drag-overlay" id="dragOverlay" style="display:none;">
+                                <div class="drag-overlay__content">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <p>Перетащите файл сюда</p>
                                 </div>
                             </div>
                         </div>

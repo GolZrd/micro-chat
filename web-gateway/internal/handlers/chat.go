@@ -182,7 +182,7 @@ func SendMessage(client *clients.ChatClient, notificationHub *hub.Hub) gin.Handl
 
 		// Рассылаем уведомления в фоне
 		go func() {
-			sendNotifications(client, notificationHub, ctx, senderClaims, req.ChatId, req.Text, req.Type, req.VoiceDuration)
+			sendNotifications(client, notificationHub, ctx, senderClaims, req.ChatId, req.Text, req.Type, req.VoiceDuration, "", "", 0)
 		}()
 
 		c.JSON(http.StatusOK, gin.H{"status": "sent"})
@@ -554,7 +554,7 @@ func UnreadCounts(client *clients.ChatClient) gin.HandlerFunc {
 	}
 }
 
-func sendNotifications(client *clients.ChatClient, notificationHub *hub.Hub, ctx context.Context, sender *utils.UserClaims, chatId int64, text string, msgType int32, voiceDuration float32) {
+func sendNotifications(client *clients.ChatClient, notificationHub *hub.Hub, ctx context.Context, sender *utils.UserClaims, chatId int64, text string, msgType int32, voiceDuration float32, fileUrl string, fileName string, fileSize int64) {
 	if sender == nil {
 		return
 	}
@@ -589,9 +589,21 @@ func sendNotifications(client *clients.ChatClient, notificationHub *hub.Hub, ctx
 	// Формируем текст превью
 	messageType := "text"
 	previewText := text
-	if msgType == 2 {
+
+	switch msgType {
+	case int32(chat_v1.MessageType_MESSAGE_TYPE_VOICE):
 		messageType = "voice"
 		previewText = "🎤 Голосовое сообщение"
+	case int32(chat_v1.MessageType_MESSAGE_TYPE_IMAGE):
+		messageType = "image"
+		previewText = "📷 Фото"
+	case int32(chat_v1.MessageType_MESSAGE_TYPE_FILE):
+		messageType = "file"
+		if fileName != "" {
+			previewText = "📎 Файл: " + fileName
+		} else {
+			previewText = "📎 Файл"
+		}
 	}
 	if len(previewText) > 100 {
 		previewText = previewText[:100] + "…"
@@ -607,6 +619,9 @@ func sendNotifications(client *clients.ChatClient, notificationHub *hub.Hub, ctx
 		Text:          previewText,
 		MessageType:   messageType,
 		VoiceDuration: voiceDuration,
+		FileUrl:       fileUrl,
+		FileName:      fileName,
+		FileSize:      fileSize,
 	})
 
 	logger.Debug("notifications sent",
@@ -683,6 +698,7 @@ func convertToWebSocketMessage(msg *chat_v1.Message) map[string]interface{} {
 			"onlineCount": len(msg.OnlineUsers),
 		}
 	case chat_v1.MessageType_MESSAGE_TYPE_VOICE:
+
 		return map[string]interface{}{
 			"type":           "message",
 			"message_type":   "voice",
@@ -690,6 +706,31 @@ func convertToWebSocketMessage(msg *chat_v1.Message) map[string]interface{} {
 			"text":           msg.Text,
 			"sent_at":        msg.CreatedAt.AsTime(),
 			"voice_duration": msg.VoiceDuration,
+			"file_url":       msg.FileUrl,
+			"file_name":      msg.FileName,
+			"file_size":      msg.FileSize,
+		}
+	case chat_v1.MessageType_MESSAGE_TYPE_IMAGE:
+		return map[string]interface{}{
+			"type":         "message",
+			"message_type": "image",
+			"from":         msg.From,
+			"text":         msg.Text,
+			"sent_at":      msg.CreatedAt.AsTime(),
+			"file_url":     msg.FileUrl,
+			"file_name":    msg.FileName,
+			"file_size":    msg.FileSize,
+		}
+	case chat_v1.MessageType_MESSAGE_TYPE_FILE:
+		return map[string]interface{}{
+			"type":         "message",
+			"message_type": "file",
+			"from":         msg.From,
+			"text":         msg.Text,
+			"sent_at":      msg.CreatedAt.AsTime(),
+			"file_url":     msg.FileUrl,
+			"file_name":    msg.FileName,
+			"file_size":    msg.FileSize,
 		}
 	default:
 		return map[string]interface{}{

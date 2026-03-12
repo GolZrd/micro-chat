@@ -53,6 +53,8 @@ func SendVoice(client *clients.ChatClient, storage storage.Storage, notification
 			return
 		}
 
+		text := "voice"
+
 		// Длительность
 		durationStr := c.PostForm("duration")
 		duration, _ := strconv.ParseFloat(durationStr, 64)
@@ -63,9 +65,12 @@ func SendVoice(client *clients.ChatClient, storage storage.Storage, notification
 		// Сохраняем сообщение в БД
 		_, err = client.Client.SendMessage(ctx, &chat_v1.SendMessageRequest{
 			ChatId:        chatId,
-			Text:          voiceURL,
+			Text:          text,
 			Type:          chat_v1.MessageType_MESSAGE_TYPE_VOICE,
 			VoiceDuration: float32(duration),
+			FileUrl:       voiceURL,
+			FileName:      header.Filename,
+			FileSize:      header.Size,
 		})
 		if err != nil {
 			logger.Error("failed to send message", zap.Error(err))
@@ -80,7 +85,7 @@ func SendVoice(client *clients.ChatClient, storage storage.Storage, notification
 
 		go func() {
 			ctx := utils.ContextWithToken(c)
-			sendNotifications(client, notificationHub, ctx, senderClaims, chatId, voiceURL, int32(chat_v1.MessageType_MESSAGE_TYPE_VOICE), float32(duration))
+			sendNotifications(client, notificationHub, ctx, senderClaims, chatId, text, int32(chat_v1.MessageType_MESSAGE_TYPE_VOICE), float32(duration), voiceURL, header.Filename, header.Size)
 		}()
 
 		c.JSON(http.StatusOK, gin.H{

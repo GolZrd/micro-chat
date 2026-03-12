@@ -87,6 +87,9 @@ func (s *Implementation) convertToProto(msg service.MessageDTO) *desc.Message {
 			Text:          msg.Text,
 			CreatedAt:     timestamppb.New(msg.CreatedAt),
 			VoiceDuration: msg.VoiceDuration,
+			FileUrl:       msg.FileUrl,
+			FileName:      msg.FileName,
+			FileSize:      msg.FileSize,
 		}
 	case service.MessageTypeImage:
 		// Изображение

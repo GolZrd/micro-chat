@@ -857,6 +857,11 @@ function connectToChat(chatId) {
 // ========== Сообщения ==========
 
 async function sendActiveMessage() {
+    if (pendingFile) {
+        sendFileMessage();
+        return;
+    }
+
     const input = document.getElementById('chatViewInput');
     const text = input.value.trim();
 
@@ -880,31 +885,93 @@ async function sendActiveMessage() {
 
 function displayChatMessage(msg) {
     const container = document.getElementById('chatViewMessages');
+    if (!container) return;
+    
+    console.log('Display message:', msg); // Для отладки
+    
+    // Удаляем приветствие если есть
     const welcome = container.querySelector('.chat-welcome');
     if (welcome) welcome.remove();
-
+    
     const currentUsername = TokenManager.getUsername();
     const isOwn = msg.from === currentUsername;
-    const timeStr = formatMessageTime(msg.sent_at);
-    const messageType = msg.message_type || 'text';
-
+    const isSystem = msg.from === 'system';
+    const timeStr = formatMessageTime(msg.sent_at || msg.created_at || msg.timestamp);
+    
+    // Определяем тип сообщения
+    const messageType = msg.message_type || msg.type || 'text';
+    
     const msgEl = document.createElement('div');
     msgEl.className = `chat-msg ${isOwn ? 'chat-msg--own' : 'chat-msg--other'}`;
-
+    
     let contentHtml = '';
-
-    if (messageType === 'voice') {
-        contentHtml = createVoicePlayerHtml(msg.text, msg.voice_duration || 0, isOwn);
-    } else {
-        contentHtml = `<div class="chat-msg__bubble">${escapeHtml(msg.text)}</div>`;
+    
+    // Обработка в зависимости от типа
+    if (messageType === 'image' || messageType === 'IMAGE') {
+        // ИЗОБРАЖЕНИЕ
+        let imageUrl = msg.file_url;
+        if (imageUrl && imageUrl.startsWith('/')) {
+            imageUrl = window.location.origin + imageUrl;
+        }
+        
+        contentHtml = `
+            <div class="chat-msg__bubble chat-msg__bubble--image">
+                <img src="${escapeHtml(imageUrl)}" 
+                     alt="${escapeHtml(msg.file_name || 'Изображение')}"
+                     onclick="openImageModal('${escapeHtml(imageUrl)}')"
+                     onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML+='<div class=\'chat-msg__text\'>Ошибка загрузки</div>';"
+                     style="max-width: 300px; max-height: 200px; border-radius: 8px; cursor: pointer; display: block;">
+                ${msg.text && msg.text !== 'Фото' && msg.text !== '📷 Фото' ? 
+                    `<div class="chat-msg__text" style="margin-top: 8px;">${escapeHtml(msg.text)}</div>` : ''}
+            </div>
+        `;
+    } 
+    else if (messageType === 'file' || messageType === 'FILE') {
+        // ФАЙЛ
+        const icon = getFileIcon(msg.file_name || '');
+        const size = msg.file_size ? formatFileSize(msg.file_size) : '';
+        let fileUrl = msg.file_url;
+        if (fileUrl && fileUrl.startsWith('/')) {
+            fileUrl = window.location.origin + fileUrl;
+        }
+        
+        contentHtml = `
+            <div class="chat-msg__bubble chat-msg__bubble--file">
+                <a href="${escapeHtml(fileUrl)}" 
+                   target="_blank" 
+                   download="${escapeHtml(msg.file_name || 'file')}"
+                   style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit;">
+                    <i class="fas ${icon}" style="font-size: 24px;"></i>
+                    <div>
+                        <div style="font-weight: bold;">${escapeHtml(msg.file_name || 'Файл')}</div>
+                        ${size ? `<div style="font-size: 12px; opacity: 0.7;">${size}</div>` : ''}
+                    </div>
+                </a>
+                ${msg.text && !msg.text.startsWith('📎') && msg.text !== 'Файл' ? 
+                    `<div class="chat-msg__text" style="margin-top: 8px;">${escapeHtml(msg.text)}</div>` : ''}
+            </div>
+        `;
     }
-
-    msgEl.innerHTML = `
-        ${!isOwn ? `<span class="chat-msg__sender">${escapeHtml(msg.from)}</span>` : ''}
-        ${contentHtml}
-        <span class="chat-msg__time">${timeStr}</span>
-    `;
-
+    else if (messageType === 'voice' || messageType === 'VOICE') {
+        // ГОЛОСОВОЕ
+        contentHtml = createVoicePlayerHtml(msg.file_url, msg.voice_duration || 0, isOwn);
+    }
+    else {
+        // ТЕКСТ
+        contentHtml = `<div class="chat-msg__bubble">${escapeHtml(msg.text || '')}</div>`;
+    }
+    
+    // Формируем полное сообщение
+    if (isSystem) {
+        msgEl.innerHTML = `<div class="chat-msg__system">${escapeHtml(msg.text)}</div>`;
+    } else {
+        msgEl.innerHTML = `
+            ${!isOwn ? `<span class="chat-msg__sender">${escapeHtml(msg.from)}</span>` : ''}
+            ${contentHtml}
+            <span class="chat-msg__time">${timeStr}</span>
+        `;
+    }
+    
     container.appendChild(msgEl);
     container.scrollTop = container.scrollHeight;
 }
@@ -3636,65 +3703,150 @@ const NotificationManager = {
     // ОБРАБОТКА WS СООБЩЕНИЙ
     // ============================================
     handleWsMessage(data) {
+        console.log('🔔 WS message received:', data);
         switch (data.type) {
             case 'new_message':
                 this.handleNewMessage(data);
                 break;
+            case 'send-file': // Добавляем обработку ответа на отправку файла
+            case 'file_sent':
+                this.handleFileMessage(data);
+                break;
             default:
-                console.log('Unknown notification type:', data.type);
+                console.log('Unknown notification type:', data.type, data);
+        }
+},
+
+    // обработчик файловых сообщений
+    handleFileMessage(data) {
+        console.log('📁 File message received:', data);
+        
+        // Извлекаем данные из ответа
+        const fileData = data.data || data;
+        
+        // Преобразуем в формат сообщения
+        const messageData = {
+            type: 'new_message', // Имитируем обычное сообщение
+            chat_id: fileData.chat_id || data.chat_id,
+            chat_name: fileData.chat_name || data.chat_name,
+            sender_name: fileData.from || TokenManager.getUsername(),
+            text: fileData.caption || (fileData.is_image ? '📷 Фото' : '📎 Файл'),
+            message_type: fileData.is_image ? 'image' : 'file',
+            file_url: fileData.file_url,
+            file_name: fileData.file_name,
+            file_size: fileData.file_size,
+            is_image: fileData.is_image,
+            sent_at: new Date().toISOString()
+        };
+        
+        // Обрабатываем как новое сообщение
+        this.handleNewMessage(messageData);
+        
+        // Также вызываем колбэк для обновления чата, если он есть
+        if (window.ChatView && typeof window.ChatView.displayMessage === 'function') {
+            window.ChatView.displayMessage(messageData);
+        } else {
+            // Ищем функцию displayChatMessage в глобальной области
+            const displayFunc = window.displayChatMessage || window.displayMessage;
+            if (displayFunc) {
+                displayFunc(messageData);
+            }
         }
     },
 
     handleNewMessage(data) {
+        console.log('💬 New message handler:', data); // Добавляем логирование
+        
         const chatIdStr = String(data.chat_id);
+        
+        // Проверяем наличие файла в сообщении
+        const hasFile = data.file_url || data.message_type === 'image' || data.message_type === 'file';
+        
+        // Если это файл, возможно текст уже обработан
+        let messageText = data.text || '';
+        if (hasFile && !messageText) {
+            messageText = data.is_image ? '📷 Фото' : '📎 Файл';
+        }
 
         // Если этот чат открыт и вкладка активна — отмечаем прочитанным
         if (String(this.activeChatId) === chatIdStr && this.isPageVisible) {
             this.markAsReadOnServer(data.chat_id);
+            
+            // Если чат открыт, показываем сообщение сразу
+            if (window.ChatView && typeof window.ChatView.addMessage === 'function') {
+                window.ChatView.addMessage(data);
+            }
             return;
         }
 
-        // Увеличиваем счётчик
-        this.unreadCounts[chatIdStr] = (this.unreadCounts[chatIdStr] || 0) + 1;
+        // Увеличиваем счётчик только если это не наш собственный файл
+        // ИЛИ если чат не открыт
+        if (String(this.activeChatId) !== chatIdStr) {
+            this.unreadCounts[chatIdStr] = (this.unreadCounts[chatIdStr] || 0) + 1;
+        }
 
         // Обновляем UI
         this.updateChatItemBadge(data.chat_id);
         this.updateTotalBadge();
 
-        // Звук
-        if (this.settings.soundEnabled) {
+        // Звук (всегда играем для новых сообщений, кроме своих)
+        if (this.settings.soundEnabled && data.sender_name !== TokenManager.getUsername()) {
             this.playSound();
         }
 
-        // Toast
-        if (this.settings.toastEnabled) {
+        // Toast (для файлов тоже)
+        if (this.settings.toastEnabled && data.sender_name !== TokenManager.getUsername()) {
+            let displayText = messageText;
+            if (hasFile) {
+                if (data.is_image) {
+                    displayText = '📷 Фото';
+                } else if (data.file_name) {
+                    displayText = `📎 ${data.file_name}`;
+                }
+            }
+            
             this.showToast(
                 data.chat_id,
                 data.chat_name || 'Чат',
                 data.sender_name || 'Кто-то',
-                data.text || 'Новое сообщение'
+                displayText
             );
         }
 
         // Push (только если вкладка не активна)
-        if (this.settings.pushEnabled && !this.isPageVisible) {
+        if (this.settings.pushEnabled && !this.isPageVisible && data.sender_name !== TokenManager.getUsername()) {
+            let pushTitle = data.chat_name || 'Чат';
+            let pushBody = data.sender_name + ': ';
+            
+            if (hasFile) {
+                if (data.is_image) {
+                    pushBody += '📷 Фото';
+                } else if (data.file_name) {
+                    pushBody += `📎 ${data.file_name}`;
+                }
+            } else {
+                pushBody += messageText;
+            }
+            
             this.showPushNotification(
-                data.chat_name || 'Чат',
-                data.sender_name || 'Кто-то',
-                data.text || 'Новое сообщение',
+                pushTitle,
+                pushBody,
+                messageText,
                 data.chat_id
             );
         }
 
         // Title blink
         if (this.settings.titleBlinkEnabled && !this.isPageVisible) {
-            this.startTitleBlink(
-                data.sender_name || 'Кто-то',
-                data.text || 'Новое сообщение'
-            );
+            let blinkText = data.sender_name || 'Кто-то';
+            if (hasFile) {
+                blinkText += data.is_image ? ': 📷 Фото' : ': 📎 Файл';
+            } else {
+                blinkText += ': ' + (messageText || 'Новое сообщение');
+            }
+            this.startTitleBlink(blinkText);
         }
     },
-
     // ============================================
     // SERVER SYNC
     // ============================================
@@ -4009,6 +4161,241 @@ const NotificationManager = {
         if (c) c.innerHTML = '';
     }
 };
+
+// ============================================
+// ФАЙЛЫ И КАРТИНКИ
+// ============================================
+
+let pendingFile = null;
+
+// Выбор файла через кнопку 📎
+function handleFileSelect(input) {
+    var file = input.files[0];
+    if (!file) return;
+
+    if (file.size > 20 * 1024 * 1024) {
+        alert('Файл слишком большой. Максимум 20MB');
+        input.value = '';
+        return;
+    }
+
+    pendingFile = file;
+    showFilePreview(file);
+    input.value = '';
+}
+
+// Показать превью файла
+function showFilePreview(file) {
+    var preview = document.getElementById('filePreview');
+    var content = document.getElementById('filePreviewContent');
+    if (!preview || !content) return;
+
+    var isImage = file.type.startsWith('image/');
+    var sizeText = formatFileSize(file.size);
+
+    if (isImage) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            content.innerHTML =
+                '<img src="' + e.target.result + '" class="file-preview__image" alt="">' +
+                '<div class="file-preview__info">' +
+                    '<div class="file-preview__name">' + escapeHtml(file.name) + '</div>' +
+                    '<div class="file-preview__size">' + sizeText + '</div>' +
+                '</div>';
+        };
+        reader.readAsDataURL(file);
+    } else {
+        var icon = getFileIcon(file.name);
+        content.innerHTML =
+            '<div class="message-file__icon"><i class="fas ' + icon + '"></i></div>' +
+            '<div class="file-preview__info">' +
+                '<div class="file-preview__name">' + escapeHtml(file.name) + '</div>' +
+                '<div class="file-preview__size">' + sizeText + '</div>' +
+            '</div>';
+    }
+
+    preview.style.display = 'flex';
+
+    // Фокус на поле ввода для добавления подписи
+    document.getElementById('chatViewInput').focus();
+}
+
+// Отменить загрузку файла
+function cancelFileUpload() {
+    pendingFile = null;
+    var preview = document.getElementById('filePreview');
+    if (preview) preview.style.display = 'none';
+}
+
+// Отправка файла
+async function sendFileMessage() {
+    if (!pendingFile || !activeChatId) return;
+
+    var file = pendingFile;
+    var textInput = document.getElementById('chatViewInput');
+    var text = textInput ? textInput.value.trim() : '';
+
+    // Блокируем повторную отправку
+    pendingFile = null;
+    var preview = document.getElementById('filePreview');
+    if (preview) preview.style.display = 'none';
+    if (textInput) textInput.value = '';
+
+    var token = TokenManager.getAccessToken();
+    if (!token.startsWith('Bearer ')) token = 'Bearer ' + token;
+
+    var formData = new FormData();
+    formData.append('chat_id', activeChatId);
+    formData.append('file', file);
+    if (text) formData.append('text', text);
+
+    try {
+        var response = await fetch('/api/chat/send-file', {
+            method: 'POST',
+            headers: { 'Authorization': token },
+            body: formData
+        });
+
+        if (!response.ok) {
+            var data = await response.json();
+            alert('Ошибка: ' + (data.error || 'Не удалось отправить'));
+        }
+    } catch (err) {
+        alert('Ошибка отправки: ' + err.message);
+    }
+}
+
+// ============================================
+// DRAG & DROP
+// ============================================
+
+function initDragDrop() {
+    var messagesArea = document.getElementById('chatViewMessages');
+    var chatActive = document.getElementById('chatViewActive');
+    if (!chatActive) return;
+
+    var dragCounter = 0;
+
+    chatActive.addEventListener('dragenter', function(e) {
+        e.preventDefault();
+        dragCounter++;
+        var overlay = document.getElementById('dragOverlay');
+        if (overlay) overlay.style.display = 'flex';
+    });
+
+    chatActive.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        dragCounter--;
+        if (dragCounter <= 0) {
+            dragCounter = 0;
+            var overlay = document.getElementById('dragOverlay');
+            if (overlay) overlay.style.display = 'none';
+        }
+    });
+
+    chatActive.addEventListener('dragover', function(e) {
+        e.preventDefault();
+    });
+
+    chatActive.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dragCounter = 0;
+        var overlay = document.getElementById('dragOverlay');
+        if (overlay) overlay.style.display = 'none';
+
+        var files = e.dataTransfer.files;
+        if (files.length > 0) {
+            var file = files[0];
+            if (file.size > 20 * 1024 * 1024) {
+                alert('Файл слишком большой. Максимум 20MB');
+                return;
+            }
+            pendingFile = file;
+            showFilePreview(file);
+        }
+    });
+}
+
+// Инициализация при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+    initDragDrop();
+});
+
+// ============================================
+// УТИЛИТЫ
+// ============================================
+
+function isImageUrl(url) {
+    if (!url) return false;
+    var lower = url.toLowerCase();
+    return lower.match(/\.(jpg|jpeg|png|gif|webp|svg)/) !== null ||
+           lower.includes('/images/');
+}
+
+function getFileIcon(filename) {
+    if (!filename) return 'fa-file';
+    var ext = filename.split('.').pop().toLowerCase();
+    var icons = {
+        'pdf': 'fa-file-pdf',
+        'doc': 'fa-file-word', 'docx': 'fa-file-word',
+        'xls': 'fa-file-excel', 'xlsx': 'fa-file-excel',
+        'ppt': 'fa-file-powerpoint', 'pptx': 'fa-file-powerpoint',
+        'zip': 'fa-file-archive', 'rar': 'fa-file-archive', '7z': 'fa-file-archive',
+        'txt': 'fa-file-alt',
+        'mp3': 'fa-file-audio', 'wav': 'fa-file-audio',
+        'mp4': 'fa-file-video', 'avi': 'fa-file-video', 'mkv': 'fa-file-video',
+    };
+    return icons[ext] || 'fa-file';
+}
+
+function formatFileSize(bytes) {
+    if (!bytes) return '';
+    if (bytes < 1024) return bytes + ' Б';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' КБ';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' МБ';
+}
+
+// Просмотр картинки на весь экран
+function openImageModal(url) {
+    var modal = document.createElement('div');
+    modal.className = 'image-modal';
+    modal.onclick = function() { modal.remove(); };
+    modal.innerHTML =
+        '<img src="' + escapeHtml(url) + '" alt="">' +
+        '<button class="image-modal__close" onclick="this.parentElement.remove()">' +
+            '<i class="fas fa-times"></i>' +
+        '</button>';
+    document.body.appendChild(modal);
+}
+
+// Закрытие по Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        var modal = document.querySelector('.image-modal');
+        if (modal) modal.remove();
+    }
+});
+
+// Вставка из буфера обмена (Ctrl+V)
+document.addEventListener('paste', function(e) {
+    if (!activeChatId) return;
+
+    var chatInput = document.getElementById('chatViewInput');
+    if (document.activeElement !== chatInput) return;
+
+    var items = e.clipboardData.items;
+    for (var i = 0; i < items.length; i++) {
+        if (items[i].type.startsWith('image/')) {
+            e.preventDefault();
+            var file = items[i].getAsFile();
+            if (file) {
+                pendingFile = file;
+                showFilePreview(file);
+            }
+            break;
+        }
+    }
+});
 
 // ==================== INITIALIZATION ====================
 document.addEventListener('DOMContentLoaded', () => {

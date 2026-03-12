@@ -123,8 +123,9 @@ func main() {
 		//Presence
 		api.POST("/presence/heartbeat", handlers.Heartbeat(chatClient))
 		api.POST("/presence/friends", handlers.FriendsPresence(chatClient))
-		// Voice
+		// Files
 		api.POST("/chat/send-voice", handlers.SendVoice(chatClient, fileStorage, notificastionHub))
+		api.POST("/chat/send-file", handlers.SendFile(chatClient, fileStorage, notificastionHub))
 	}
 
 	// WebSocket для чата

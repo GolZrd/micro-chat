@@ -20,6 +20,9 @@ type Notification struct {
 	MessageType   string  `json:"message_type"`
 	VoiceDuration float32 `json:"voice_duration"`
 	Timestamp     int64   `json:"timestamp"`
+	FileUrl       string  `json:"file_url"`
+	FileName      string  `json:"file_name"`
+	FileSize      int64   `json:"file_size"`
 }
 
 // connection - одно WS соединение (вкладка)
