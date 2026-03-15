@@ -563,6 +563,17 @@
             });
         });
     </script>
+
+    <!-- Модальное окно профиля пользователя  -->
+    <div class="user-profile-modal" id="userProfileModal" style="display:none;">
+        <div class="user-profile-modal__overlay" onclick="closeUserProfile()"></div>
+        <div class="user-profile-modal__content" id="userProfileContent">
+            <button class="user-profile-modal__close" onclick="closeUserProfile()">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="user-profile-loading">Загрузка...</div>
+        </div>
+    </div>
     
     <!-- Контейнер для toast-уведомлений -->
     <div class="toast-container" id="toastContainer"></div>

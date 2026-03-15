@@ -323,70 +323,58 @@ body.authenticated .right-sidebar.protected-sidebar {
 /* ==================== DROPDOWN МЕНЮ ==================== */
 
 .friend-dropdown {
-    position: fixed;
-    background: #2f3136;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: #252547;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 8px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
     min-width: 180px;
-    padding: 0.5rem;
-    z-index: 1000;
-    opacity: 0;
-    visibility: hidden;
-    transform: scale(0.95) translateY(-5px);
-    transition: all 0.15s ease;
+    animation: dropdownFadeIn 0.15s ease;
 }
 
-.friend-dropdown.open {
-    opacity: 1;
-    visibility: visible;
-    transform: scale(1) translateY(0);
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-.friend-dropdown .dropdown-item {
+.friend-dropdown__item {
     display: flex;
     align-items: center;
-    gap: 0.625rem;
-    width: 100%;
-    padding: 0.5rem 0.625rem;
-    border: none;
-    border-radius: 4px;
-    background: transparent;
-    color: var(--text-primary);
-    font-size: 0.85rem;
+    gap: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.8);
     cursor: pointer;
     transition: background 0.15s;
-    text-align: left;
 }
 
-.friend-dropdown .dropdown-item:hover {
+.friend-dropdown__item:hover {
     background: rgba(255, 255, 255, 0.06);
 }
 
-.friend-dropdown .dropdown-item i {
-    width: 18px;
+.friend-dropdown__item i {
+    width: 16px;
     text-align: center;
-    font-size: 0.8rem;
-    color: var(--text-muted);
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
 }
 
-.friend-dropdown .dropdown-item:hover i {
-    color: var(--text-primary);
+.friend-dropdown__item--danger {
+    color: #ef4444;
 }
 
-.friend-dropdown .dropdown-item.danger:hover {
-    background: rgba(237, 66, 69, 0.15);
-    color: #ed4245;
+.friend-dropdown__item--danger i {
+    color: #ef4444;
 }
 
-.friend-dropdown .dropdown-item.danger:hover i {
-    color: #ed4245;
-}
-
-.friend-dropdown .dropdown-divider {
-    height: 1px;
-    background: rgba(255, 255, 255, 0.1);
-    margin: 0.375rem 0;
+.friend-dropdown__item--danger:hover {
+    background: rgba(239, 68, 68, 0.1);
 }
 
 /* ==================== ЗАЯВКИ В ДРУЗЬЯ ==================== */

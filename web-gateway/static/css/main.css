@@ -11,6 +11,7 @@
 @import url('./pages/auth.css');
 @import url('./pages/chat.css');
 @import url('./pages/profile.css');
+@import url('./pages/user-profile.css');
 
 /* 3. Layouts */
 @import url('./layout/right-sidebar.css');

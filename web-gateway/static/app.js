@@ -727,6 +727,8 @@ function filterChatList(query) {
 }
 
 // ========== Открытие чата ==========
+var activeChatMemberAvatars = {};
+var activeChatMemberIds = [];
 
 function openChat(chatId, chatName, isDirect) {
     closeChatInfo();
@@ -749,6 +751,24 @@ function openChat(chatId, chatName, isDirect) {
     document.getElementById('chatViewStatus').textContent = 'Подключение...';
     document.getElementById('chatViewMessages').innerHTML = '';
     document.getElementById('chatViewInput').value = '';
+
+    // ✅ Сохраняем member_avatars для отображения аватарок в сообщениях
+    var chatItem = document.querySelector('.chat-list-item[data-chat-id="' + chatId + '"]');
+    if (chatItem) {
+        try {
+            activeChatMemberAvatars = JSON.parse(chatItem.getAttribute('data-member-avatars') || '{}');
+        } catch(e) {
+            activeChatMemberAvatars = {};
+        }
+    } else {
+        activeChatMemberAvatars = {};
+    }
+
+    var chat = chatListData ? chatListData.find(function(c) { return c.id === chatId; }) : null;
+    if (chat) {
+        activeChatMemberAvatars = chat.member_avatars || {};
+        activeChatMemberIds = chat.member_ids || [];
+    }
 
     // Аватарка в шапке чата
     const avatarContainer = document.getElementById('chatViewAvatar');
@@ -886,92 +906,138 @@ async function sendActiveMessage() {
 function displayChatMessage(msg) {
     const container = document.getElementById('chatViewMessages');
     if (!container) return;
-    
-    console.log('Display message:', msg); // Для отладки
-    
-    // Удаляем приветствие если есть
+
+    if (msg.type === 'online_users') {
+        updateChatOnlineUsers(msg);
+        return;
+    }
+
     const welcome = container.querySelector('.chat-welcome');
     if (welcome) welcome.remove();
-    
+
     const currentUsername = TokenManager.getUsername();
     const isOwn = msg.from === currentUsername;
     const isSystem = msg.from === 'system';
     const timeStr = formatMessageTime(msg.sent_at || msg.created_at || msg.timestamp);
-    
-    // Определяем тип сообщения
     const messageType = msg.message_type || msg.type || 'text';
-    
+
+    // Аватарка отправителя
+    let senderAvatarUrl = '';
+    if (!isOwn && !isSystem) {
+        const chat = chatListData
+            ? chatListData.find(c => c.id === activeChatId)
+            : null;
+        if (chat && chat.usernames && chat.member_ids && chat.member_avatars) {
+            const idx = chat.usernames.indexOf(msg.from);
+            if (idx !== -1 && chat.member_ids[idx]) {
+                senderAvatarUrl = chat.member_avatars[String(chat.member_ids[idx])] || '';
+            }
+        }
+    }
+
     const msgEl = document.createElement('div');
     msgEl.className = `chat-msg ${isOwn ? 'chat-msg--own' : 'chat-msg--other'}`;
-    
+
+    // Имя отправителя (внутри bubble)
+    const senderNameEscaped = escapeHtml(msg.from).replace(/'/g, "\\'");
+    const senderInsideBubble = !isOwn && !isSystem
+        ? `<span class="chat-msg__sender" onclick="openUserProfile('${senderNameEscaped}')">${escapeHtml(msg.from)}</span>`
+        : '';
+
     let contentHtml = '';
-    
-    // Обработка в зависимости от типа
+
     if (messageType === 'image' || messageType === 'IMAGE') {
-        // ИЗОБРАЖЕНИЕ
         let imageUrl = msg.file_url;
         if (imageUrl && imageUrl.startsWith('/')) {
             imageUrl = window.location.origin + imageUrl;
         }
-        
         contentHtml = `
             <div class="chat-msg__bubble chat-msg__bubble--image">
+                ${senderInsideBubble}
                 <img src="${escapeHtml(imageUrl)}" 
                      alt="${escapeHtml(msg.file_name || 'Изображение')}"
                      onclick="openImageModal('${escapeHtml(imageUrl)}')"
-                     onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML+='<div class=\'chat-msg__text\'>Ошибка загрузки</div>';"
-                     style="max-width: 300px; max-height: 200px; border-radius: 8px; cursor: pointer; display: block;">
+                     onerror="this.onerror=null; this.style.display='none';">
                 ${msg.text && msg.text !== 'Фото' && msg.text !== '📷 Фото' ? 
-                    `<div class="chat-msg__text" style="margin-top: 8px;">${escapeHtml(msg.text)}</div>` : ''}
+                    `<div class="chat-msg__text">${escapeHtml(msg.text)}</div>` : ''}
+                <span class="chat-msg__time">${timeStr}</span>
             </div>
         `;
     } 
     else if (messageType === 'file' || messageType === 'FILE') {
-        // ФАЙЛ
         const icon = getFileIcon(msg.file_name || '');
         const size = msg.file_size ? formatFileSize(msg.file_size) : '';
         let fileUrl = msg.file_url;
         if (fileUrl && fileUrl.startsWith('/')) {
             fileUrl = window.location.origin + fileUrl;
         }
-        
         contentHtml = `
             <div class="chat-msg__bubble chat-msg__bubble--file">
-                <a href="${escapeHtml(fileUrl)}" 
-                   target="_blank" 
-                   download="${escapeHtml(msg.file_name || 'file')}"
-                   style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit;">
-                    <i class="fas ${icon}" style="font-size: 24px;"></i>
+                ${senderInsideBubble}
+                <a href="${escapeHtml(fileUrl)}" target="_blank" download="${escapeHtml(msg.file_name || 'file')}">
+                    <i class="fas ${icon}"></i>
                     <div>
-                        <div style="font-weight: bold;">${escapeHtml(msg.file_name || 'Файл')}</div>
-                        ${size ? `<div style="font-size: 12px; opacity: 0.7;">${size}</div>` : ''}
+                        <div style="font-weight:600;">${escapeHtml(msg.file_name || 'Файл')}</div>
+                        ${size ? `<div style="font-size:12px;opacity:0.5;">${size}</div>` : ''}
                     </div>
                 </a>
                 ${msg.text && !msg.text.startsWith('📎') && msg.text !== 'Файл' ? 
-                    `<div class="chat-msg__text" style="margin-top: 8px;">${escapeHtml(msg.text)}</div>` : ''}
+                    `<div class="chat-msg__text">${escapeHtml(msg.text)}</div>` : ''}
+                <span class="chat-msg__time">${timeStr}</span>
             </div>
         `;
     }
     else if (messageType === 'voice' || messageType === 'VOICE') {
-        // ГОЛОСОВОЕ
-        contentHtml = createVoicePlayerHtml(msg.file_url, msg.voice_duration || 0, isOwn);
-    }
-    else {
-        // ТЕКСТ
-        contentHtml = `<div class="chat-msg__bubble">${escapeHtml(msg.text || '')}</div>`;
-    }
-    
-    // Формируем полное сообщение
-    if (isSystem) {
-        msgEl.innerHTML = `<div class="chat-msg__system">${escapeHtml(msg.text)}</div>`;
-    } else {
-        msgEl.innerHTML = `
-            ${!isOwn ? `<span class="chat-msg__sender">${escapeHtml(msg.from)}</span>` : ''}
-            ${contentHtml}
-            <span class="chat-msg__time">${timeStr}</span>
+        const duration = msg.voice_duration || 0;
+        const voiceUrl = msg.file_url || msg.text || '';
+        contentHtml = `
+            <div class="chat-msg__bubble chat-msg__bubble--voice">
+                ${senderInsideBubble}
+                <div class="voice-message" data-url="${escapeHtml(voiceUrl)}" data-duration="${duration}">
+                    <button class="voice-play-btn" onclick="toggleVoicePlay(this)">
+                        <i class="fas fa-play"></i>
+                    </button>
+                    <div class="voice-body">
+                        <div class="voice-waveform">${generateWaveformBars(40)}</div>
+                        <div class="voice-bottom">
+                            <span class="voice-duration">${formatVoiceDuration(duration)}</span>
+                        </div>
+                    </div>
+                    <audio src="${escapeHtml(voiceUrl)}" preload="none"></audio>
+                </div>
+                <span class="chat-msg__time">${timeStr}</span>
+            </div>
         `;
     }
-    
+    else {
+        // Текстовое сообщение: имя + текст + время — всё внутри одного bubble
+        contentHtml = `
+            <div class="chat-msg__bubble">
+                ${senderInsideBubble}
+                <span class="chat-msg__text">${escapeHtml(msg.text || '')}</span>
+                <span class="chat-msg__time">${timeStr}</span>
+            </div>
+        `;
+    }
+
+    if (isSystem) {
+        msgEl.className = 'chat-msg chat-msg--system';
+        msgEl.innerHTML = `<div class="chat-msg__system">${escapeHtml(msg.text)}</div>`;
+    } else {
+        const avatarClickHtml = !isOwn
+            ? `<div class="chat-msg__avatar" onclick="openUserProfile('${senderNameEscaped}')">
+                   ${avatarHtml(senderAvatarUrl, msg.from, 34)}
+               </div>`
+            : '';
+
+        msgEl.innerHTML = `
+            ${avatarClickHtml}
+            <div class="chat-msg__content">
+                ${contentHtml}
+            </div>
+        `;
+    }
+
     container.appendChild(msgEl);
     container.scrollTop = container.scrollHeight;
 }
@@ -1989,50 +2055,261 @@ function initFriendDropdown() {
     });
 }
 
-function openFriendDropdown(button, friend) {
-    const dropdown = document.getElementById('friendDropdown');
-    if (!dropdown) return;
-
+function openFriendDropdown(btn, friend) {
+    closeFriendDropdown();
     currentDropdownFriend = friend;
+    btn.classList.add('active');
 
-    // Убираем active с других кнопок
-    document.querySelectorAll('.btn-more.active').forEach(btn => {
-        btn.classList.remove('active');
-    });
+    const dropdown = document.createElement('div');
+    dropdown.className = 'friend-dropdown';
+    dropdown.id = 'friendDropdown';
 
-    // Добавляем active к текущей кнопке
-    button.classList.add('active');
+    dropdown.innerHTML = `
+        <div class="friend-dropdown__item" onclick="closeFriendDropdown(); openUserProfilePage(${friend.user_id || friend.id}, '${escapeHtml(friend.username).replace(/'/g, "\\'")}')">
+            <i class="fas fa-user"></i>
+            <span>Профиль</span>
+        </div>
+        <div class="friend-dropdown__item friend-dropdown__item--danger" onclick="closeFriendDropdown(); removeFriend(${friend.user_id || friend.id})">
+            <i class="fas fa-user-minus"></i>
+            <span>Удалить из друзей</span>
+        </div>
+    `;
 
-    // Позиционируем dropdown
-    const rect = button.getBoundingClientRect();
-    const dropdownHeight = 120; // Примерная высота
-    
-    // Проверяем, помещается ли снизу
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const showAbove = spaceBelow < dropdownHeight;
+    // Позиционируем относительно кнопки
+    const rect = btn.getBoundingClientRect();
+    dropdown.style.position = 'fixed';
+    dropdown.style.top = (rect.bottom + 4) + 'px';
+    dropdown.style.right = (window.innerWidth - rect.right) + 'px';
+    dropdown.style.zIndex = '9999';
 
-    dropdown.style.left = `${rect.left - 150 + rect.width}px`; // Выравниваем по правому краю кнопки
-    
-    if (showAbove) {
-        dropdown.style.top = `${rect.top - dropdownHeight - 5}px`;
-    } else {
-        dropdown.style.top = `${rect.bottom + 5}px`;
+    document.body.appendChild(dropdown);
+
+    setTimeout(() => {
+        document.addEventListener('click', closeFriendDropdownOutside);
+    }, 10);
+}
+
+function closeFriendDropdownOutside(e) {
+    if (!e.target.closest('.friend-dropdown') && !e.target.closest('.btn-more')) {
+        closeFriendDropdown();
     }
-
-    dropdown.classList.add('open');
 }
 
 function closeFriendDropdown() {
     const dropdown = document.getElementById('friendDropdown');
-    if (dropdown) {
-        dropdown.classList.remove('open');
-    }
-    
+    if (dropdown) dropdown.remove();
+
     document.querySelectorAll('.btn-more.active').forEach(btn => {
         btn.classList.remove('active');
     });
-    
+
+    document.removeEventListener('click', closeFriendDropdownOutside);
     currentDropdownFriend = null;
+}
+
+async function openUserProfilePage(userId, username) {
+    // Переключаемся на секцию профиля
+    document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+    
+    const profileSection = document.getElementById('profileSection');
+    if (!profileSection) return;
+    profileSection.classList.add('active');
+
+    // Обновляем nav
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+
+    const container = document.getElementById('profilePage');
+    if (!container) return;
+
+    container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Загрузка профиля...</div>';
+
+    let token = TokenManager.getAccessToken();
+    if (!token.startsWith('Bearer ')) token = 'Bearer ' + token;
+
+    try {
+        // Загружаем профиль
+        const response = await fetch('/api/user/' + userId, {
+            headers: { 'Authorization': token }
+        });
+
+        if (!response.ok) throw new Error('Failed to load profile');
+        const user = await response.json();
+
+        // Загружаем статус дружбы
+        let friendshipStatus = 'none';
+        try {
+            const searchResp = await fetch('/api/users/search?q=' + encodeURIComponent(username) + '&limit=1', {
+                headers: { 'Authorization': token }
+            });
+            if (searchResp.ok) {
+                const searchData = await searchResp.json();
+                const found = (searchData.users || []).find(u => u.username === username);
+                if (found) friendshipStatus = found.friendship_status || 'none';
+            }
+        } catch (e) {}
+
+        // Загружаем общие чаты
+        let commonChats = 0;
+        try {
+            const chatsResp = await fetch('/api/chat/my', {
+                headers: { 'Authorization': token }
+            });
+            if (chatsResp.ok) {
+                const chatsData = await chatsResp.json();
+                commonChats = (chatsData.chats || []).filter(chat => {
+                    return (chat.usernames || []).includes(username);
+                }).length;
+            }
+        } catch (e) {}
+
+        renderOtherUserProfile(user, friendshipStatus, commonChats);
+
+    } catch (err) {
+        container.innerHTML = '<div class="loading">Ошибка загрузки профиля</div>';
+    }
+}
+
+function renderOtherUserProfile(user, friendshipStatus, commonChats) {
+    const container = document.getElementById('profilePage');
+    if (!container) return;
+
+    const currentUserId = TokenManager.getUserId();
+    const isOwnProfile = String(user.id) === String(currentUserId);
+
+    // Если свой профиль — показываем обычный
+    if (isOwnProfile) {
+        loadUserInfo();
+        return;
+    }
+
+    const avatarUrl = user.avatar_url || '';
+    const bio = user.bio || '';
+    const role = user.role || 'user';
+    const createdAt = new Date(user.created_at).toLocaleDateString('ru-RU', {
+        year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    const roleIcon = role === 'admin' ? 'fa-shield-alt' : 'fa-user';
+    const roleLabel = role === 'admin' ? 'Администратор' : 'Пользователь';
+
+    const avatarContent = avatarUrl
+        ? '<img src="' + escapeHtml(avatarUrl) + '" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">'
+        : '<span style="font-size:40px;font-weight:700;color:#fff;">' +
+          escapeHtml(user.username.substring(0, 2).toUpperCase()) + '</span>';
+
+    // Кнопки действий
+    let actionsHtml = '';
+
+    // Написать
+    actionsHtml += `
+        <button class="profile-action-btn profile-action-btn--primary" 
+                onclick="startChatWithFriend(${user.id}, '${escapeHtml(user.username).replace(/'/g, "\\'")}')">
+            <i class="fas fa-comment"></i>
+            <span>Написать</span>
+        </button>
+    `;
+
+    // Друг / Добавить
+    if (friendshipStatus === 'friends' || friendshipStatus === 'accepted') {
+        actionsHtml += `
+            <button class="profile-action-btn profile-action-btn--secondary" disabled>
+                <i class="fas fa-check"></i>
+                <span>В друзьях</span>
+            </button>
+        `;
+    } else if (friendshipStatus === 'pending_sent') {
+        actionsHtml += `
+            <button class="profile-action-btn profile-action-btn--secondary" disabled>
+                <i class="fas fa-clock"></i>
+                <span>Заявка отправлена</span>
+            </button>
+        `;
+    } else {
+        actionsHtml += `
+            <button class="profile-action-btn profile-action-btn--secondary"
+                    onclick="sendFriendRequest(${user.id}, '${escapeHtml(user.username)}')">
+                <i class="fas fa-user-plus"></i>
+                <span>Добавить в друзья</span>
+            </button>
+        `;
+    }
+
+    // Кнопка назад
+    const backBtn = `
+        <button class="profile-back-btn" onclick="showSection('home')">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+    `;
+
+    container.innerHTML = `
+        <!-- Шапка -->
+        <div class="profile-header">
+            ${backBtn}
+            <div class="profile-header-content">
+                <div class="profile-avatar-container">
+                    <div class="profile-avatar">
+                        ${avatarContent}
+                    </div>
+                </div>
+                <div class="profile-header-info">
+                    <h1 class="profile-name">${escapeHtml(user.username)}</h1>
+                    <span class="profile-role">
+                        <i class="fas ${roleIcon}"></i> ${roleLabel}
+                    </span>
+                    <div class="profile-joined">
+                        <i class="fas fa-calendar-alt"></i>
+                        На платформе с ${createdAt}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Действия -->
+        <div class="profile-actions-bar">
+            ${actionsHtml}
+        </div>
+
+        <!-- Статистика -->
+        <div class="profile-stats">
+            <div class="profile-stat">
+                <span class="profile-stat-value">${commonChats}</span>
+                <span class="profile-stat-label">Общих чатов</span>
+            </div>
+        </div>
+
+        ${bio ? `
+        <!-- О себе -->
+        <div class="profile-section">
+            <h3 class="profile-section-title">
+                <i class="fas fa-quote-left"></i> О себе
+            </h3>
+            <p class="profile-bio-text">${escapeHtml(bio)}</p>
+        </div>
+        ` : ''}
+
+        <!-- Информация -->
+        <div class="profile-section">
+            <h3 class="profile-section-title">
+                <i class="fas fa-info-circle"></i> Информация
+            </h3>
+
+            <div class="profile-field">
+                <div class="profile-field-icon"><i class="fas fa-user"></i></div>
+                <div class="profile-field-content">
+                    <div class="profile-field-label">Имя пользователя</div>
+                    <div class="profile-field-value">${escapeHtml(user.username)}</div>
+                </div>
+            </div>
+
+            <div class="profile-field">
+                <div class="profile-field-icon"><i class="fas fa-id-badge"></i></div>
+                <div class="profile-field-content">
+                    <div class="profile-field-label">ID</div>
+                    <div class="profile-field-value">#${user.id}</div>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 // Загрузка друзей
@@ -3067,14 +3344,86 @@ function createVoicePlayerHtml(voiceUrl, duration, isOwn) {
     `;
 }
 
-function formatVoiceDuration(sec) {
-    const m = Math.floor(sec / 60);
-    const s = Math.floor(sec % 60);
-    return `${m}:${s.toString().padStart(2, '0')}`;
+// Генерация полосок waveform
+function generateWaveformBars(count) {
+    let bars = '';
+    for (let i = 0; i < count; i++) {
+        // Случайная высота для визуального эффекта
+        const h = Math.floor(Math.random() * 14) + 4;
+        bars += `<div class="voice-waveform-bar" style="height:${h}px;" data-index="${i}"></div>`;
+    }
+    return bars;
 }
 
-// ========== Воспроизведение ==========
+// Форматирование длительности
+function formatVoiceDuration(seconds) {
+    if (!seconds || !isFinite(seconds) || isNaN(seconds)) return '0:00';
+    seconds = Math.floor(seconds);
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return mins + ':' + (secs < 10 ? '0' : '') + secs;
+}
 
+// Воспроизведение
+function toggleVoicePlay(btn) {
+    const voiceMsg = btn.closest('.voice-message');
+    if (!voiceMsg) return;
+
+    const audio = voiceMsg.querySelector('audio');
+    if (!audio) return;
+
+    const icon = btn.querySelector('i');
+    const bars = voiceMsg.querySelectorAll('.voice-waveform-bar');
+    const durationEl = voiceMsg.querySelector('.voice-duration');
+    const totalDuration = parseFloat(voiceMsg.getAttribute('data-duration')) || 0;
+
+    if (audio.paused) {
+        // Останавливаем другие
+        document.querySelectorAll('.voice-message audio').forEach(a => {
+            if (a !== audio && !a.paused) {
+                a.pause();
+                a.currentTime = 0;
+                const otherBtn = a.closest('.voice-message').querySelector('.voice-play-btn i');
+                if (otherBtn) otherBtn.className = 'fas fa-play';
+                a.closest('.voice-message').querySelectorAll('.voice-waveform-bar').forEach(b => {
+                    b.classList.remove('active');
+                });
+            }
+        });
+
+        audio.play().catch(() => {});
+        icon.className = 'fas fa-pause';
+
+        audio.ontimeupdate = function() {
+            const dur = audio.duration && isFinite(audio.duration) ? audio.duration : totalDuration;
+            if (dur > 0) {
+                const progress = audio.currentTime / dur;
+                const activeCount = Math.floor(progress * bars.length);
+                bars.forEach((bar, i) => {
+                    bar.classList.toggle('active', i < activeCount);
+                });
+                if (durationEl) {
+                    durationEl.textContent = formatVoiceDuration(audio.currentTime);
+                }
+            }
+        };
+
+        audio.onended = function() {
+            icon.className = 'fas fa-play';
+            bars.forEach(bar => bar.classList.remove('active'));
+            if (durationEl) {
+                const dur = audio.duration && isFinite(audio.duration) ? audio.duration : totalDuration;
+                durationEl.textContent = formatVoiceDuration(dur);
+            }
+        };
+    } else {
+        audio.pause();
+        icon.className = 'fas fa-play';
+    }
+}
+
+
+// ========== Воспроизведение ==========
 function toggleVoice(playerId, url) {
     const icon = document.getElementById(playerId + '_icon');
     const bar = document.getElementById(playerId + '_bar');
@@ -4394,6 +4743,128 @@ document.addEventListener('paste', function(e) {
             }
             break;
         }
+    }
+});
+
+// ============================================
+// ПРОФИЛЬ ДРУГОГО ПОЛЬЗОВАТЕЛЯ
+// ============================================
+
+async function openUserProfile(username) {
+    var modal = document.getElementById('userProfileModal');
+    var content = document.getElementById('userProfileContent');
+    if (!modal || !content) return;
+
+    modal.style.display = 'flex';
+    content.innerHTML =
+        '<button class="user-profile-modal__close" onclick="closeUserProfile()">' +
+            '<i class="fas fa-times"></i></button>' +
+        '<div class="user-profile-loading"><i class="fas fa-spinner fa-spin"></i> Загрузка...</div>';
+
+    var token = TokenManager.getAccessToken();
+    if (!token.startsWith('Bearer ')) token = 'Bearer ' + token;
+
+    try {
+        // Ищем user_id по username
+        var searchResp = await fetch('/api/users/search?q=' + encodeURIComponent(username) + '&limit=1', {
+            headers: { 'Authorization': token }
+        });
+
+        if (!searchResp.ok) throw new Error('User not found');
+
+        var searchData = await searchResp.json();
+        var users = searchData.users || [];
+        var user = users.find(function(u) { return u.username === username; });
+
+        if (!user) throw new Error('User not found');
+
+        // Получаем полный профиль
+        var profileResp = await fetch('/api/user/' + user.id, {
+            headers: { 'Authorization': token }
+        });
+
+        if (!profileResp.ok) throw new Error('Failed to load profile');
+
+        var profile = await profileResp.json();
+
+        renderUserProfileModal(profile, user.friendship_status || 'none');
+
+    } catch (err) {
+        content.innerHTML =
+            '<button class="user-profile-modal__close" onclick="closeUserProfile()">' +
+                '<i class="fas fa-times"></i></button>' +
+            '<div class="user-profile-loading">Пользователь не найден</div>';
+    }
+}
+
+function renderUserProfileModal(user, friendshipStatus) {
+    var content = document.getElementById('userProfileContent');
+    if (!content) return;
+
+    var currentUserId = TokenManager.getUserId();
+    var isOwnProfile = String(user.id) === String(currentUserId);
+
+    var avatarContent = user.avatar_url
+        ? '<img src="' + escapeHtml(user.avatar_url) + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">'
+        : '<span style="font-size:28px;font-weight:700;color:#fff;">' +
+          escapeHtml(user.username.substring(0, 2).toUpperCase()) + '</span>';
+
+    var roleLabel = user.role === 'admin' ? 'Администратор' : 'Пользователь';
+
+    var bioHtml = user.bio
+        ? '<div class="user-profile-card__bio">' + escapeHtml(user.bio) + '</div>'
+        : '';
+
+    // Кнопки действий
+    var actionsHtml = '';
+
+    if (!isOwnProfile) {
+        // Написать
+        actionsHtml += '<button class="btn-profile-chat" onclick="closeUserProfile(); startChatWithFriend(' +
+            user.id + ',\'' + escapeHtml(user.username).replace(/'/g, "\\'") + '\')">' +
+            '<i class="fas fa-comment"></i> Написать</button>';
+
+        // Друг
+        if (friendshipStatus === 'friends' || friendshipStatus === 'accepted') {
+            actionsHtml += '<button class="btn-profile-friend" disabled>' +
+                '<i class="fas fa-check"></i> В друзьях</button>';
+        } else if (friendshipStatus === 'pending_sent') {
+            actionsHtml += '<button class="btn-profile-friend" disabled>' +
+                '<i class="fas fa-clock"></i> Отправлено</button>';
+        } else {
+            actionsHtml += '<button class="btn-profile-friend" onclick="sendFriendRequest(' +
+                user.id + ',\'' + escapeHtml(user.username) + '\')">' +
+                '<i class="fas fa-user-plus"></i> Добавить</button>';
+        }
+    }
+
+    // Кнопка перехода на полный профиль
+    var fullProfileBtnHtml = '<button class="btn-profile-full" onclick="closeUserProfile(); openUserProfilePage(' +
+        user.id + ',\'' + escapeHtml(user.username).replace(/'/g, "\\'") + '\')">' +
+        '<i class="fas fa-external-link-alt"></i> Открыть профиль</button>';
+
+    content.innerHTML =
+        '<button class="user-profile-modal__close" onclick="closeUserProfile()">' +
+            '<i class="fas fa-times"></i></button>' +
+        '<div class="user-profile-card">' +
+            '<div class="user-profile-card__avatar">' + avatarContent + '</div>' +
+            '<div class="user-profile-card__name">' + escapeHtml(user.username) + '</div>' +
+            '<div class="user-profile-card__role">' + roleLabel + '</div>' +
+            bioHtml +
+            '<div class="user-profile-card__actions">' + actionsHtml + '</div>' +
+            fullProfileBtnHtml +
+        '</div>';
+}
+
+function closeUserProfile() {
+    var modal = document.getElementById('userProfileModal');
+    if (modal) modal.style.display = 'none';
+}
+
+// Закрытие по Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeUserProfile();
     }
 });
 
